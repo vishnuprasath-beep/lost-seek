@@ -96,64 +96,69 @@ module.exports = async function handler(req, res) {
       const isLost = String(report.type).toUpperCase() === 'LOST';
 
       // Automatic cross-account matching against real active reports in Supabase
+      // Decoupled into background async block to speed up report submission (as requested)
       const generatedMatches = [];
-      try {
-        const candidateOppositeType = isLost ? 'FOUND' : 'LOST';
-        const candidates = await db.getReports({ type: candidateOppositeType, status: 'Active' }, { role: 'admin' });
-
-        for (const candidate of candidates) {
-          const lostRep = isLost ? report : candidate;
-          const foundRep = isLost ? candidate : report;
-
-          const matchResult = await evaluateMatch(lostRep, foundRep);
-          if (matchResult.isMatch) {
-            const savedMatch = await db.createMatch({
-              lostReportId: matchResult.lostReportId,
-              foundReportId: matchResult.foundReportId,
-              score: matchResult.score,
-              confidence: matchResult.confidence,
-              signals: matchResult.signals
-            });
-            generatedMatches.push(savedMatch);
-
-            // Notify both reporters in Supabase
-            const lostReporterId = lostRep.reporterId || lostRep.reporter_id;
-            const foundReporterId = foundRep.reporterId || foundRep.reporter_id;
-
-            if (lostReporterId) {
-              await db.createNotification({
-                userId: lostReporterId,
-                type: 'match',
-                message: `🔍 Potential Match: Your lost "${lostRep.title || lostRep.itemName}" matches a found item (${matchResult.score}% confidence)! Check Match Center.`
-              }).catch(() => {});
-            }
-
-            if (foundReporterId) {
-              await db.createNotification({
-                userId: foundReporterId,
-                type: 'match',
-                message: `🔍 Potential Match: A lost report matching your found "${foundRep.title || foundRep.itemName}" was found (${matchResult.score}% confidence)! Check Match Center.`
-              }).catch(() => {});
+      (async () => {
+        try {
+          const candidateOppositeType = isLost ? 'FOUND' : 'LOST';
+          const candidates = await db.getReports({ type: candidateOppositeType, status: 'Active' }, { role: 'admin' });
+  
+          for (const candidate of candidates) {
+            const lostRep = isLost ? report : candidate;
+            const foundRep = isLost ? candidate : report;
+  
+            const matchResult = await evaluateMatch(lostRep, foundRep);
+            if (matchResult.isMatch) {
+              const savedMatch = await db.createMatch({
+                lostReportId: matchResult.lostReportId,
+                foundReportId: matchResult.foundReportId,
+                score: matchResult.score,
+                confidence: matchResult.confidence,
+                signals: matchResult.signals
+              });
+              generatedMatches.push(savedMatch);
+  
+              // Notify both reporters in Supabase
+              const lostReporterId = lostRep.reporterId || lostRep.reporter_id;
+              const foundReporterId = foundRep.reporterId || foundRep.reporter_id;
+  
+              if (lostReporterId) {
+                await db.createNotification({
+                  userId: lostReporterId,
+                  type: 'match',
+                  message: `🔍 Potential Match: Your lost "${lostRep.title || lostRep.itemName}" matches a found item (${matchResult.score}% confidence)! Check Match Center.`
+                }).catch(() => {});
+              }
+  
+              if (foundReporterId) {
+                await db.createNotification({
+                  userId: foundReporterId,
+                  type: 'match',
+                  message: `🔍 Potential Match: A lost report matching your found "${foundRep.title || foundRep.itemName}" was found (${matchResult.score}% confidence)! Check Match Center.`
+                }).catch(() => {});
+              }
             }
           }
+        } catch (matchErr) {
+          console.warn('Server-side automatic matching warning:', matchErr.message);
         }
-      } catch (matchErr) {
-        console.warn('Server-side automatic matching warning:', matchErr.message);
-      }
+      })().catch(err => console.error("Background matching error:", err));
 
       // If LOST report: create safe Community Alert
       if (isLost) {
-        try {
-          await db.createCommunityAlert({
-            reportId: report.id,
-            category: report.category,
-            approximateArea: report.location,
-            description: report.description,
-            reporterUser: user ? (user.username || user.id) : null
-          });
-        } catch (alertErr) {
-          console.warn('Community alert creation notice:', alertErr.message);
-        }
+        (async () => {
+          try {
+            await db.createCommunityAlert({
+              reportId: report.id,
+              category: report.category,
+              approximateArea: report.location,
+              description: report.description,
+              reporterUser: user ? (user.username || user.id) : null
+            });
+          } catch (alertErr) {
+            console.warn('Community alert creation notice:', alertErr.message);
+          }
+        })().catch(err => console.error("Background alert error:", err));
       }
 
       return res.status(201).json({
