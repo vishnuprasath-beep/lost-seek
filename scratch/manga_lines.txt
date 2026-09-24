@@ -1,0 +1,49 @@
+9078:    MANGA VIEWER LOGIC
+9081: let currentMangaPage = 1;
+9082: const totalMangaPages = 9;
+9084: function renderMangaPagination() {
+9085:   const paginationContainer = document.getElementById('manga-pagination');
+9089:   for (let i = 1; i <= totalMangaPages; i++) {
+9091:     dot.className = 'manga-dot' + (i === currentMangaPage ? ' active' : '');
+9092:     dot.onclick = () => goToMangaPage(i);
+9097: function updateMangaView() {
+9098:   const slides = document.querySelectorAll('.manga-slide');
+9105:     if (pageNum === currentMangaPage) {
+9107:     } else if (pageNum < currentMangaPage) {
+9112:   const prevBtn = document.getElementById('manga-prev');
+9113:   const nextBtn = document.getElementById('manga-next');
+9115:   if (prevBtn) prevBtn.disabled = currentMangaPage === 1;
+9116:   if (nextBtn) nextBtn.disabled = currentMangaPage === totalMangaPages;
+9118:   renderMangaPagination();
+9121: let lastMangaTurn = 0;
+9122: window.nextMangaPage = function() {
+9124:   if (now - lastMangaTurn < 250) {
+9125:     console.log('Debounced nextMangaPage');
+9128:   lastMangaTurn = now;
+9129:   console.log('nextMangaPage called. Current is:', currentMangaPage);
+9131:   if (currentMangaPage < totalMangaPages) {
+9132:     currentMangaPage++;
+9133:     console.log('Incremented to:', currentMangaPage);
+9134:     updateMangaView();
+9138: window.prevMangaPage = function() {
+9140:   if (now - lastMangaTurn < 250) return;
+9141:   lastMangaTurn = now;
+9143:   if (currentMangaPage > 1) {
+9144:     currentMangaPage--;
+9145:     updateMangaView();
+9149: window.goToMangaPage = function(page) {
+9150:   if (page >= 1 && page <= totalMangaPages) {
+9151:     currentMangaPage = page;
+9152:     updateMangaView();
+9160: function handleMangaSwipe() {
+9162:     window.nextMangaPage(); // Swipe Left -> Next
+9165:     window.prevMangaPage(); // Swipe Right -> Prev
+9170:   const wrapper = document.getElementById('manga-slides-wrapper');
+9171:   const prevBtn = document.getElementById('manga-prev');
+9172:   const nextBtn = document.getElementById('manga-next');
+9182:       handleMangaSwipe();
+9189:     const mangaContainer = document.getElementById('manga-slides-wrapper');
+9190:     if (mangaContainer && window.getComputedStyle(mangaContainer).display !== 'none') {
+9191:       if (e.key === 'ArrowRight') window.nextMangaPage();
+9192:       if (e.key === 'ArrowLeft') window.prevMangaPage();
+9196:   updateMangaView();

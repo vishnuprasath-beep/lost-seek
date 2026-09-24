@@ -1,0 +1,39 @@
+{
+  "version": 2,
+  "cleanUrls": false,
+  "headers": [
+    {
+      "source": "/(.*)\\.apk",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/vnd.android.package-archive"
+        },
+        {
+          "key": "Content-Disposition",
+          "value": "attachment; filename=\"LostSeek.apk\""
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
+    }
+  ],
+  "functions": {
+    "api/*.js": {
+      "includeFiles": "models/**",
+      "maxDuration": 15
+    }
+  },
+  "rewrites": [
+    { "source": "/api/login", "destination": "/api/auth?action=login" },
+    { "source": "/api/register", "destination": "/api/auth?action=register" },
+    { "source": "/api/change-password", "destination": "/api/auth?action=change-password" },
+    { "source": "/api/profile", "destination": "/api/auth?action=profile" },
+    { "source": "/LostSeek.apk", "destination": "/LostSeek.apk" },
+    { "source": "/download", "destination": "/download.html" },
+    { "source": "/googled552e0cbc66fc7ac", "destination": "/googled552e0cbc66fc7ac.html" },
+    { "source": "/((?!api/|.*\\..*).*)", "destination": "/index.html" }
+  ]
+}

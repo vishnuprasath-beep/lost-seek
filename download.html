@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Get LostSeek for Android — Official APK Download</title>
+  <meta name="description" content="Download the official LostSeek Android APK for smart campus lost-and-found. Report lost items, browse campus sightings, and receive instant AI-assisted match updates.">
+  <link rel="canonical" href="https://smart-campus-pro.vercel.app/download">
+  <link rel="icon" type="image/png" href="/assets/images/lostseek-logo.png">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Get LostSeek for Android — Official APK Download">
+  <meta property="og:description" content="Download the official LostSeek Android APK for smart campus lost-and-found.">
+  <meta property="og:image" content="https://smart-campus-pro.vercel.app/assets/images/lostseek-logo.png">
+  <meta property="og:url" content="https://smart-campus-pro.vercel.app/download">
+  <meta property="og:type" content="website">
+
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Outfit:wght@600;700;800&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Outfit:wght@600;700;800&display=swap">
+  </noscript>
+  <script defer src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    :root {
+      --primary: #10b981;
+      --primary-dark: #059669;
+      --primary-light: #ecfdf5;
+      --accent-blue: #2563eb;
+      --accent-purple: #8b5cf6;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --bg-gradient: linear-gradient(135deg, #f0fdf4 0%, #f8fafc 50%, #eff6ff 100%);
+      --card-bg: #ffffff;
+      --border-color: rgba(226, 232, 240, 0.8);
+      --radius-lg: 24px;
+      --radius-md: 16px;
+      --radius-pill: 9999px;
+      --shadow-card: 0 10px 30px -5px rgba(0, 0, 0, 0.05), 0 4px 12px -2px rgba(0, 0, 0, 0.03);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      background: var(--bg-gradient);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      line-height: 1.6;
+    }
+
+    .dl-header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-color);
+      padding: 14px 24px;
+    }
+
+    .dl-header-inner {
+      max-width: 1140px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand-logo-link {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .brand-logo-img {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      object-fit: contain;
+    }
+
+    .brand-text h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: #065f46;
+      line-height: 1.1;
+    }
+
+    .brand-text span {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .btn-header {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 18px;
+      border-radius: var(--radius-pill);
+      font-size: 0.88rem;
+      font-weight: 700;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+
+    .btn-outline {
+      border: 1.5px solid var(--primary-dark);
+      color: var(--primary-dark);
+      background: transparent;
+    }
+
+    .btn-outline:hover {
+      background: var(--primary-light);
+    }
+
+    .dl-main {
+      flex: 1;
+      max-width: 920px;
+      margin: 40px auto;
+      padding: 0 20px;
+      width: 100%;
+    }
+
+    .dl-card {
+      background: var(--card-bg);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-card);
+      padding: 44px 36px;
+      text-align: center;
+    }
+
+    .app-icon-wrap {
+      width: 88px;
+      height: 88px;
+      margin: 0 auto 20px;
+      border-radius: 22px;
+      background: #ffffff;
+      padding: 8px;
+      box-shadow: 0 8px 24px rgba(16, 185, 129, 0.18);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .app-icon-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      border-radius: 16px;
+    }
+
+    .badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 14px;
+      border-radius: var(--radius-pill);
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      font-size: 0.8rem;
+      font-weight: 700;
+      margin-bottom: 14px;
+    }
+
+    .dl-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: var(--text-main);
+      margin-bottom: 12px;
+      line-height: 1.2;
+    }
+
+    .dl-subtitle {
+      font-size: 1.05rem;
+      color: var(--text-muted);
+      max-width: 600px;
+      margin: 0 auto 28px;
+    }
+
+    .btn-download-primary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: #ffffff;
+      padding: 16px 36px;
+      border-radius: var(--radius-pill);
+      font-size: 1.12rem;
+      font-weight: 800;
+      text-decoration: none;
+      box-shadow: 0 8px 24px rgba(16, 185, 129, 0.35);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      cursor: pointer;
+    }
+
+    .btn-download-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 28px rgba(16, 185, 129, 0.45);
+    }
+
+    .meta-pills {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 16px;
+      margin-top: 24px;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+    }
+
+    .meta-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: #f8fafc;
+      padding: 6px 12px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border-color);
+      font-weight: 600;
+    }
+
+    .guide-section {
+      margin-top: 40px;
+      text-align: left;
+      border-top: 1px solid var(--border-color);
+      padding-top: 36px;
+    }
+
+    .guide-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 18px;
+    }
+
+    .step-box {
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 20px;
+    }
+
+    .step-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 0.85rem;
+      margin-bottom: 12px;
+    }
+
+    .step-heading {
+      font-size: 0.98rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 6px;
+    }
+
+    .step-desc {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .security-note {
+      margin-top: 28px;
+      background: #ecfdf5;
+      border: 1px solid #a7f3d0;
+      border-radius: var(--radius-md);
+      padding: 16px 20px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      font-size: 0.85rem;
+      color: #065f46;
+      text-align: left;
+    }
+
+    .security-note i {
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .dl-footer {
+      text-align: center;
+      padding: 24px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      border-top: 1px solid var(--border-color);
+      background: #ffffff;
+    }
+
+    .dl-footer a {
+      color: var(--primary-dark);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .dl-footer a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 640px) {
+      .dl-card {
+        padding: 30px 20px;
+      }
+      .dl-title {
+        font-size: 1.7rem;
+      }
+      .btn-download-primary {
+        width: 100%;
+        padding: 14px 20px;
+        font-size: 1.02rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="dl-header">
+    <div class="dl-header-inner">
+      <a href="/" class="brand-logo-link">
+        <picture>
+          <source srcset="/assets/images/lostseek-logo.webp" type="image/webp">
+          <img src="/assets/images/lostseek-logo.png" alt="LostSeek" class="brand-logo-img" width="38" height="38" loading="eager" decoding="async" />
+        </picture>
+        <div class="brand-text">
+          <h1>LostSeek</h1>
+          <span>AI-Powered Smart Campus</span>
+        </div>
+      </a>
+      <a href="/" class="btn-header btn-outline">
+        <i data-lucide="globe" style="width: 16px; height: 16px;"></i>
+        <span>Open Web App</span>
+      </a>
+    </div>
+  </header>
+
+  <main class="dl-main">
+    <div class="dl-card">
+      <div class="app-icon-wrap">
+        <picture>
+          <source srcset="/assets/images/lostseek-logo.webp" type="image/webp">
+          <img src="/assets/images/lostseek-logo.png" alt="LostSeek Android App" width="76" height="76" loading="eager" decoding="async" />
+        </picture>
+      </div>
+
+      <div class="badge-pill">
+        <i data-lucide="smartphone" style="width: 14px; height: 14px;"></i>
+        <span>Official Android APK Release</span>
+      </div>
+
+      <h2 class="dl-title">Get LostSeek for Android</h2>
+      <p class="dl-subtitle">
+        Install the native LostSeek app on your phone for faster image capture, offline caching, instant community sighting notifications, and seamless campus recovery.
+      </p>
+
+      <a href="/LostSeek.apk" download="LostSeek.apk" class="btn-download-primary" id="btn-apk-download">
+        <i data-lucide="download" style="width: 22px; height: 22px;"></i>
+        <span>Download LostSeek APK</span>
+      </a>
+
+      <div class="meta-pills">
+        <div class="meta-item">
+          <i data-lucide="tag" style="width: 13px; height: 13px;"></i>
+          <span>Version 2.4.0</span>
+        </div>
+        <div class="meta-item">
+          <i data-lucide="file-check" style="width: 13px; height: 13px;"></i>
+          <span>Size: 4.62 MB</span>
+        </div>
+        <div class="meta-item">
+          <i data-lucide="cpu" style="width: 13px; height: 13px;"></i>
+          <span>Android 7.0+</span>
+        </div>
+        <div class="meta-item">
+          <i data-lucide="shield-check" style="width: 13px; height: 13px;"></i>
+          <span>Signed Release APK</span>
+        </div>
+      </div>
+
+      <div class="guide-section">
+        <h3 class="guide-title">
+          <i data-lucide="help-circle" style="width: 20px; height: 20px; color: var(--primary);"></i>
+          <span>Quick 3-Step Installation Guide</span>
+        </h3>
+
+        <div class="steps-grid">
+          <div class="step-box">
+            <div class="step-num">1</div>
+            <div class="step-heading">Download APK</div>
+            <div class="step-desc">
+              Tap the download button above to save <code>LostSeek.apk</code> to your device.
+            </div>
+          </div>
+          <div class="step-box">
+            <div class="step-num">2</div>
+            <div class="step-heading">Allow Unknown Apps</div>
+            <div class="step-desc">
+              If prompted by Android, go to Settings &rarr; enable "Allow from this source" for your browser.
+            </div>
+          </div>
+          <div class="step-box">
+            <div class="step-num">3</div>
+            <div class="step-heading">Install &amp; Launch</div>
+            <div class="step-desc">
+              Tap the downloaded APK from notifications or your Downloads folder, tap <strong>Install</strong>, and open LostSeek.
+            </div>
+          </div>
+        </div>
+
+        <div class="security-note">
+          <i data-lucide="shield-alert" style="width: 20px; height: 20px; color: #059669;"></i>
+          <div>
+            <strong>Campus Security Verification Notice:</strong> LostSeek is distributed directly to university members for hackathon and campus evaluation. Android may display a standard prompt noting the APK was downloaded outside Google Play. The application is safe, verified, and signed.
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <footer class="dl-footer">
+    <p>&copy; 2026 LostSeek — AI-Powered Smart Campus Lost &amp; Found. <a href="/">Return to Web Application</a></p>
+  </footer>
+
+  <script>
+    if (window.lucide) {
+      window.lucide.createIcons();
+    }
+  </script>
+</body>
+</html>

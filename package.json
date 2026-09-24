@@ -1,0 +1,26 @@
+{
+  "name": "lostseek",
+  "version": "2.0.0",
+  "private": true,
+  "description": "LostSeek - Modern Campus Lost & Found System",
+  "scripts": {
+    "build": "node -e \"console.log('Build completed')\"",
+    "start": "node scratch/server.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.116.0",
+    "@vercel/blob": "^2.8.0",
+    "clip-tokenizer-rs": "^0.1.0",
+    "gpt-tokenizer": "^4.0.0",
+    "jimp": "^0.22.12",
+    "jsqr": "^1.4.0",
+    "onnx-proto": "^8.0.1",
+    "onnxruntime-node": "^1.30.0",
+    "pdfkit": "^0.20.2",
+    "qrcode": "^1.5.4",
+    "sharp": "^0.35.4"
+  }
+}

@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">LostSeek</string>
+    <string name="syncing_text">Syncing with Campus Cloud...</string>
+    <string name="offline_title">Campus Network Offline</string>
+    <string name="offline_desc">Unable to connect to LostSeek Cloud Backend. Please verify your connection.</string>
+    <string name="retry_btn">Retry Connection</string>
+</resources>

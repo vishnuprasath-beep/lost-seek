@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Allow: /download
+Disallow: /api/
+
+Sitemap: https://smart-campus-pro.vercel.app/sitemap.xml
