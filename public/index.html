@@ -114,98 +114,472 @@
       </div>
     </header>
 
-    <main id="main-content" class="manga-viewer-container">
-      <div class="manga-slides-wrapper" id="manga-slides-wrapper">
-        <!-- Page 1: The Loss -->
-        <div class="manga-slide active" data-page="1">
-          <div class="manga-art-container">
-            <img src="assets/images/manga-page-1.jpg?v=3" alt="The Loss" class="manga-art" loading="eager" />
+    <main id="main-content">
+    <!-- Hero Section -->
+    <section class="lp-hero-section" id="home">
+      <div class="lp-hero-grid">
+        <div class="lp-hero-content">
+          <div class="lp-hero-badge">
+            <i data-lucide="sparkles" style="width: 14px; height: 14px; color: #10b981;"></i>
+            <span>AI-Powered Smart Campus Lost &amp; Found</span>
           </div>
-          
+
+          <h1 class="lp-hero-title">
+            Find what you lost.<br>
+            Help others recover<br>
+            <span class="lp-hero-title-green">what they found.</span>
+          </h1>
+
+          <p class="lp-hero-desc">
+            LostSeek is a smart campus lost-and-found platform that helps students report lost items, report found items, discover community sightings, and use AI-assisted matching to recover belongings safely.
+          </p>
+
+          <div class="lp-hero-actions">
+            <!-- Action Row 1: Reporting CTAs -->
+            <div class="lp-actions-row">
+              <button type="button" class="lp-btn lp-btn-primary lp-btn-lg" onclick="goToReportLost()">
+                <i data-lucide="search" style="width: 18px; height: 18px;"></i>
+                <span>Report a Lost Item</span>
+              </button>
+              <button type="button" class="lp-btn lp-btn-blue lp-btn-lg" onclick="goToReportFound()">
+                <i data-lucide="plus-circle" style="width: 18px; height: 18px;"></i>
+                <span>Report a Found Item</span>
+              </button>
+            </div>
+
+            <!-- Action Row 2: Secondary CTAs -->
+            <div class="lp-actions-row">
+              <button type="button" class="lp-btn lp-btn-outline" onclick="goToAppLogin()">
+                <span>&lt; Open LostSeek &gt;</span>
+              </button>
+              <a href="/download" class="lp-btn lp-btn-dark">
+                <i data-lucide="smartphone" style="width: 16px; height: 16px;"></i>
+                <span>Get Android App</span>
+              </a>
+
+              <button type="button" class="lp-btn lp-btn-outline" onclick="window.location.href='/story'" style="border-color: #f59e0b; color: #f59e0b;">
+                <i data-lucide="book-open" style="width: 16px; height: 16px;"></i>
+                <span>Reveal the Story</span>
+              </button>
+            </div>
+          </div>
         </div>
 
-        <!-- Page 2: The Hero Appears -->
-        <div class="manga-slide" data-page="2">
-          <div class="manga-art-container">
-            <img src="assets/images/manga-page-2.jpg?v=3" alt="The Hero Appears" class="manga-art"  />
-          </div>
-          
-        </div>
+        <!-- Phone Mockup Visual -->
+        <div class="lp-hero-visual">
+          <div class="lp-visual-backdrop"></div>
 
-        <!-- Page 3: The Report -->
-        <div class="manga-slide" data-page="3">
-          <div class="manga-art-container">
-            <img src="assets/images/manga-page-3.jpg?v=3" alt="The Report" class="manga-art"  />
+          <!-- Hand-drawn annotation badge -->
+          <div class="lp-handdrawn-note">
+            <span>✦ Your campus lost &amp; found, smarter!</span>
           </div>
-          
-        </div>
 
-        <!-- Page 4: YOLO Scans -->
-        <div class="manga-slide" data-page="4">
-          <div class="manga-art-container">
-            <img src="assets/images/manga-page-4.jpg?v=3" alt="YOLO Scans" class="manga-art"  />
+          <!-- Easel chalkboard art -->
+          <div class="lp-easel-board">
+            <h4>Better Together</h4>
+            <p>A Safer Campus</p>
+            <div style="font-size: 1.1rem; margin-top: 4px;">💚</div>
           </div>
-          
-        </div>
 
-        <!-- Page 5: CLIP Connects -->
-        <div class="manga-slide" data-page="5">
-          <div class="manga-art-container">
-            <img src="assets/images/manga-page-5.jpg?v=3" alt="CLIP Connects" class="manga-art"  />
-          </div>
-          
-        </div>
+          <!-- Phone device frame -->
+          <div class="lp-phone-frame">
+            <div class="lp-phone-screen">
+              <div class="lp-phone-island">
+                <span>9:41</span>
+                <div style="display: flex; gap: 4px; align-items: center;">
+                  <i data-lucide="wifi" style="width: 12px; height: 12px;"></i>
+                  <i data-lucide="battery-charging" style="width: 12px; height: 12px;"></i>
+                </div>
+              </div>
 
-        <!-- Page 6: Matching Engine -->
-        <div class="manga-slide" data-page="6">
-          <div class="manga-art-container">
-            <img src="assets/images/manga-page-6.jpg?v=3" alt="Matching Engine" class="manga-art"  />
-          </div>
-          
-        </div>
+              <div class="lp-phone-header">
+                <div class="lp-phone-brand">
+                  <strong>LostSeek</strong>
+                  <i data-lucide="bell" style="width: 14px; height: 14px; color: #64748b;"></i>
+                </div>
+                <div style="font-size: 0.7rem; color: #047857; font-weight: 700; margin-bottom: 6px;">
+                  Lost something? We'll help you find it.
+                </div>
+                <div class="lp-phone-search">
+                  <i data-lucide="search" style="width: 12px; height: 12px; color: #475569;"></i>
+                  <span style="color: #475569; font-weight: 500;">Search items, locations...</span>
+                </div>
+              </div>
 
-        <!-- Page 7: Admin Review -->
-        <div class="manga-slide" data-page="7">
-          <div class="manga-art-container">
-            <img src="assets/images/manga-page-7.jpg?v=3" alt="Admin Review" class="manga-art"  />
-          </div>
-          
-        </div>
+              <div class="lp-phone-categories">
+                <div class="lp-cat-bubble">
+                  <div class="lp-cat-icon" style="background: #f5f3ff; color: #8b5cf6;">📱</div>
+                  <span>Electronics</span>
+                </div>
+                <div class="lp-cat-bubble">
+                  <div class="lp-cat-icon" style="background: #eff6ff; color: #3b82f6;">🎒</div>
+                  <span>Bags</span>
+                </div>
+                <div class="lp-cat-bubble">
+                  <div class="lp-cat-icon" style="background: #fffbeb; color: #f59e0b;">📄</div>
+                  <span>Documents</span>
+                </div>
+                <div class="lp-cat-bubble">
+                  <div class="lp-cat-icon" style="background: #ecfeff; color: #06b6d4;">🔑</div>
+                  <span>Keys</span>
+                </div>
+              </div>
 
-        <!-- Page 8: The Return -->
-        <div class="manga-slide" data-page="8">
-          <div class="manga-art-container">
-            <img src="assets/images/manga-page-8.jpg?v=3" alt="The Return" class="manga-art"  />
-          </div>
-          
-        </div>
+              <div class="lp-phone-feed">
+                <div class="lp-feed-title">Recent Reports</div>
 
-        <!-- Page 9: The Reveal -->
-        <div class="manga-slide" data-page="9">
-          <div class="manga-art-container">
-            <img src="assets/images/manga-page-9.jpg?v=3" alt="The Reveal" class="manga-art"  />
+                <div class="lp-mini-card">
+                  <div class="lp-mini-icon" style="background: #eff6ff;">🎒</div>
+                  <div class="lp-mini-info">
+                    <div class="lp-mini-title">Blue Backpack</div>
+                    <div class="lp-mini-sub"><strong style="color:#047857;">Found</strong> • Library • 2h ago</div>
+                  </div>
+                </div>
+
+                <div class="lp-mini-card">
+                  <div class="lp-mini-icon" style="background: #fef2f2;">📱</div>
+                  <div class="lp-mini-info">
+                    <div class="lp-mini-title">iPhone 14 (Midnight)</div>
+                    <div class="lp-mini-sub"><strong style="color:#b91c1c;">Lost</strong> • Academic Block • 4h ago</div>
+                  </div>
+                </div>
+
+                <div class="lp-mini-card">
+                  <div class="lp-mini-icon" style="background: #fffbeb;">👛</div>
+                  <div class="lp-mini-info">
+                    <div class="lp-mini-title">Leather Wallet</div>
+                    <div class="lp-mini-sub"><strong style="color:#047857;">Found</strong> • Canteen • 5h ago</div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-          
         </div>
       </div>
+    </section>
 
-      <!-- Navigation Controls -->
-      <div class="manga-nav-controls">
-        <button class="manga-nav-btn prev-btn" id="manga-prev" onclick="prevMangaPage()" aria-label="Previous Page">
-          <i data-lucide="chevron-left"></i>
-        </button>
-        <div class="manga-pagination" id="manga-pagination">
-          <!-- Dots generated by JS -->
+    <!-- 5 Feature Highlights Bar -->
+    <div class="lp-highlights-bar">
+      <div class="lp-highlights-inner">
+        <div class="lp-highlight-item">
+          <div class="lp-highlight-icon" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+            <i data-lucide="cpu" style="width: 22px; height: 22px;"></i>
+          </div>
+          <div class="lp-highlight-title">AI Matching</div>
+          <div class="lp-highlight-desc">Find possible matches with smart technology</div>
         </div>
-        <button class="manga-nav-btn next-btn" id="manga-next" onclick="nextMangaPage()" aria-label="Next Page">
-          <i data-lucide="chevron-right"></i>
-        </button>
+
+        <div class="lp-highlight-item">
+          <div class="lp-highlight-icon" style="background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);">
+            <i data-lucide="users" style="width: 22px; height: 22px;"></i>
+          </div>
+          <div class="lp-highlight-title">Community Sightings</div>
+          <div class="lp-highlight-desc">See something? Help someone!</div>
+        </div>
+
+        <div class="lp-highlight-item">
+          <div class="lp-highlight-icon" style="background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);">
+            <i data-lucide="shield-check" style="width: 22px; height: 22px;"></i>
+          </div>
+          <div class="lp-highlight-title">Safe &amp; Private</div>
+          <div class="lp-highlight-desc">Your data, your control</div>
+        </div>
+
+        <div class="lp-highlight-item">
+          <div class="lp-highlight-icon" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
+            <i data-lucide="smartphone" style="width: 22px; height: 22px;"></i>
+          </div>
+          <div class="lp-highlight-title">Web + Android</div>
+          <div class="lp-highlight-desc">Access from anywhere on campus</div>
+        </div>
+
+        <div class="lp-highlight-item">
+          <div class="lp-highlight-icon" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+            <i data-lucide="zap" style="width: 22px; height: 22px;"></i>
+          </div>
+          <div class="lp-highlight-title">Simple &amp; Easy</div>
+          <div class="lp-highlight-desc">Report, find, recover</div>
+        </div>
       </div>
-      
-      <!-- Skip to App -->
-      <div class="manga-skip-action">
-         <button type="button" class="lp-btn lp-btn-outline" onclick="goToAppLogin()">Skip Story &amp; Open App</button>
+    </div>
+
+    <!-- How It Works — Connected 5-Step Workflow -->
+    <section class="lp-how-it-works" id="how-it-works">
+      <div class="lp-section-header">
+        <h2 class="lp-section-title">How It Works</h2>
+        <p class="lp-section-subtitle">From lost to found — in just 5 simple steps.</p>
       </div>
+
+      <div class="lp-workflow-steps">
+        <!-- Step 1: Report -->
+        <div class="lp-step-card">
+          <div class="lp-step-illustration" style="background: #ecfdf5;">
+            <div style="font-size: 3rem;">📝</div>
+          </div>
+          <div class="lp-step-pill lp-step-pill-1">
+            <span class="lp-step-badge-num">1</span>
+            <span>Report</span>
+          </div>
+          <h3 class="lp-step-title">Report</h3>
+          <p class="lp-step-desc">Student reports a lost or found item with details, photos, or description.</p>
+        </div>
+
+        <div class="lp-workflow-arrow">
+          <i data-lucide="arrow-right" style="width: 22px; height: 22px;"></i>
+        </div>
+
+        <!-- Step 2: Discover -->
+        <div class="lp-step-card">
+          <div class="lp-step-illustration" style="background: #eff6ff;">
+            <div style="font-size: 3rem;">🔍</div>
+          </div>
+          <div class="lp-step-pill lp-step-pill-2">
+            <span class="lp-step-badge-num">2</span>
+            <span>Discover</span>
+          </div>
+          <h3 class="lp-step-title">Discover</h3>
+          <p class="lp-step-desc">Students browse relevant campus reports and recent sightings across locations.</p>
+        </div>
+
+        <div class="lp-workflow-arrow">
+          <i data-lucide="arrow-right" style="width: 22px; height: 22px;"></i>
+        </div>
+
+        <!-- Step 3: Match -->
+        <div class="lp-step-card">
+          <div class="lp-step-illustration" style="background: #f5f3ff;">
+            <div style="font-size: 3rem;">🧠</div>
+          </div>
+          <div class="lp-step-pill lp-step-pill-3">
+            <span class="lp-step-badge-num">3</span>
+            <span>Match</span>
+          </div>
+          <h3 class="lp-step-title">AI Match</h3>
+          <p class="lp-step-desc">LostSeek combines report details with AI-assisted visual and semantic evidence.</p>
+        </div>
+
+        <div class="lp-workflow-arrow">
+          <i data-lucide="arrow-right" style="width: 22px; height: 22px;"></i>
+        </div>
+
+        <!-- Step 4: Verify -->
+        <div class="lp-step-card">
+          <div class="lp-step-illustration" style="background: #fffbeb;">
+            <div style="font-size: 3rem;">🛡️</div>
+          </div>
+          <div class="lp-step-pill lp-step-pill-4">
+            <span class="lp-step-badge-num">4</span>
+            <span>Verify</span>
+          </div>
+          <h3 class="lp-step-title">Verify</h3>
+          <p class="lp-step-desc">Users provide private ownership evidence and institutional verification.</p>
+        </div>
+
+        <div class="lp-workflow-arrow">
+          <i data-lucide="arrow-right" style="width: 22px; height: 22px;"></i>
+        </div>
+
+        <!-- Step 5: Recover -->
+        <div class="lp-step-card">
+          <div class="lp-step-illustration" style="background: #ecfeff;">
+            <div style="font-size: 3rem;">🤝</div>
+          </div>
+          <div class="lp-step-pill lp-step-pill-5">
+            <span class="lp-step-badge-num">5</span>
+            <span>Recover</span>
+          </div>
+          <h3 class="lp-step-title">Recover</h3>
+          <p class="lp-step-desc">Safely arrange a verified handover on campus or through official help desks.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Three Feature Cards: AI Matching, I Saw Something, Privacy -->
+    <section class="lp-three-cards-section" id="ai-matching">
+      <div class="lp-three-cards-grid">
+        
+        <!-- Card 1: AI-Assisted Matching -->
+        <div class="lp-feature-box">
+          <div class="lp-feature-header">
+            <div class="lp-feature-icon" style="background: #ecfdf5; color: #059669;">
+              <i data-lucide="cpu" style="width: 24px; height: 24px;"></i>
+            </div>
+            <div>
+              <h3 class="lp-feature-title">AI-Assisted Matching</h3>
+            </div>
+          </div>
+
+          <p class="lp-feature-subtitle">LostSeek utilizes multi-modal matching:</p>
+
+          <ul class="lp-checklist">
+            <li class="lp-checklist-item">
+              <i data-lucide="check-circle-2" class="lp-check-icon" style="width: 17px; height: 17px;"></i>
+              <span><strong>Object detection</strong> &amp; item classification</span>
+            </li>
+            <li class="lp-checklist-item">
+              <i data-lucide="check-circle-2" class="lp-check-icon" style="width: 17px; height: 17px;"></i>
+              <span><strong>Image understanding</strong> &amp; color / brand extraction</span>
+            </li>
+            <li class="lp-checklist-item">
+              <i data-lucide="check-circle-2" class="lp-check-icon" style="width: 17px; height: 17px;"></i>
+              <span><strong>Semantic similarity</strong> comparing descriptions with photos</span>
+            </li>
+            <li class="lp-checklist-item">
+              <i data-lucide="check-circle-2" class="lp-check-icon" style="width: 17px; height: 17px;"></i>
+              <span><strong>Attribute fusion:</strong> category, time, location &amp; tags</span>
+            </li>
+          </ul>
+
+          <div class="lp-unique-nophoto-box">
+            <strong>Lost it without a photo?</strong> You can submit a lost report with just a text description. When someone uploads a found photo, our AI links them automatically.
+          </div>
+
+          <div class="lp-match-callout-box">
+            <div class="lp-match-comparison">
+              <div class="lp-match-thumb" title="Lost Report Description">📝</div>
+              <span style="font-weight: 800; color: #94a3b8;">+</span>
+              <div class="lp-match-thumb" title="Found Photo">📷</div>
+              <span style="font-weight: 800; color: #94a3b8;">=</span>
+              <div class="lp-match-thumb" style="background: #ecfdf5; color: #059669;">✨</div>
+            </div>
+            <div class="lp-possible-match-badge">
+              <i data-lucide="sparkles" style="width: 13px; height: 13px;"></i>
+              <span>AI-Assisted Potential Match</span>
+            </div>
+          </div>
+
+          <div class="lp-feature-disclaimer">
+            <i data-lucide="info" style="width: 13px; height: 13px; display: inline-block; vertical-align: -2px;"></i>
+            The AI produces supporting evidence for potential matches. It does not establish ownership by itself.
+          </div>
+        </div>
+
+        <!-- Card 2: See Something? Help Someone Find It (I Saw Something) -->
+        <div class="lp-feature-box" id="community">
+          <div class="lp-feature-header">
+            <div class="lp-feature-icon" style="background: #f5f3ff; color: #7c3aed;">
+              <i data-lucide="glasses" style="width: 24px; height: 24px;"></i>
+            </div>
+            <div>
+              <h3 class="lp-feature-title">See Something?</h3>
+            </div>
+          </div>
+
+          <p class="lp-feature-subtitle">Help someone find it with "I Saw Something":</p>
+
+          <p style="font-size: 0.88rem; color: #475569; line-height: 1.5; margin-bottom: 16px;">
+            Not every found item is picked up immediately. When you notice an unattended or missing item around campus, report a sighting in seconds.
+          </p>
+
+          <ul class="lp-checklist">
+            <li class="lp-checklist-item">
+              <i data-lucide="check-circle-2" class="lp-check-icon" style="color: #7c3aed; width: 17px; height: 17px;"></i>
+              <span><strong>Item description:</strong> What was observed</span>
+            </li>
+            <li class="lp-checklist-item">
+              <i data-lucide="check-circle-2" class="lp-check-icon" style="color: #7c3aed; width: 17px; height: 17px;"></i>
+              <span><strong>Approximate location:</strong> Building, floor, or room</span>
+            </li>
+            <li class="lp-checklist-item">
+              <i data-lucide="check-circle-2" class="lp-check-icon" style="color: #7c3aed; width: 17px; height: 17px;"></i>
+              <span><strong>Time seen:</strong> When it was spotted</span>
+            </li>
+          </ul>
+
+          <div class="lp-sighting-bubble-box">
+            <div style="font-size: 2rem;">🚶‍♂️</div>
+            <div class="lp-sighting-speech">
+              "I saw a similar blue backpack on the 2nd floor library study table!"
+            </div>
+          </div>
+
+          <div class="lp-feature-disclaimer">
+            <i data-lucide="shield-check" style="width: 13px; height: 13px; display: inline-block; vertical-align: -2px; color: #7c3aed;"></i>
+            Sightings are routed directly to the lost-item owner. No personal phone numbers or contact details are publicly exposed.
+          </div>
+        </div>
+
+        <!-- Card 3: Built with Privacy in Mind -->
+        <div class="lp-feature-box" id="privacy">
+          <div class="lp-feature-header">
+            <div class="lp-feature-icon" style="background: #ecfeff; color: #0891b2;">
+              <i data-lucide="lock" style="width: 24px; height: 24px;"></i>
+            </div>
+            <div>
+              <h3 class="lp-feature-title">Built with Privacy in Mind</h3>
+            </div>
+          </div>
+
+          <p class="lp-feature-subtitle">Your security and consent come first:</p>
+
+          <ul class="lp-checklist">
+            <li class="lp-checklist-item">
+              <i data-lucide="check-circle-2" class="lp-check-icon" style="color: #0891b2; width: 17px; height: 17px;"></i>
+              <span><strong>User-controlled contact sharing:</strong> Phone numbers are shared only when you explicitly choose to share.</span>
+            </li>
+            <li class="lp-checklist-item">
+              <i data-lucide="check-circle-2" class="lp-check-icon" style="color: #0891b2; width: 17px; height: 17px;"></i>
+              <span><strong>Private ownership evidence:</strong> Serial numbers, lock screens, and private marks remain shielded from public feeds.</span>
+            </li>
+            <li class="lp-checklist-item">
+              <i data-lucide="check-circle-2" class="lp-check-icon" style="color: #0891b2; width: 17px; height: 17px;"></i>
+              <span><strong>Strict verification:</strong> AI matching aids discovery, but claims require verified ownership proof.</span>
+            </li>
+            <li class="lp-checklist-item">
+              <i data-lucide="check-circle-2" class="lp-check-icon" style="color: #0891b2; width: 17px; height: 17px;"></i>
+              <span><strong>Audit trails &amp; official handover:</strong> Campus supervisors can oversee high-value recovery handovers.</span>
+            </li>
+          </ul>
+
+          <div style="background: #f8fafc; border-radius: var(--lp-radius-md); padding: 14px; text-align: center; margin-top: auto; border: 1px solid var(--lp-border);">
+            <i data-lucide="shield" style="width: 32px; height: 32px; color: #0891b2; margin-bottom: 6px;"></i>
+            <div style="font-size: 0.8rem; font-weight: 700; color: #0f172a;">Institutional Identity Protection</div>
+            <div style="font-size: 0.74rem; color: #64748b;">Zero spam, encrypted storage, and verified university accounts.</div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Android Callout Banner -->
+    <section class="lp-android-section">
+      <div class="lp-android-banner">
+        <div class="lp-android-phone">
+          <div class="lp-android-phone-screen">
+            <picture><source srcset="assets/images/lostseek-logo.webp" type="image/webp"><img src="assets/images/lostseek-logo.png" alt="LostSeek Android" width="48" height="48" loading="lazy" decoding="async" /></picture>
+            <span>LostSeek</span>
+          </div>
+        </div>
+
+        <div class="lp-android-content">
+          <h3>Get LostSeek for Android</h3>
+          <p>
+            Install the native LostSeek Android app for instant camera capture, offline caching, push sighting notifications, and quick report submission on the go.
+          </p>
+
+          <div class="lp-android-actions">
+            <a href="/LostSeek.apk" download="LostSeek.apk" class="lp-btn lp-btn-primary">
+              <i data-lucide="download" style="width: 18px; height: 18px;"></i>
+              <span>Download LostSeek APK</span>
+            </a>
+            <span class="lp-version-tag">
+              <i data-lucide="tag" style="width: 13px; height: 13px;"></i>
+              <span>Version 2.4.0 • 4.62 MB</span>
+            </span>
+          </div>
+
+          <p class="lp-android-disclaimer">
+            Direct release for campus members. Android may ask you to allow installation of apps downloaded from outside Google Play.
+          </p>
+        </div>
+
+        <div class="lp-android-badge-art">
+          <div class="lp-available-pill">
+            ★ Available on Web &amp; Android
+          </div>
+        </div>
+      </div>
+    </section>
     </main>
 
     <!-- Landing Footer -->

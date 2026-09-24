@@ -34,6 +34,7 @@
     { "source": "/LostSeek.apk", "destination": "/LostSeek.apk" },
     { "source": "/download", "destination": "/download.html" },
     { "source": "/googled552e0cbc66fc7ac", "destination": "/googled552e0cbc66fc7ac.html" },
+    { "source": "/story", "destination": "/story.html" },
     { "source": "/((?!api/|.*\\..*).*)", "destination": "/index.html" }
   ]
 }

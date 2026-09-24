@@ -4821,21 +4821,8 @@ function renderAdminStudents() {
     });
   }
 
-  // 2. Default seed students
-  const defaultStudents = [
-    { name: 'Alex Rivera', id: 'STU-2026-8891', karma: 45, status: 'Active' },
-    { name: 'Vishnu Prasath', id: 'STU-2026-1011', karma: 50, status: 'Active' },
-    { name: 'Vishnu Varthan', id: 'STU-2026-1012', karma: 50, status: 'Active' },
-    { name: 'Sivavaiyapuri', id: 'STU-2026-1013', karma: 50, status: 'Active' },
-    { name: 'Boobathy', id: 'STU-2026-1014', karma: 50, status: 'Active' },
-    { name: 'Krish', id: 'STU-2026-1015', karma: 50, status: 'Active' },
-    { name: 'Girl1', id: 'STU-2026-1016', karma: 50, status: 'Active' },
-    { name: 'Rohan Sharma', id: 'STU-2026-1042', karma: 30, status: 'Active' },
-    { name: 'Priya Patel', id: 'STU-2026-3021', karma: 25, status: 'Active' },
-    { name: 'Aman Verma', id: 'STU-2026-7814', karma: 50, status: 'Active' },
-    { name: 'Sneha Rao', id: 'STU-2026-5129', karma: 15, status: 'Active' },
-    { name: 'Ravi Kumar', id: 'STU-2026-9032', karma: 20, status: 'Active' }
-  ];
+  // 2. Default seed students (REMOVED - We now rely entirely on database users)
+  const defaultStudents = [];
 
   defaultStudents.forEach(s => {
     if (!studentMap.has(s.name)) {
@@ -4865,17 +4852,25 @@ function renderAdminStudents() {
   });
 
   // Fetch updated student directory in background if staff user
-  if (!window.__fetchingAdminUsers && appState.user && ['admin', 'supervisor', 'director'].includes(String(appState.user.role || '').toLowerCase())) {
+  const now = Date.now();
+  if (!window.__fetchingAdminUsers && (!window.__lastAdminUserFetch || now - window.__lastAdminUserFetch > 5000) && appState.user && ['admin', 'supervisor', 'director'].includes(String(appState.user.role || '').toLowerCase())) {
     window.__fetchingAdminUsers = true;
     fetch(API_BASE + '/api/auth?action=users', { headers: getAuthHeaders() })
       .then(res => res.ok ? res.json() : null)
       .then(data => {
         window.__fetchingAdminUsers = false;
+        window.__lastAdminUserFetch = Date.now();
         if (data && data.success && Array.isArray(data.users)) {
+          const oldLen = appState.users ? appState.users.length : 0;
           appState.users = data.users;
+          if (oldLen !== data.users.length) {
+            renderAdminStudents();
+          }
         }
       })
-      .catch(() => { window.__fetchingAdminUsers = false; });
+      .catch(() => { 
+        window.__fetchingAdminUsers = false;
+      });
   }
 
   const studentsList = Array.from(studentMap.values()).filter(s => {
