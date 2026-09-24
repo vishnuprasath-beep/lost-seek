@@ -1714,7 +1714,7 @@ function showPage(pageId) {
   } else if (pageId === 'matches-page') {
     renderAIMatches();
   } else if (pageId === 'my-reports-page') {
-    renderMyReports('all');
+    renderMyReports(currentMyReportsTab);
   } else if (pageId === 'admin-page') {
     renderAdminDesk();
   } else if (pageId === 'admin-photo-search-page') {
@@ -1912,7 +1912,7 @@ function renderAllViews() {
   renderDashboardActivity();
   animateStatCounters();
   renderAIMatches();
-  renderMyReports('all');
+  renderMyReports(currentMyReportsTab);
   renderAdminDesk();
   if (typeof renderProfile === 'function') {
     renderProfile();
@@ -3103,9 +3103,17 @@ function renderMyReports(tab = currentMyReportsTab) {
   const userRole = user ? (user.role || '').toLowerCase() : '';
   const isStaff = ['admin', 'supervisor', 'director'].includes(userRole);
 
-  let rawList = (tab === 'lost')
-    ? appState.lostReports.map(i => ({ ...i, itemType: 'Lost' }))
-    : appState.foundReports.map(i => ({ ...i, itemType: 'Found' }));
+  let rawList = [];
+  if (tab === 'lost') {
+    rawList = (appState.lostReports || []).map(i => ({ ...i, itemType: 'Lost' }));
+  } else if (tab === 'found') {
+    rawList = (appState.foundReports || []).map(i => ({ ...i, itemType: 'Found' }));
+  } else {
+    rawList = [
+      ...(appState.lostReports || []).map(i => ({ ...i, itemType: 'Lost' })),
+      ...(appState.foundReports || []).map(i => ({ ...i, itemType: 'Found' }))
+    ];
+  }
 
   // In "My Reports", students strictly see only their own reports.
   let items = rawList.filter(item => {
@@ -4625,7 +4633,7 @@ function handleGlobalSearch(query) {
   const q = query.trim().toLowerCase();
   if (!q) {
     renderDashboardActivity();
-    renderMyReports('all');
+    renderMyReports(currentMyReportsTab);
     return;
   }
 
