@@ -54,26 +54,45 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const body = parseBody(req);
-    const { image, filename, type } = body || {};
-
-    if (!image) {
-      return res.status(400).json({
-        success: false,
-        message: 'No image data provided. Provide a base64 Data URL or binary buffer in `image`.'
-      });
-    }
-
     let buffer;
-    let contentType = 'image/jpeg';
+    let contentType = req.headers['content-type'] || 'image/jpeg';
+    let safeFilename = req.headers['x-file-name'] || 'item-image.jpg';
 
-    if (image.startsWith('data:')) {
-      const parts = image.split(';base64,');
-      contentType = parts[0].replace('data:', '') || 'image/jpeg';
-      buffer = Buffer.from(parts[1], 'base64');
+    if (contentType.startsWith('image/') || contentType.startsWith('application/octet-stream')) {
+      // Phase 2: Raw Binary Direct Uploads (Avoids Base64 Payload Bloat)
+      if (req.body && Buffer.isBuffer(req.body)) {
+        buffer = req.body;
+      } else if (req.body && typeof req.body === 'string') {
+        buffer = Buffer.from(req.body, 'binary');
+      } else {
+        const chunks = [];
+        for await (const chunk of req) {
+          chunks.push(chunk);
+        }
+        buffer = Buffer.concat(chunks);
+      }
     } else {
-      buffer = Buffer.from(image, 'base64');
-      if (type) contentType = type;
+      // Legacy Base64 JSON Uploads (For backwards compatibility with old app.js caches)
+      const body = parseBody(req);
+      const { image, filename, type } = body || {};
+
+      if (!image) {
+        return res.status(400).json({
+          success: false,
+          message: 'No image data provided. Provide a binary stream or base64 Data URL.'
+        });
+      }
+
+      if (filename) safeFilename = filename;
+
+      if (image.startsWith('data:')) {
+        const parts = image.split(';base64,');
+        contentType = parts[0].replace('data:', '') || 'image/jpeg';
+        buffer = Buffer.from(parts[1], 'base64');
+      } else {
+        buffer = Buffer.from(image, 'base64');
+        if (type) contentType = type;
+      }
     }
 
     // Limit image size to 10MB
@@ -84,7 +103,7 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    const safeName = `reports/${Date.now()}-${(filename || 'item-image.jpg').replace(/[^a-zA-Z0-9._-]/g, '')}`;
+    const safeName = `reports/${Date.now()}-${safeFilename.replace(/[^a-zA-Z0-9._-]/g, '')}`;
 
     // Upload to Vercel Blob
     const token = process.env.BLOB_READ_WRITE_TOKEN;

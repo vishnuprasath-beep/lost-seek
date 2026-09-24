@@ -829,10 +829,25 @@ function updateSyncIndicator(status, text) {
 async function uploadImageToCloud(dataUrl, filename) {
   if (!dataUrl || !dataUrl.startsWith('data:')) return dataUrl;
   try {
+    // Phase 2: Convert base64 to Blob to avoid sending bloat over the wire
+    const arr = dataUrl.split(',');
+    const mimeMatch = arr[0].match(/:(.*?);/);
+    const mime = mimeMatch ? mimeMatch[1] : 'image/jpeg';
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+    const blob = new Blob([u8arr], { type: mime });
+
     const res = await fetch(API_BASE + '/api/upload', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ image: dataUrl, filename: filename || 'item.jpg' })
+      headers: {
+        'Content-Type': mime,
+        'x-file-name': filename || 'item.jpg'
+      },
+      body: blob
     });
     const data = await res.json();
     if (data.success && data.url) {
