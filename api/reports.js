@@ -217,8 +217,7 @@ module.exports = async function handler(req, res) {
       return res.status(503).json({
         success: false,
         error: 'DatabaseConfigurationMissing',
-        message: error.message,
-        requiredEnv: error.requiredEnv
+        message: error.message
       });
     }
     return res.status(500).json({

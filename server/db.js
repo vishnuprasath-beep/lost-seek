@@ -47,10 +47,9 @@ function isConfigured() {
 
 function getSupabase() {
   if (!isConfigured()) {
-    const error = new Error('DatabaseConfigurationMissing');
+    console.error('[SERVER ERROR] Supabase PostgreSQL database is not configured. Required environment variables: SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY. Configure them in .env.local and Vercel Project Settings.');
+    const error = new Error('Unable to submit your report right now. Please try again.');
     error.code = 'CONFIG_MISSING';
-    error.requiredEnv = ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY'];
-    error.message = 'Supabase PostgreSQL database is not configured. Required environment variables: SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY. Configure them in .env.local and Vercel Project Settings.';
     throw error;
   }
   if (!supabaseInstance) {
