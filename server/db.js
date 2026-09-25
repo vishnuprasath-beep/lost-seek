@@ -734,27 +734,8 @@ async function markAllNotificationsRead(userId) {
 // 6. USERS
 // ---------------------------------------------------------------------------
 function parseUserMetadata(phone) {
-  if (!phone) return { phone: '', avatarUrl: '', passwordHash: '' };
-  if (typeof phone === 'object' && phone !== null) {
-    const rawAvatar = phone.avatarUrl || phone.avatar_url || phone.profilePicture || phone.profilePictureUrl || phone.photoUrl || phone.avatar || '';
-    return {
-      phone: phone.phone || '',
-      avatarUrl: rawAvatar,
-      passwordHash: phone.passwordHash || ''
-    };
-  }
-  if (typeof phone === 'string' && phone.trim().startsWith('{') && phone.trim().endsWith('}')) {
-    try {
-      const parsed = JSON.parse(phone);
-      const rawAvatar = parsed.avatarUrl || parsed.avatar_url || parsed.profilePicture || parsed.profilePictureUrl || parsed.photoUrl || parsed.avatar || '';
-      return {
-        phone: parsed.phone || '',
-        avatarUrl: rawAvatar,
-        passwordHash: parsed.passwordHash || ''
-      };
-    } catch (e) {}
-  }
-  return { phone: String(phone), avatarUrl: '', passwordHash: '' };
+  // Legacy function stub in case it is imported anywhere else, though it shouldn't be.
+  return { phone: String(phone || ''), avatarUrl: '', passwordHash: '' };
 }
 
 async function getUser(usernameOrId) {
@@ -790,16 +771,15 @@ async function getUser(usernameOrId) {
   if (!data || data.length === 0) return null;
 
   const u = data[0];
-  const meta = parseUserMetadata(u.phone);
   return {
     id: u.id,
     username: u.username,
     name: u.name,
     role: u.role,
     studentId: u.student_id,
-    phone: meta.phone,
-    avatarUrl: meta.avatarUrl,
-    passwordHash: meta.passwordHash,
+    phone: u.phone || '',
+    avatarUrl: u.avatar_url || '',
+    passwordHash: u.password_hash || '',
     createdAt: u.created_at
   };
 }
@@ -813,11 +793,6 @@ async function createUser(userData) {
   const studentId = userData.studentId || userData.student_id || `STU-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
   
   const rawAvatar = userData.avatarUrl || userData.avatar_url || userData.profilePicture || userData.profilePictureUrl || userData.photoUrl || userData.avatar || '';
-  const metadata = {
-    phone: userData.phone || '',
-    avatarUrl: rawAvatar,
-    passwordHash: userData.passwordHash || ''
-  };
 
   const row = {
     id,
@@ -825,7 +800,9 @@ async function createUser(userData) {
     name,
     role,
     student_id: studentId,
-    phone: JSON.stringify(metadata),
+    phone: userData.phone || '',
+    avatar_url: rawAvatar,
+    password_hash: userData.passwordHash || '',
     created_at: new Date().toISOString()
   };
 
@@ -838,8 +815,8 @@ async function createUser(userData) {
     name: data.name,
     role: data.role,
     studentId: data.student_id,
-    phone: metadata.phone,
-    avatarUrl: metadata.avatarUrl,
+    phone: data.phone || '',
+    avatarUrl: data.avatar_url || '',
     createdAt: data.created_at
   };
 }
@@ -864,20 +841,15 @@ async function updateUser(usernameOrId, updates) {
 
   const avatarCandidate = updates.avatarUrl !== undefined ? updates.avatarUrl : (updates.avatar_url !== undefined ? updates.avatar_url : (updates.profilePicture !== undefined ? updates.profilePicture : (updates.profilePictureUrl !== undefined ? updates.profilePictureUrl : (updates.photoUrl !== undefined ? updates.photoUrl : updates.avatar))));
 
-  const meta = {
-    phone: updates.phone !== undefined ? updates.phone : (existing.phone || ''),
-    avatarUrl: avatarCandidate !== undefined ? String(avatarCandidate).trim() : (existing.avatarUrl || ''),
-    passwordHash: updates.passwordHash !== undefined ? updates.passwordHash : (existing.passwordHash || '')
-  };
-
-  const dbUpdates = {
-    phone: JSON.stringify(meta)
-  };
-  if (updates.name) dbUpdates.name = updates.name;
-  if (updates.studentId) dbUpdates.student_id = updates.studentId;
+  const dbUpdates = {};
+  if (updates.name !== undefined) dbUpdates.name = updates.name;
+  if (updates.studentId !== undefined) dbUpdates.student_id = updates.studentId;
   if (updates.role && ['student', 'admin', 'supervisor', 'director'].includes(updates.role)) {
     dbUpdates.role = updates.role;
   }
+  if (updates.phone !== undefined) dbUpdates.phone = updates.phone;
+  if (avatarCandidate !== undefined) dbUpdates.avatar_url = String(avatarCandidate).trim();
+  if (updates.passwordHash !== undefined) dbUpdates.password_hash = updates.passwordHash;
 
   const { data, error } = await supabase
     .from('users')
@@ -894,8 +866,8 @@ async function updateUser(usernameOrId, updates) {
     name: data.name,
     role: data.role,
     studentId: data.student_id,
-    phone: meta.phone,
-    avatarUrl: meta.avatarUrl,
+    phone: data.phone || '',
+    avatarUrl: data.avatar_url || '',
     createdAt: data.created_at
   };
 }
