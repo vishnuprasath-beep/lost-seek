@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 
 const srcDir = path.join(__dirname, 'public', 'src');
-const outputFile = path.join(__dirname, 'public', 'app.js');
+const outputFile = path.join(__dirname, 'app.js');
 
 if (!fs.existsSync(srcDir)) {
   console.log('No src directory found. Skipping JS build.');

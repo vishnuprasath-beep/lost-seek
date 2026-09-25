@@ -109,16 +109,13 @@ let currentMangaPage = 1;
 const totalMangaPages = 9;
 
 function renderMangaPagination() {
-  const paginationContainer = document.getElementById('manga-pagination');
-  if (!paginationContainer) return;
+  const progressTextDesktop = document.getElementById('manga-progress-text-desktop');
+  const progressTextMobile = document.getElementById('manga-progress-text-mobile');
+  const progressFill = document.getElementById('manga-progress-fill');
   
-  paginationContainer.innerHTML = '';
-  for (let i = 1; i <= totalMangaPages; i++) {
-    const dot = document.createElement('div');
-    dot.className = 'manga-dot' + (i === currentMangaPage ? ' active' : '');
-    dot.onclick = () => goToMangaPage(i);
-    paginationContainer.appendChild(dot);
-  }
+  if (progressTextDesktop) progressTextDesktop.innerText = `Page ${currentMangaPage} of ${totalMangaPages}`;
+  if (progressTextMobile) progressTextMobile.innerText = `${currentMangaPage} / ${totalMangaPages}`;
+  if (progressFill) progressFill.style.width = `${(currentMangaPage / totalMangaPages) * 100}%`;
 }
 
 function updateMangaView() {
@@ -136,11 +133,11 @@ function updateMangaView() {
     }
   });
 
-  const prevBtn = document.getElementById('manga-prev');
-  const nextBtn = document.getElementById('manga-next');
+  const prevBtns = [document.getElementById('manga-prev-desktop'), document.getElementById('manga-prev-mobile')];
+  const nextBtns = [document.getElementById('manga-next-desktop'), document.getElementById('manga-next-mobile')];
   
-  if (prevBtn) prevBtn.disabled = currentMangaPage === 1;
-  if (nextBtn) nextBtn.disabled = currentMangaPage === totalMangaPages;
+  prevBtns.forEach(btn => { if (btn) btn.disabled = currentMangaPage === 1; });
+  nextBtns.forEach(btn => { if (btn) btn.disabled = currentMangaPage === totalMangaPages; });
   
   renderMangaPagination();
 }

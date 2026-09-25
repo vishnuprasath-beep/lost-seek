@@ -58,6 +58,7 @@ const server = http.createServer((req, res) => {
 
   // Static file serving
   let filePath = path.join(ROOT, urlPath === '/' ? 'index.html' : urlPath);
+  if (urlPath === '/story') filePath = path.join(ROOT, 'story.html');
   if (!fs.existsSync(filePath)) {
     filePath = path.join(ROOT, 'index.html');
   }

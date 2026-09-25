@@ -11,13 +11,21 @@ function renderStudentHomeFeeds() {
     ].slice(0, 3);
 
     if (allUserReports.length === 0) {
-      myReportsEl.innerHTML = '<p style="color:var(--text-muted);font-size:0.88rem;">No reports submitted yet.</p>';
+      myReportsEl.innerHTML = `
+        <div style="text-align: center; padding: 24px 0; background: var(--bg-subtle); border-radius: var(--radius-md); border: 1px dashed var(--border-subtle); margin-top: 12px;">
+          <i data-lucide="folder-open" style="color: var(--text-muted); width: 32px; height: 32px; margin-bottom: 8px;"></i>
+          <p style="color: var(--text-secondary); font-size: 0.95rem; font-weight: 500;">No reports submitted yet.</p>
+          <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 4px;">Items you report lost or found will appear here.</p>
+        </div>
+      `;
     } else {
       myReportsEl.innerHTML = allUserReports.map(item => `
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border-subtle);">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 12px;border-bottom:1px solid var(--border-subtle); margin-bottom: 4px; border-radius: var(--radius-sm); transition: background var(--transition-fast);" onmouseover="this.style.background='var(--bg-subtle)'" onmouseout="this.style.background='transparent'">
           <div>
-            <div style="font-weight:600;font-size:0.92rem;color:var(--text-primary);">${escapeHTML(item.title)}</div>
-            <div style="font-size:0.75rem;color:var(--text-muted);">📍 ${escapeHTML(item.location)} • ${getTimeAgo(item.createdAt)}</div>
+            <div style="font-weight:700;font-size:0.95rem;color:var(--text-primary); margin-bottom: 2px;">${escapeHTML(item.title)}</div>
+            <div style="font-size:0.8rem;color:var(--text-secondary);display:flex;align-items:center;gap:4px;">
+              <i data-lucide="map-pin" style="width: 12px; height: 12px;"></i> ${escapeHTML(item.location)} <span style="opacity: 0.5;">•</span> ${getTimeAgo(item.createdAt)}
+            </div>
           </div>
           <div>${getStatusBadgeHTML(item.status)}</div>
         </div>
@@ -30,15 +38,23 @@ function renderStudentHomeFeeds() {
   if (matchesEl) {
     const matches = calculateMatchesList().slice(0, 2);
     if (matches.length === 0) {
-      matchesEl.innerHTML = '<p style="color:var(--text-muted);font-size:0.88rem;">No possible matches yet.</p>';
+      matchesEl.innerHTML = `
+        <div style="text-align: center; padding: 24px 0; background: var(--bg-subtle); border-radius: var(--radius-md); border: 1px dashed var(--border-subtle); margin-top: 12px;">
+          <i data-lucide="sparkles" style="color: var(--text-muted); width: 32px; height: 32px; margin-bottom: 8px;"></i>
+          <p style="color: var(--text-secondary); font-size: 0.95rem; font-weight: 500;">No AI matches found.</p>
+          <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 4px;">We'll notify you if an item matches yours.</p>
+        </div>
+      `;
     } else {
       matchesEl.innerHTML = matches.map(m => `
-        <div style="padding:10px 0;border-bottom:1px solid var(--border-subtle);">
+        <div style="padding:14px 12px;border-bottom:1px solid var(--border-subtle); margin-bottom: 4px; border-radius: var(--radius-sm); transition: background var(--transition-fast);" onmouseover="this.style.background='var(--bg-subtle)'" onmouseout="this.style.background='transparent'">
           <div style="display:flex;justify-content:space-between;align-items:center;">
-            <strong style="font-size:0.92rem;color:var(--text-primary);">${escapeHTML(m.lost.title)}</strong>
-            <span style="font-size:0.8rem;font-weight:700;color:var(--teal-bright);background:rgba(20,184,166,0.12);padding:2px 8px;border-radius:12px;">${m.score}% Match</span>
+            <strong style="font-size:0.95rem;color:var(--text-primary);">${escapeHTML(m.lost.title)}</strong>
+            <span style="font-size:0.8rem;font-weight:700;color:var(--teal-bright);background:var(--color-success-bg);padding:4px 10px;border-radius:var(--radius-full);">${m.score}% Match</span>
           </div>
-          <div style="font-size:0.75rem;color:var(--text-muted);margin-top:2px;">Found at: ${escapeHTML(m.found.location)}</div>
+          <div style="font-size:0.85rem;color:var(--text-secondary);margin-top:6px;display:flex;align-items:center;gap:4px;">
+            <i data-lucide="package" style="width: 14px; height: 14px; color: var(--text-muted);"></i> Found at: ${escapeHTML(m.found.location)}
+          </div>
         </div>
       `).join('');
     }
@@ -49,13 +65,22 @@ function renderStudentHomeFeeds() {
   if (alertsEl) {
     const notifs = appState.notifications.slice(0, 3);
     if (notifs.length === 0) {
-      alertsEl.innerHTML = '<p style="color:var(--text-muted);font-size:0.88rem;">No new alerts.</p>';
+      alertsEl.innerHTML = `
+        <div style="text-align: center; padding: 24px 0; background: var(--bg-subtle); border-radius: var(--radius-md); border: 1px dashed var(--border-subtle); margin-top: 12px;">
+          <i data-lucide="bell-off" style="color: var(--text-muted); width: 32px; height: 32px; margin-bottom: 8px;"></i>
+          <p style="color: var(--text-secondary); font-size: 0.95rem; font-weight: 500;">No new alerts.</p>
+        </div>
+      `;
     } else {
       alertsEl.innerHTML = notifs.map(n => `
-        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border-subtle);font-size:0.85rem;">
-          <i data-lucide="bell" style="width:14px;height:14px;color:var(--color-warning);flex-shrink:0;"></i>
-          <span style="flex:1;color:var(--text-primary);">${escapeHTML(n.message)}</span>
-          <span style="font-size:0.72rem;color:var(--text-muted);">${getTimeAgo(n.createdAt)}</span>
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:12px;border-bottom:1px solid var(--border-subtle); border-radius: var(--radius-sm); transition: background var(--transition-fast);" onmouseover="this.style.background='var(--bg-subtle)'" onmouseout="this.style.background='transparent'">
+          <div style="background: var(--color-info-bg); padding: 8px; border-radius: var(--radius-full); flex-shrink: 0; display:flex;">
+            <i data-lucide="bell" style="width:14px;height:14px;color:var(--color-info);"></i>
+          </div>
+          <div style="flex:1;">
+            <div style="color:var(--text-primary); font-size:0.9rem; font-weight: 500; line-height: 1.4;">${escapeHTML(n.message)}</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);margin-top: 4px;">${getTimeAgo(n.createdAt)}</div>
+          </div>
         </div>
       `).join('');
     }
