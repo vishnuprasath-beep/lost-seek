@@ -4,7 +4,7 @@
   "private": true,
   "description": "LostSeek - Modern Campus Lost & Found System",
   "scripts": {
-    "build": "node -e \"console.log('Build completed')\"",
+    "build": "node build.js",
     "start": "node scratch/server.js"
   },
   "engines": {
