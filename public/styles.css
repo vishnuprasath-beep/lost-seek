@@ -192,10 +192,9 @@ button, input, select, textarea {
 
 /* Gradient text accent */
 .gradient-text {
-  background: var(--text-primary);
-  color: var(--text-primary);
+  background: linear-gradient(135deg, var(--teal-bright) 0%, #38BDF8 50%, var(--campus-blue) 100%);
   -webkit-background-clip: text;
-  -webkit-text-fill-color: var(--text-primary);
+  -webkit-text-fill-color: transparent;
   display: inline-block;
 }
 
@@ -5112,29 +5111,77 @@ html, body {
 /* =========================================================================
    MANGA VIEWER STYLES
    ========================================================================= */
-
 .manga-viewer-container {
-  position: relative;
-  width: 100%;
-  max-width: 100vw;
-  margin: 0 auto;
-  height: calc(100vh - 120px); /* Height between header and bottom */
-  min-height: 500px;
-  overflow: hidden;
-  background: var(--bg-primary);
-  border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  background-color: #0F172A; /* Deep navy/ink */
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
+  font-family: var(--font-family);
+  color: #F8FAFC;
+}
+
+/* A soft vignette glow around the edges */
+.manga-viewer-container::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.8);
+  pointer-events: none;
+  z-index: 10;
+}
+
+.manga-reader-toolbar {
+  padding: 16px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 20;
+  position: relative;
+}
+
+.manga-back-btn {
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #F8FAFC;
+  text-decoration: none;
+  padding: 8px 16px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.manga-back-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.manga-stage {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  z-index: 15;
+  padding: 20px;
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
 }
 
 .manga-slides-wrapper {
   position: relative;
-  flex: 1;
   width: 100%;
   height: 100%;
-  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .manga-slide {
@@ -5144,449 +5191,223 @@ html, body {
   width: 100%;
   height: 100%;
   opacity: 0;
-  transition: opacity 0.5s ease, transform 0.5s ease;
-  transform: translateX(100%);
-  pointer-events: none;
+  visibility: hidden;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  transform: translateX(10px);
   display: flex;
-  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 
 .manga-slide.active {
   opacity: 1;
+  visibility: visible;
   transform: translateX(0);
-  pointer-events: auto;
 }
 
 .manga-slide.prev-slide {
-  transform: translateX(-100%);
+  transform: translateX(-10px);
 }
 
 .manga-art-container {
-  flex: 1;
-  position: relative;
-  width: 100%;
-  height: 100%;
+  max-width: 100%;
+  max-height: 75vh;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
   overflow: hidden;
-  background-color: #0f172a; /* Dark background to frame contained art */
-  border: 4px solid #0f172a;
-  box-sizing: border-box;
+  position: relative;
+  background: #000; /* Placeholder color before load */
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .manga-art {
   width: 100%;
   height: 100%;
-  object-fit: contain; /* CRITICAL: Never crop or stretch */
-  object-position: center;
-  filter: contrast(1.1) brightness(1.05); /* Slight pop for premium feel */
+  max-height: 75vh;
+  object-fit: contain;
+  display: block;
 }
 
-/* Halftone texture overlay */
-.halftone-bg::before {
+/* Loading state for images */
+.manga-art-container::before {
   content: '';
   position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background-image: radial-gradient(circle, #0f172a 1px, transparent 1px);
-  background-size: 8px 8px;
-  opacity: 0.1;
-  pointer-events: none;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 32px; height: 32px;
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-top-color: #10B981; /* LostSeek Green */
+  border-radius: 50%;
+  animation: manga-spin 1s linear infinite;
   z-index: 1;
 }
-
-.manga-panel-overlay {
-  position: absolute;
-  top: 0; left: 0; width: 100%; height: 100%;
-  pointer-events: none;
+.manga-art {
+  position: relative;
   z-index: 2;
 }
 
-.manga-title-box {
+@keyframes manga-spin {
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* Desktop Navigation Controls beside art */
+.manga-nav-side {
   position: absolute;
-  top: 16px;
-  left: 16px;
-  background-color: #0f172a;
-  color: #fff;
-  padding: 6px 12px;
-  font-family: 'Outfit', sans-serif;
-  font-weight: 800;
-  font-size: 1rem;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  border: 3px solid #fff;
-  box-shadow: 4px 4px 0 #0f172a;
-  transform: rotate(-2deg);
-}
-
-.speech-bubble {
-  position: absolute;
-  background: #fff;
-  color: #0f172a;
-  border: 3px solid #0f172a;
-  border-radius: 20px;
-  padding: 12px 18px;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-weight: 700;
-  font-size: 1.1rem;
-  box-shadow: 4px 4px 0 rgba(15, 23, 42, 0.8);
-  max-width: 70%;
-  text-align: center;
-}
-
-.speech-bubble p {
-  margin: 0;
-  line-height: 1.3;
-}
-
-/* Directional Speech Bubbles */
-.speech-bubble::after {
-  content: '';
-  position: absolute;
-  border-style: solid;
-}
-
-.top-left { top: 70px; left: 20px; }
-.top-left::after {
-  border-width: 15px 15px 0 0;
-  border-color: #fff transparent transparent transparent;
-  bottom: -15px; left: 20px;
-}
-.top-left::before {
-  content: ''; position: absolute;
-  border-width: 19px 19px 0 0;
-  border-style: solid;
-  border-color: #0f172a transparent transparent transparent;
-  bottom: -20px; left: 18px; z-index: -1;
-}
-
-.top-right { top: 70px; right: 20px; }
-.top-right::after {
-  border-width: 15px 0 0 15px;
-  border-color: #fff transparent transparent transparent;
-  bottom: -15px; right: 20px;
-}
-.top-right::before {
-  content: ''; position: absolute;
-  border-width: 19px 0 0 19px;
-  border-style: solid;
-  border-color: #0f172a transparent transparent transparent;
-  bottom: -20px; right: 18px; z-index: -1;
-}
-
-.bottom-left { bottom: 80px; left: 20px; }
-.bottom-left::after {
-  border-width: 0 15px 15px 0;
-  border-color: transparent #fff transparent transparent;
-  top: -15px; left: 20px;
-}
-.bottom-left::before {
-  content: ''; position: absolute;
-  border-width: 0 19px 19px 0;
-  border-style: solid;
-  border-color: transparent #0f172a transparent transparent;
-  top: -20px; left: 18px; z-index: -1;
-}
-
-.bottom-right { bottom: 80px; right: 20px; }
-.bottom-right::after {
-  border-width: 0 0 15px 15px;
-  border-color: transparent transparent #fff transparent;
-  top: -15px; right: 20px;
-}
-.bottom-right::before {
-  content: ''; position: absolute;
-  border-width: 0 0 19px 19px;
-  border-style: solid;
-  border-color: transparent transparent #0f172a transparent;
-  top: -20px; right: 18px; z-index: -1;
-}
-
-.right-side { top: 40%; right: 20px; transform: translateY(-50%); }
-.center-top { top: 60px; left: 50%; transform: translateX(-50%); }
-.bottom-center { bottom: 100px; left: 50%; transform: translateX(-50%); }
-
-
-/* Navigation Controls */
-.manga-nav-controls {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 20px;
-  background: var(--bg-card);
-  border-top: 1px solid var(--border-subtle);
-  z-index: 10;
-}
-
-.manga-nav-btn {
-  background: transparent;
-  border: none;
-  color: var(--text-primary);
-  cursor: pointer;
-  padding: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 56px;
+  height: 56px;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 50%;
   display: flex;
-  align-items: center;
   justify-content: center;
-  transition: background 0.2s;
+  align-items: center;
+  color: #F8FAFC;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 20;
 }
 
-.manga-nav-btn:hover {
-  background: var(--bg-subtle);
+.manga-nav-side:hover:not(:disabled) {
+  background: rgba(16, 185, 129, 0.9); /* Green accent */
+  border-color: #10B981;
+  transform: translateY(-50%) scale(1.05);
 }
 
-.manga-nav-btn:disabled {
+.manga-nav-side:disabled {
   opacity: 0.3;
   cursor: not-allowed;
 }
 
-.manga-nav-btn i {
-  width: 24px;
-  height: 24px;
+.manga-nav-side:focus-visible {
+  outline: 2px solid #3B82F6; /* Soft blue focus */
+  outline-offset: 2px;
 }
 
-.manga-pagination {
+.manga-prev-side {
+  left: 20px;
+}
+
+.manga-next-side {
+  right: 20px;
+}
+
+/* Bottom Progress and Skip Action */
+.manga-bottom-bar {
+  padding: 20px 24px 32px;
   display: flex;
-  gap: 6px;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  z-index: 20;
+  position: relative;
 }
 
-.manga-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--border-subtle);
-  transition: all 0.3s ease;
+.manga-progress-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  max-width: 320px;
+}
+
+.manga-progress-text {
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: #94A3B8;
+}
+
+.manga-progress-bar {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.manga-progress-fill {
+  height: 100%;
+  background: #10B981;
+  transition: width 0.3s ease;
+}
+
+.manga-skip-action button {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #F8FAFC;
+  padding: 10px 24px;
+  border-radius: 9999px;
+  font-weight: 600;
+  font-size: 0.95rem;
   cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.manga-dot.active {
-  background: var(--teal-bright);
-  transform: scale(1.3);
+.manga-skip-action button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
-.manga-skip-action {
-  padding: 16px;
-  text-align: center;
-  background: var(--bg-card);
+.manga-skip-action button:focus-visible {
+  outline: 2px solid #3B82F6;
+  outline-offset: 2px;
 }
 
-
-/* --- PREMIUM REDESIGN RULES --- */
-.premium-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-card);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-card);
-  transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+/* Mobile specific overrides */
+@media (max-width: 768px) {
+  .manga-nav-side {
+    display: none !important; /* Hide side arrows on mobile */
+  }
+  
+  .manga-reader-toolbar {
+    padding: 12px 16px;
+  }
+  
+  .manga-stage {
+    padding: 10px;
+  }
+  
+  .manga-art-container {
+    max-height: 60vh;
+  }
+  
+  .manga-bottom-bar {
+    padding: 16px 16px 24px;
+  }
+  
+  /* Mobile bottom nav controls */
+  .manga-mobile-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 12px;
+  }
+  
+  .manga-mobile-nav-btn {
+    width: 44px;
+    height: 44px;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 50%;
+    color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .manga-mobile-nav-btn:disabled {
+    opacity: 0.3;
+  }
 }
-.premium-card:hover {
-  box-shadow: var(--shadow-elevated);
-}
-.student-action-card-btn {
-  background: var(--bg-card) !important;
-  border: 1px solid var(--border-card) !important;
-  border-radius: var(--radius-lg) !important;
-  box-shadow: var(--shadow-card) !important;
-  padding: 24px !important;
-  transition: all var(--transition-fast) !important;
-}
-.student-action-card-btn:hover {
-  transform: translateY(-2px) !important;
-  box-shadow: var(--shadow-elevated) !important;
-  border-color: var(--teal-bright) !important;
-}
-.student-action-title {
-  font-weight: 700 !important;
-  color: var(--text-primary) !important;
-  font-size: 1.1rem !important;
-}
-.student-action-desc {
-  color: var(--text-secondary) !important;
-  font-size: 0.9rem !important;
-  line-height: 1.4 !important;
-}
-.icon-bg-blue, .icon-bg-teal, .icon-bg-amber, .icon-bg-purple {
-  background: var(--bg-subtle) !important;
-  box-shadow: none !important;
-}
-.icon-bg-blue i { color: var(--campus-blue) !important; }
-.icon-bg-teal i { color: var(--teal-deep) !important; }
-.icon-bg-amber i { color: var(--color-warning) !important; }
-.icon-bg-purple i { color: var(--ai-violet) !important; }
-
-/* Clean up sidebar */
-.sidebar {
-  background: var(--bg-sidebar) !important;
-  border-right: 1px solid var(--border-subtle) !important;
-  box-shadow: none !important;
-}
-.nav-link.active {
-  background: var(--bg-subtle) !important;
-  border-left: 3px solid var(--teal-bright) !important;
-  color: var(--teal-deep) !important;
-  box-shadow: none !important;
-}
-.nav-link.active i {
-  color: var(--teal-deep) !important;
-}
-.nav-link:hover {
-  background: var(--bg-subtle) !important;
-}
-
-/* Header */
-.topbar {
-  background: var(--bg-header) !important;
-  border-bottom: 1px solid var(--border-subtle) !important;
-  box-shadow: none !important;
-  backdrop-filter: blur(12px) !important;
-}
-
-/* Remove old glowing glass cards */
-.glass-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-card);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-card);
-}
-
-
-/* --- ADMIN DASHBOARD PREMIUM REDESIGN --- */
-.dashboard-hero {
-  background: var(--bg-card) !important;
-  border: 1px solid var(--border-card) !important;
-  border-radius: var(--radius-lg) !important;
-  box-shadow: var(--shadow-card) !important;
-  padding: 32px !important;
-  margin-bottom: 24px !important;
-  display: flex !important;
-  justify-content: space-between !important;
-  align-items: flex-start !important;
-}
-.stat-card {
-  background: var(--bg-card) !important;
-  border: 1px solid var(--border-card) !important;
-  border-radius: var(--radius-lg) !important;
-  box-shadow: var(--shadow-card) !important;
-  padding: 24px !important;
-  transition: all var(--transition-fast) !important;
-}
-.stat-card:hover {
-  transform: translateY(-2px) !important;
-  box-shadow: var(--shadow-elevated) !important;
-  border-color: var(--teal-bright) !important;
-}
-.stat-meta h3 {
-  color: var(--text-primary) !important;
-  font-size: 2rem !important;
-  font-weight: 800 !important;
-  margin-bottom: 4px !important;
-}
-.stat-meta p {
-  color: var(--text-secondary) !important;
-  font-size: 0.95rem !important;
-  font-weight: 500 !important;
-}
-
-/* Fix generic tables to be cleaner */
-table {
-  border-collapse: separate !important;
-  border-spacing: 0 !important;
-  width: 100% !important;
-}
-th {
-  background: var(--bg-subtle) !important;
-  color: var(--text-secondary) !important;
-  font-weight: 600 !important;
-  padding: 16px !important;
-  border-bottom: 2px solid var(--border-subtle) !important;
-  text-align: left !important;
-}
-td {
-  padding: 16px !important;
-  border-bottom: 1px solid var(--border-subtle) !important;
-  color: var(--text-primary) !important;
-}
-tr:hover td {
-  background: var(--bg-subtle) !important;
-}
-
-/* Badge styling for light theme */
-.badge {
-  padding: 4px 10px !important;
-  border-radius: var(--radius-full) !important;
-  font-weight: 600 !important;
-  font-size: 0.75rem !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  gap: 4px !important;
-}
-.badge-verified {
-  background: var(--color-success-bg) !important;
-  color: var(--color-success) !important;
-  border: 1px solid rgba(16, 185, 129, 0.2) !important;
-}
-
-
-/* --- HEADER POLISH --- */
-.top-header {
-  padding: 0 32px !important;
-}
-.header-search input {
-  background: var(--bg-subtle) !important;
-  border: 1px solid var(--border-subtle) !important;
-  border-radius: var(--radius-full) !important;
-  color: var(--text-primary) !important;
-  padding: 8px 16px 8px 36px !important;
-  transition: all var(--transition-fast) !important;
-}
-.header-search input:focus {
-  background: var(--bg-card) !important;
-  border-color: var(--border-focus) !important;
-  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1) !important;
-}
-.header-search i {
-  color: var(--text-muted) !important;
-}
-.cloud-sync-badge {
-  background: var(--bg-subtle) !important;
-  border: 1px solid var(--border-subtle) !important;
-  color: var(--text-secondary) !important;
-  border-radius: var(--radius-full) !important;
-  font-weight: 500 !important;
-  font-size: 0.8rem !important;
-  padding: 6px 12px !important;
-}
-.cloud-sync-badge.synced .sync-dot {
-  background: var(--color-success) !important;
-  box-shadow: 0 0 6px var(--color-success) !important;
-}
-.theme-toggle-btn, .notif-btn {
-  background: var(--bg-subtle) !important;
-  border: 1px solid var(--border-subtle) !important;
-  border-radius: var(--radius-full) !important;
-  color: var(--text-secondary) !important;
-  transition: all var(--transition-fast) !important;
-}
-.theme-toggle-btn:hover, .notif-btn:hover {
-  background: var(--bg-card) !important;
-  border-color: var(--border-focus) !important;
-  color: var(--teal-bright) !important;
-}
-.notif-count-badge {
-  background: var(--color-error) !important;
-  color: #fff !important;
-}
-
-/* Forms */
-.form-group label {
-  color: var(--text-primary) !important;
-  font-weight: 600 !important;
-}
-.input-glass, .textarea-glass, select {
-  background: var(--bg-input) !important;
-  border: 1px solid var(--border-subtle) !important;
-  color: var(--text-primary) !important;
-  border-radius: var(--radius-sm) !important;
-  transition: border var(--transition-fast), box-shadow var(--transition-fast) !important;
-}
-.input-glass:focus, .textarea-glass:focus, select:focus {
-  border-color: var(--border-focus) !important;
-  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1) !important;
+@media (min-width: 769px) {
+  .manga-mobile-nav {
+    display: none;
+  }
 }

@@ -14,6 +14,7 @@ console.log('Synced index.html -> 200.html');
 
 const files = [
   'index.html',
+  'story.html',
   '200.html',
   'styles.css',
   'app.js',

@@ -54,7 +54,7 @@
   <link rel="apple-touch-icon" href="assets/images/lostseek-logo.png">
 
   <!-- Stylesheet -->
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=2">
 
   <!-- Lucide Icons (Deferred) -->
   <script defer src="https://unpkg.com/lucide@latest"></script>
@@ -115,105 +115,76 @@
     </header>
 
     <main id="main-content" class="manga-viewer-container">
-<div style="position: absolute; top: 100px; left: 24px; z-index: 1000;">
-  <a href="/" class="lp-btn lp-btn-outline" style="background: rgba(15,23,42,0.85); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.1); color: white; text-decoration: none; padding: 8px 16px; border-radius: 9999px; display: inline-flex; align-items: center; gap: 8px; font-weight: 600; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);">
-    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
-    Back to Home
-  </a>
-</div>
+  <div class="manga-reader-toolbar">
+    <a href="/" class="manga-back-btn" aria-label="Back to Home">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+      Back to Home
+    </a>
+  </div>
 
-      <div class="manga-slides-wrapper" id="manga-slides-wrapper">
-        <!-- Page 1: The Loss -->
-        <div class="manga-slide active" data-page="1">
-          <div class="manga-art-container">
-            <img src="assets/images/manga-page-1.jpg?v=3" alt="The Loss" class="manga-art" loading="eager" />
-          </div>
-          
-        </div>
-
-        <!-- Page 2: The Hero Appears -->
-        <div class="manga-slide" data-page="2">
-          <div class="manga-art-container">
-            <img src="assets/images/manga-page-2.jpg?v=3" alt="The Hero Appears" class="manga-art"  />
-          </div>
-          
-        </div>
-
-        <!-- Page 3: The Report -->
-        <div class="manga-slide" data-page="3">
-          <div class="manga-art-container">
-            <img src="assets/images/manga-page-3.jpg?v=3" alt="The Report" class="manga-art"  />
-          </div>
-          
-        </div>
-
-        <!-- Page 4: YOLO Scans -->
-        <div class="manga-slide" data-page="4">
-          <div class="manga-art-container">
-            <img src="assets/images/manga-page-4.jpg?v=3" alt="YOLO Scans" class="manga-art"  />
-          </div>
-          
-        </div>
-
-        <!-- Page 5: CLIP Connects -->
-        <div class="manga-slide" data-page="5">
-          <div class="manga-art-container">
-            <img src="assets/images/manga-page-5.jpg?v=3" alt="CLIP Connects" class="manga-art"  />
-          </div>
-          
-        </div>
-
-        <!-- Page 6: Matching Engine -->
-        <div class="manga-slide" data-page="6">
-          <div class="manga-art-container">
-            <img src="assets/images/manga-page-6.jpg?v=3" alt="Matching Engine" class="manga-art"  />
-          </div>
-          
-        </div>
-
-        <!-- Page 7: Admin Review -->
-        <div class="manga-slide" data-page="7">
-          <div class="manga-art-container">
-            <img src="assets/images/manga-page-7.jpg?v=3" alt="Admin Review" class="manga-art"  />
-          </div>
-          
-        </div>
-
-        <!-- Page 8: The Return -->
-        <div class="manga-slide" data-page="8">
-          <div class="manga-art-container">
-            <img src="assets/images/manga-page-8.jpg?v=3" alt="The Return" class="manga-art"  />
-          </div>
-          
-        </div>
-
-        <!-- Page 9: The Reveal -->
-        <div class="manga-slide" data-page="9">
-          <div class="manga-art-container">
-            <img src="assets/images/manga-page-9.jpg?v=3" alt="The Reveal" class="manga-art"  />
-          </div>
-          
-        </div>
+  <div class="manga-stage">
+    <button class="manga-nav-side manga-prev-side" id="manga-prev-desktop" onclick="prevMangaPage()" aria-label="Previous story page">
+      <i data-lucide="chevron-left"></i>
+    </button>
+    
+    <div class="manga-slides-wrapper" id="manga-slides-wrapper">
+      <div class="manga-slide active" data-page="1">
+        <div class="manga-art-container"><img src="assets/images/manga-page-1.jpg?v=3" alt="The Loss" class="manga-art" loading="eager" /></div>
       </div>
+      <div class="manga-slide" data-page="2">
+        <div class="manga-art-container"><img src="assets/images/manga-page-2.jpg?v=3" alt="The Hero Appears" class="manga-art" loading="lazy" /></div>
+      </div>
+      <div class="manga-slide" data-page="3">
+        <div class="manga-art-container"><img src="assets/images/manga-page-3.jpg?v=3" alt="The Report" class="manga-art" loading="lazy" /></div>
+      </div>
+      <div class="manga-slide" data-page="4">
+        <div class="manga-art-container"><img src="assets/images/manga-page-4.jpg?v=3" alt="YOLO Scans" class="manga-art" loading="lazy" /></div>
+      </div>
+      <div class="manga-slide" data-page="5">
+        <div class="manga-art-container"><img src="assets/images/manga-page-5.jpg?v=3" alt="CLIP Connects" class="manga-art" loading="lazy" /></div>
+      </div>
+      <div class="manga-slide" data-page="6">
+        <div class="manga-art-container"><img src="assets/images/manga-page-6.jpg?v=3" alt="Matching Engine" class="manga-art" loading="lazy" /></div>
+      </div>
+      <div class="manga-slide" data-page="7">
+        <div class="manga-art-container"><img src="assets/images/manga-page-7.jpg?v=3" alt="Admin Review" class="manga-art" loading="lazy" /></div>
+      </div>
+      <div class="manga-slide" data-page="8">
+        <div class="manga-art-container"><img src="assets/images/manga-page-8.jpg?v=3" alt="The Return" class="manga-art" loading="lazy" /></div>
+      </div>
+      <div class="manga-slide" data-page="9">
+        <div class="manga-art-container"><img src="assets/images/manga-page-9.jpg?v=3" alt="The Reveal" class="manga-art" loading="lazy" /></div>
+      </div>
+    </div>
+    
+    <button class="manga-nav-side manga-next-side" id="manga-next-desktop" onclick="nextMangaPage()" aria-label="Next story page">
+      <i data-lucide="chevron-right"></i>
+    </button>
+  </div>
 
-      <!-- Navigation Controls -->
-      <div class="manga-nav-controls">
-        <button class="manga-nav-btn prev-btn" id="manga-prev" onclick="prevMangaPage()" aria-label="Previous Page">
-          <i data-lucide="chevron-left"></i>
-        </button>
-        <div class="manga-pagination" id="manga-pagination">
-          <!-- Dots generated by JS -->
-        </div>
-        <button class="manga-nav-btn next-btn" id="manga-next" onclick="nextMangaPage()" aria-label="Next Page">
-          <i data-lucide="chevron-right"></i>
-        </button>
+  <div class="manga-bottom-bar">
+    <div class="manga-mobile-nav">
+      <button class="manga-mobile-nav-btn" id="manga-prev-mobile" onclick="prevMangaPage()" aria-label="Previous story page">
+        <i data-lucide="chevron-left"></i>
+      </button>
+      <div class="manga-progress-text" id="manga-progress-text-mobile">1 / 9</div>
+      <button class="manga-mobile-nav-btn" id="manga-next-mobile" onclick="nextMangaPage()" aria-label="Next story page">
+        <i data-lucide="chevron-right"></i>
+      </button>
+    </div>
+
+    <div class="manga-progress-container">
+      <div class="manga-progress-text" id="manga-progress-text-desktop">Page 1 of 9</div>
+      <div class="manga-progress-bar">
+        <div class="manga-progress-fill" id="manga-progress-fill" style="width: 11.11%;"></div>
       </div>
-      
-      <!-- Skip to App -->
-      <div class="manga-skip-action">
-         <button type="button" class="lp-btn lp-btn-outline" onclick="goToAppLogin()">Skip Story &amp; Open App</button>
-      </div>
-    </main>
+    </div>
+    
+    <div class="manga-skip-action">
+       <button type="button" aria-label="Skip Story and Open App" onclick="window.location.href='/#login'">Skip Story &amp; Open App</button>
+    </div>
+  </div>
+</main>
 
     <!-- Landing Footer -->
     <footer class="lp-footer">
@@ -3685,7 +3656,7 @@
 
 
   <!-- JavaScript Bundle -->
-  <script defer src="app.js?v=6"></script>
+  <script defer src="app.js?v=7"></script>
 
   <!-- Admin Contact Assistance Bridge Modal (#admin-contact-help-modal) -->
   <div class="modal-overlay" id="admin-contact-help-modal">
