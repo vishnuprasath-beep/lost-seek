@@ -20,29 +20,6 @@ function parseBody(req) {
   return {};
 }
 
-function parseUser(req) {
-  const body = req.body && typeof req.body === 'object' ? req.body : null;
-  if (body && (body.callerUser || body.callingUser || body.user)) {
-    return body.callerUser || body.callingUser || body.user;
-  }
-  const userHeader = req.headers['x-lostseek-user'] || req.headers['x-user'];
-  if (userHeader) {
-    try {
-      return JSON.parse(decodeURIComponent(userHeader));
-    } catch (e) {
-      try { return JSON.parse(userHeader); } catch (err) {}
-    }
-  }
-  if (req.headers['x-user-id'] || req.headers['x-user-role']) {
-    return {
-      id: req.headers['x-user-id'] || 'usr-anon',
-      role: req.headers['x-user-role'] || 'student',
-      username: req.headers['x-user-name'] || req.headers['x-user-username'] || req.headers['x-user-id'] || 'user'
-    };
-  }
-  return null;
-}
-
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -53,7 +30,8 @@ module.exports = async function handler(req, res) {
     return res.status(200).end();
   }
 
-  const user = parseUser(req);
+  const authHelper = require('../server/authHelper.js');
+  const user = await authHelper.getAuthenticatedUser(req);
   const urlParts = (req.url || '').split('?');
   const queryParams = new URLSearchParams(urlParts[1] || '');
 

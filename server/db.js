@@ -81,6 +81,11 @@ async function getReports(filter = {}, user = null) {
     query = query.eq('status', filter.status);
   }
 
+  if (filter.limit) {
+    const offset = filter.offset || 0;
+    query = query.range(offset, offset + filter.limit - 1);
+  }
+
   const { data, error } = await query;
   if (error) throw error;
 
@@ -390,6 +395,11 @@ async function getClaims(filter = {}, user = null) {
   if (filter.id) query = query.eq('id', filter.id);
   if (filter.claimantId) query = query.eq('claimant_id', filter.claimantId);
   if (filter.status) query = query.eq('claim_status', filter.status);
+
+  if (filter.limit) {
+    const offset = filter.offset || 0;
+    query = query.range(offset, offset + filter.limit - 1);
+  }
 
   const { data, error } = await query;
   if (error) throw error;

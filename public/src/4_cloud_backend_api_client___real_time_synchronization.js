@@ -9,6 +9,9 @@ function getAuthHeaders() {
   const headers = { 'Content-Type': 'application/json' };
   if (window.appState && window.appState.user) {
     headers['x-lostseek-user'] = encodeURIComponent(JSON.stringify(window.appState.user));
+    if (window.appState.user.token) {
+      headers['Authorization'] = 'Bearer ' + window.appState.user.token;
+    }
   }
   return headers;
 }
@@ -126,12 +129,12 @@ function triggerManualSync() {
   syncWithCloud(true);
 }
 
-// Auto-sync polling every 8 seconds when logged in
+// Auto-sync polling every 2 minutes when logged in and tab is active
 setInterval(() => {
-  if (window.appState && window.appState.user) {
+  if (window.appState && window.appState.user && document.visibilityState === 'visible') {
     syncWithCloud(false);
   }
-}, 8000);
+}, 120000);
 
 // Immediate sync on tab focus and network reconnection
 window.addEventListener('focus', () => {

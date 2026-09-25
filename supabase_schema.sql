@@ -165,3 +165,138 @@ INSERT INTO users (id, username, name, role, student_id) VALUES
 ('usr-girl1', 'girl1', 'Girl1', 'student', 'STU-2026-1016')
 ON CONFLICT (username) DO NOTHING;
 
+-- ==============================================================================
+-- 9. ROW LEVEL SECURITY (RLS) POLICIES
+-- Enable RLS on all tables
+-- ==============================================================================
+
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE reports ENABLE ROW LEVEL SECURITY;
+ALTER TABLE claims ENABLE ROW LEVEL SECURITY;
+ALTER TABLE matches ENABLE ROW LEVEL SECURITY;
+ALTER TABLE help_requests ENABLE ROW LEVEL SECURITY;
+ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE community_alerts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE sightings ENABLE ROW LEVEL SECURITY;
+
+-- Helper function to check if current user is admin/staff
+CREATE SCHEMA IF NOT EXISTS private;
+
+CREATE OR REPLACE FUNCTION private.is_staff() RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN (auth.jwt() -> 'app_metadata' ->> 'role') IN ('admin', 'supervisor', 'director');
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = '';
+
+-- Helper function to get legacy user ID from Supabase Auth JWT
+CREATE OR REPLACE FUNCTION private.get_legacy_id() RETURNS TEXT AS $$
+BEGIN
+  RETURN (auth.jwt() -> 'app_metadata' ->> 'legacy_id');
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = '';
+
+-- Grant execution rights so policies can evaluate these
+GRANT USAGE ON SCHEMA private TO anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION private.is_staff() TO anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION private.get_legacy_id() TO anon, authenticated, service_role;
+
+-- ------------------------------------------------------------------------------
+-- Users Table Policies
+-- ------------------------------------------------------------------------------
+-- Anyone can read basic user info (needed for directory/display)
+CREATE POLICY "Public profiles are viewable by everyone." ON public.users FOR SELECT USING (true);
+-- Users can update their own row (or staff can)
+CREATE POLICY "Users can update own profile." ON public.users FOR UPDATE USING (id = private.get_legacy_id() OR private.is_staff());
+-- Only staff can insert/delete users directly
+CREATE POLICY "Staff can manage users." ON public.users FOR ALL USING (private.is_staff());
+
+-- ------------------------------------------------------------------------------
+-- Reports Table Policies
+-- ------------------------------------------------------------------------------
+-- Reports are public to view
+CREATE POLICY "Reports are viewable by everyone." ON public.reports FOR SELECT USING (true);
+-- Users can insert their own reports
+CREATE POLICY "Users can create reports." ON public.reports FOR INSERT WITH CHECK (reporter_id = private.get_legacy_id() OR private.is_staff());
+-- Users can update/delete their own reports
+CREATE POLICY "Users can update own reports." ON public.reports FOR UPDATE USING (reporter_id = private.get_legacy_id() OR private.is_staff());
+CREATE POLICY "Users can delete own reports." ON public.reports FOR DELETE USING (reporter_id = private.get_legacy_id() OR private.is_staff());
+
+-- ------------------------------------------------------------------------------
+-- Claims Table Policies
+-- ------------------------------------------------------------------------------
+-- Claimants and Staff can view claims
+CREATE POLICY "Claimants and staff can view claims." ON public.claims FOR SELECT USING (claimant_id = private.get_legacy_id() OR private.is_staff());
+-- Users can create claims
+CREATE POLICY "Users can create claims." ON public.claims FOR INSERT WITH CHECK (claimant_id = private.get_legacy_id() OR private.is_staff());
+-- Only staff can update/delete claims
+CREATE POLICY "Only staff can update claims." ON public.claims FOR UPDATE USING (private.is_staff());
+CREATE POLICY "Only staff can delete claims." ON public.claims FOR DELETE USING (private.is_staff());
+
+-- ------------------------------------------------------------------------------
+-- Matches Table Policies
+-- ------------------------------------------------------------------------------
+-- Matches are viewable by the reporters of the lost/found items or staff
+CREATE POLICY "Matches viewable by involved parties or staff." ON public.matches FOR SELECT USING (
+  EXISTS (SELECT 1 FROM reports WHERE reports.id = lost_report_id AND reports.reporter_id = private.get_legacy_id()) OR
+  EXISTS (SELECT 1 FROM reports WHERE reports.id = found_report_id AND reports.reporter_id = private.get_legacy_id()) OR
+  private.is_staff()
+);
+CREATE POLICY "Staff can manage matches." ON public.matches FOR ALL USING (private.is_staff());
+
+-- ------------------------------------------------------------------------------
+-- Help Requests & Notifications
+-- ------------------------------------------------------------------------------
+CREATE POLICY "Users can view own help requests." ON public.help_requests FOR SELECT USING (user_id = private.get_legacy_id() OR private.is_staff());
+CREATE POLICY "Users can create help requests." ON public.help_requests FOR INSERT WITH CHECK (user_id = private.get_legacy_id() OR private.is_staff());
+CREATE POLICY "Staff can update help requests." ON public.help_requests FOR UPDATE USING (private.is_staff());
+
+CREATE POLICY "Users can view own notifications." ON public.notifications FOR SELECT USING (user_id = private.get_legacy_id() OR private.is_staff());
+CREATE POLICY "System/Staff can manage notifications." ON public.notifications FOR ALL USING (private.is_staff());
+
+-- ------------------------------------------------------------------------------
+-- Community Alerts & Sightings
+-- ------------------------------------------------------------------------------
+CREATE POLICY "Alerts are viewable by everyone." ON public.community_alerts FOR SELECT USING (true);
+CREATE POLICY "Staff can manage alerts." ON public.community_alerts FOR ALL USING (private.is_staff());
+
+CREATE POLICY "Sightings are viewable by everyone." ON public.sightings FOR SELECT USING (true);
+CREATE POLICY "Users can create sightings." ON public.sightings FOR INSERT WITH CHECK (observer_id = private.get_legacy_id() OR private.is_staff());
+CREATE POLICY "Staff can manage sightings." ON public.sightings FOR ALL USING (private.is_staff());
+-- ==============================================================================
+-- 10. POSTGRESQL GRANTS (Defense in Depth)
+-- Ensure strict privileges independent of RLS
+-- ==============================================================================
+
+-- Revoke all default privileges from public
+REVOKE ALL ON ALL TABLES IN SCHEMA public FROM PUBLIC;
+REVOKE ALL ON ALL FUNCTIONS IN SCHEMA public FROM PUBLIC;
+
+-- Grant usage on schema
+GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+
+-- SERVICE_ROLE: Full access
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO service_role;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO service_role;
+
+-- ANON: Minimal access (Only read public data)
+GRANT SELECT ON users TO anon;
+GRANT SELECT ON reports TO anon;
+GRANT SELECT ON community_alerts TO anon;
+GRANT SELECT ON sightings TO anon;
+-- (No access to claims, matches, help_requests, notifications for anon)
+
+-- AUTHENTICATED: Standard app operations
+GRANT SELECT, INSERT, UPDATE, DELETE ON reports TO authenticated;
+GRANT SELECT, UPDATE ON users TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON claims TO authenticated;
+GRANT SELECT ON matches TO authenticated;
+GRANT SELECT, INSERT, UPDATE ON help_requests TO authenticated;
+GRANT SELECT ON notifications TO authenticated;
+GRANT SELECT ON community_alerts TO authenticated;
+GRANT SELECT, INSERT ON sightings TO authenticated;
+
+-- STORAGE POLICIES
+-- In Supabase, storage policies are managed in the storage.objects table.
+-- You must manually execute these in the SQL editor:
+-- CREATE POLICY "Public Access" ON storage.objects FOR SELECT USING (bucket_id = 'lostseek-images');
+-- CREATE POLICY "Authenticated Upload" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'lostseek-images');

@@ -1,12 +1,9 @@
 /**
  * LostSeek - Serverless Claims API Route (/api/claims)
- * Supports:
- * - GET: Read all claims with authorization-based evidence protection
- * - POST: Submit a new ownership claim
- * - PATCH: Update claim status (requires Admin authorization for Approved/Rejected/Completed)
  */
 
 const db = require('../server/db.js');
+const authHelper = require('../server/authHelper.js');
 
 function parseBody(req) {
   if (typeof req.body === 'object' && req.body !== null) return req.body;
@@ -16,114 +13,86 @@ function parseBody(req) {
   return {};
 }
 
-function parseUser(req) {
-  const userHeader = req.headers['x-lostseek-user'];
-  if (userHeader) {
-    try {
-      return JSON.parse(decodeURIComponent(userHeader));
-    } catch (e) {
-      try { return JSON.parse(userHeader); } catch (err) {}
-    }
-  }
-  return null;
-}
-
 module.exports = async function handler(req, res) {
-  // CORS
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
   res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, x-lostseek-user, Authorization');
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
+  if (req.method === 'OPTIONS') return res.status(200).end();
 
-  const user = parseUser(req);
+  const user = await authHelper.getAuthenticatedUser(req);
   const url = new URL(req.url, 'http://localhost');
   const query = Object.fromEntries(url.searchParams.entries());
 
   try {
-    // 1. GET - Retrieve claims
     if (req.method === 'GET') {
-      const filter = {
-        id: query.id,
-        claimantId: query.claimantId,
-        status: query.status
-      };
+      const filter = { id: query.id, claimantId: query.claimantId, status: query.status };
+      const limit = parseInt(query.limit) || 50;
+      const page = parseInt(query.page) || 1;
+      filter.limit = limit;
+      filter.offset = (page - 1) * limit;
+      
       const claims = await db.getClaims(filter, user);
-      return res.status(200).json({
-        success: true,
-        count: claims.length,
-        claims
-      });
+      return res.status(200).json({ success: true, count: claims.length, claims, page, limit });
     }
 
-    // 2. POST - Create new claim
     if (req.method === 'POST') {
+      authHelper.requireAuth(user);
       const body = parseBody(req);
       if (!body.verificationEvidence && !body.evidence) {
-        return res.status(400).json({
-          success: false,
-          message: 'Verification evidence is mandatory for ownership claims.'
-        });
+        return res.status(400).json({ success: false, message: 'Verification evidence is mandatory.' });
       }
+      
+      if (body.description && body.description.length > 2000) return res.status(400).json({ success: false, message: 'Description too long' });
+      if (body.contact && body.contact.length > 200) return res.status(400).json({ success: false, message: 'Contact info too long' });
+
+      const storageHelper = require('../server/storageHelper.js');
+      if (body.verificationEvidence) body.verificationEvidence = await storageHelper.uploadIfBase64(body.verificationEvidence, 'claim');
+      if (body.evidence) body.evidence = await storageHelper.uploadIfBase64(body.evidence, 'claim');
 
       const claim = await db.createClaim(body, user);
 
-      // Create notification for Admin
-      await db.createNotification({
-        userId: 'admin@campus.edu',
-        message: `📋 New Claim submitted for "${body.itemTitle || 'Item'}" by ${user ? user.name : 'Student'}. Awaiting verification.`,
-        type: 'claim'
-      });
+      try {
+        await db.createNotification({
+          userId: 'admin@campus.edu',
+          message: `📋 New Claim submitted for "${body.itemTitle || 'Item'}" by ${user.name || 'Student'}.`,
+          type: 'claim'
+        });
+      } catch (e) {}
 
-      return res.status(201).json({
-        success: true,
-        message: 'Claim registered and stored in cloud database.',
-        claim
-      });
+      return res.status(201).json({ success: true, message: 'Claim registered.', claim });
     }
 
-    // 3. PATCH - Update claim status
     if (req.method === 'PATCH') {
+      authHelper.requireAuth(user);
       const body = parseBody(req);
       const claimId = query.id || body.id;
-      if (!claimId) {
-        return res.status(400).json({ success: false, message: 'Claim id is required for update.' });
+      if (!claimId) return res.status(400).json({ success: false, message: 'Claim id is required.' });
+
+      // Only staff can update status. (Assuming DB layer enforces further rules if needed)
+      if (body.status || body.claimStatus) {
+        authHelper.requireRole(user, ['admin', 'supervisor', 'director']);
       }
 
       const updated = await db.updateClaim(claimId, body, user);
 
-      // If status changed to Approved, notify claimant
       if (body.status === 'Approved' || body.claimStatus === 'Approved') {
-        await db.createNotification({
-          userId: updated.claimant_id,
-          message: `🎉 Claim #${claimId} for "${updated.item_title}" has been APPROVED! Proceed to Campus Security Desk for safe handover.`,
-          type: 'claim_approved'
-        });
+        try {
+          await db.createNotification({
+            userId: updated.claimant_id,
+            message: `🎉 Claim #${claimId} for "${updated.item_title}" has been APPROVED! Proceed to Campus Security Desk.`,
+            type: 'claim_approved'
+          });
+        } catch (e) {}
       }
 
-      return res.status(200).json({
-        success: true,
-        message: `Claim status updated to ${body.status || body.claimStatus}.`,
-        claim: updated
-      });
+      return res.status(200).json({ success: true, message: `Claim updated.`, claim: updated });
     }
 
     return res.status(405).json({ success: false, message: 'Method Not Allowed.' });
   } catch (error) {
-    if (error.code === 'CONFIG_MISSING') {
-      return res.status(503).json({
-        success: false,
-        error: 'DatabaseConfigurationMissing',
-        message: error.message,
-        requiredEnv: error.requiredEnv
-      });
-    }
-    return res.status(500).json({
-      success: false,
-      message: error.message || 'Internal server error while processing claim.'
-    });
+    if (error.code === 'CONFIG_MISSING') return res.status(503).json({ success: false, message: error.message });
+    return res.status(error.statusCode || 500).json({ success: false, message: error.message });
   }
 };
