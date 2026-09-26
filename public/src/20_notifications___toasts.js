@@ -40,12 +40,13 @@ function renderNotifications() {
 }
 
 function openViewSightingModal(message) {
+  ensureModalsLoaded();
   const modal = document.getElementById('view-sighting-modal');
   const textEl = document.getElementById('view-sighting-text');
   if (textEl) textEl.textContent = message;
   if (modal) {
     modal.style.display = 'flex';
-    if (window.lucide) window.lucide.createIcons();
+    if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
   }
 }
 
@@ -59,7 +60,7 @@ async function markAllNotificationsRead() {
   saveData();
   renderNotifications();
   renderNotificationsList();
-  updateBadges();
+  updateIndicatorPills();
   showToast('All notifications cleared', 'info');
 
   try {

@@ -30,5 +30,22 @@ for (const file of files) {
   combinedCode += code + '\n';
 }
 
-fs.writeFileSync(outputFile, combinedCode, 'utf8');
-console.log(`Successfully built public/app.js (${combinedCode.split('\n').length} lines)`);
+(async () => {
+  try {
+    const { minify } = require('terser');
+    console.log('Minifying app.js with terser...');
+    const minified = await minify(combinedCode, { sourceMap: true });
+    combinedCode = minified.code;
+    console.log('Minification successful.');
+  } catch (e) {
+    console.log('Terser not found or minification failed, using unminified code.');
+    console.error(e);
+  }
+
+  fs.writeFileSync(outputFile, combinedCode, 'utf8');
+  const publicOutputFile = path.join(__dirname, 'public', 'app.js');
+  if (fs.existsSync(path.join(__dirname, 'public'))) {
+    fs.writeFileSync(publicOutputFile, combinedCode, 'utf8');
+  }
+  console.log(`Successfully built app.js and public/app.js (${combinedCode.split('\n').length} lines)`);
+})();

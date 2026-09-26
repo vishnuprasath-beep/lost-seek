@@ -1240,6 +1240,7 @@ async function getAllUsers(callingUser) {
 }
 
 module.exports = {
+  getSupabase,
   isConfigured,
   getSupabaseConfig,
   getReports,

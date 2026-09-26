@@ -2,7 +2,7 @@
    RENDER & VIEW LOGIC
    ========================================================================== */
 function renderAllViews() {
-  updateBadges();
+  updateIndicatorPills();
   renderNotifications();
   renderDashboardActivity();
   animateStatCounters();
@@ -12,12 +12,12 @@ function renderAllViews() {
   if (typeof renderProfile === 'function') {
     renderProfile();
   }
-  if (typeof updateAdminMetricsAndBadges === 'function') {
-    updateAdminMetricsAndBadges();
+  if (typeof updateAdminMetricsAndPills === 'function') {
+    updateAdminMetricsAndPills();
   }
 }
 
-function updateBadges() {
+function updateIndicatorPills() {
   // AI Matches badge in sidebar
   const matchCount = calculateMatchesList().length;
   const matchBadge = document.getElementById('sidebar-matches-badge');

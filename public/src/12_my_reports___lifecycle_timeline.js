@@ -167,7 +167,7 @@ function markItemAsReturned(id, itemType) {
   const item = list.find(r => r.id === id);
   if (item) {
     item.status = 'Returned';
-    addKarma(25, 'Item Successfully Returned');
+    
     saveData();
     renderAllViews();
     showToast(`"${item.title}" marked as Returned! Reunited successfully. 🎉`, 'success');

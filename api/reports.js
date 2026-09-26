@@ -42,6 +42,7 @@ module.exports = async function handler(req, res) {
     }
 
     if (req.method === 'POST') {
+      console.log('[DEBUG] Backend API: Received POST /api/reports. User authenticated:', !!user);
       authHelper.requireAuth(user);
       const body = parseBody(req);
       if (!body.title && !body.itemName) return res.status(400).json({ success: false, message: 'Item title/name is required.' });

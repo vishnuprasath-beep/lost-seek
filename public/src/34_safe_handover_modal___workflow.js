@@ -4,6 +4,7 @@
 let activeHandoverClaimId = null;
 
 function openAdminHandoverModal(targetId) {
+  ensureModalsLoaded();
   let claim = appState.claims.find(c => c.id === targetId || c.lostReportId === targetId || c.foundReportId === targetId);
   if (!claim) {
     const item = appState.lostReports.find(r => r.id === targetId) || appState.foundReports.find(r => r.id === targetId);
@@ -77,7 +78,7 @@ function openAdminHandoverModal(targetId) {
   if (notesInput) notesInput.value = '';
 
   modal.classList.add('show');
-  if (window.lucide) window.lucide.createIcons();
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
 }
 
 function closeAdminHandoverModal() {
@@ -139,11 +140,11 @@ function confirmAdminHandover() {
     });
   }
 
-  addKarma(25, 'Physical Handover Verified');
+  
   saveData();
   renderAllViews();
   closeAdminHandoverModal();
-  showToast('Handover recorded! Item marked Returned 🤝 +25 Karma', 'success');
+  showToast('Handover recorded! Item marked Returned 🤝 ', 'success');
 
   if (claimId) {
     setTimeout(() => {

@@ -12,6 +12,7 @@ function toggleNavGroup(headerEl) {
 let activeContactHelpReportId = null;
 
 function openAdminContactHelpModal(reportId) {
+  ensureModalsLoaded();
   activeContactHelpReportId = reportId;
   const modal = document.getElementById('admin-contact-help-modal');
   if (modal) modal.classList.add('show');

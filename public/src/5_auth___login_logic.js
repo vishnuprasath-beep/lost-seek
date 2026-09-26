@@ -39,7 +39,7 @@ function toggleLoginPassword() {
 
   if (icon) {
     icon.setAttribute('data-lucide', isPassword ? 'eye-off' : 'eye');
-    if (window.lucide) window.lucide.createIcons();
+    if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
   }
 }
 
@@ -160,6 +160,14 @@ async function handleLoginSubmit(e) {
 
   // 4. Establish safe session (NEVER store password in localStorage/sessionStorage)
   appState.user = authenticatedUser;
+  
+  // SAFE DEBUGGING TEST
+  if (appState.user && appState.user.token) {
+    console.log('[DEBUG] Safe Auth Check: Supabase access token obtained. Length:', appState.user.token.length);
+  } else {
+    console.warn('[DEBUG] Auth Warning: No Supabase token found in login response!');
+  }
+
   saveData();
 
   setupAuthenticatedUser(appState.user);
@@ -187,7 +195,7 @@ function toggleRegisterView(showRegister) {
     }
     if (roleToggle) roleToggle.style.display = 'block';
   }
-  if (window.lucide) window.lucide.createIcons();
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
 }
 
 function triggerRegPhotoPick(mode) {
@@ -294,7 +302,7 @@ async function handleRegistrationSubmit(e) {
   if (btn) {
     btn.disabled = true;
     btn.innerHTML = '<i data-lucide="loader-2" class="spin"></i> Creating student account...';
-    if (window.lucide) window.lucide.createIcons();
+    if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
   }
 
   try {
@@ -360,7 +368,7 @@ async function handleRegistrationSubmit(e) {
     if (btn) {
       btn.disabled = false;
       btn.innerHTML = '<i data-lucide="check-circle"></i> Create Student Account';
-      if (window.lucide) window.lucide.createIcons();
+      if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
     }
   }
 }
@@ -442,10 +450,8 @@ function setupAuthenticatedUser(user) {
   }
   document.getElementById('app-layout').style.display = 'flex';
 
-  updateKarmaDisplay();
-  evaluateBadges();
   renderAllViews();
-  if (window.lucide) window.lucide.createIcons();
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
   syncWithCloud(false);
 }
 
@@ -476,7 +482,7 @@ function showLandingPage() {
     landingEl.style.display = 'block';
   }
   window.scrollTo({ top: 0, behavior: 'smooth' });
-  if (window.lucide) window.lucide.createIcons();
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
 }
 
 function showLoginPage() {
@@ -503,7 +509,7 @@ function showLoginPage() {
   }
 
   initLoginPageAvatars();
-  if (window.lucide) window.lucide.createIcons();
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
 }
 
 function goToAppLogin() {

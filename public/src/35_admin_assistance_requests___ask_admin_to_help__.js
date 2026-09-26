@@ -67,7 +67,7 @@ function renderAdminHelpRequests() {
         <p style="color: var(--text-muted); font-size: 0.85rem; margin: 0;">No student assistance requests pending. All communications running smoothly!</p>
       </div>
     `;
-    if (window.lucide) window.lucide.createIcons();
+    if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
     return;
   }
 
@@ -107,7 +107,7 @@ function renderAdminHelpRequests() {
     `;
   }).join('');
 
-  if (window.lucide) window.lucide.createIcons();
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
 }
 
 function resolveAdminHelpRequest(helpId) {

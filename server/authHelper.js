@@ -12,11 +12,18 @@ async function getAuthenticatedUser(req) {
   
   try {
     const supabase = db.getSupabase();
+    
+    // SAFE DEBUGGING TEST
+    console.log(`[DEBUG] Backend Auth: Verifying token of length ${token.length}`);
+    
     const { data: { user }, error } = await supabase.auth.getUser(token);
     
     if (error || !user) {
+      console.warn(`[DEBUG] Backend Auth: JWT verification failed:`, error ? error.message : 'No user returned');
       return null;
     }
+    
+    console.log(`[DEBUG] Backend Auth: JWT successfully verified for ${user.email}`);
     
     // Extract metadata
     const role = (user.app_metadata && user.app_metadata.role) || 'student';

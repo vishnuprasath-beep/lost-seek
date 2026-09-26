@@ -4,6 +4,7 @@
 let activeStatusReportId = null;
 
 async function openStatusUpdateModal(reportId) {
+  ensureModalsLoaded();
   activeStatusReportId = reportId;
   const report = (appState.lostReports || []).find(r => r.id === reportId) ||
                  (appState.foundReports || []).find(r => r.id === reportId);
@@ -67,7 +68,7 @@ function renderAllAdminPages() {
   renderAdminAllReportsPage();
   renderAdminClaimsPage();
   renderAdminMatchCenterPage();
-  updateAdminMetricsAndBadges();
+  updateAdminMetricsAndPills();
 }
 
 
@@ -92,7 +93,7 @@ window.openReportHistoryModal = openReportHistoryModal;
 window.closeReportHistoryModal = closeReportHistoryModal;
 window.openStatusUpdateModal = openStatusUpdateModal;
 window.viewMatchesForReport = viewMatchesForReport;
-window.updateAdminMetricsAndBadges = updateAdminMetricsAndBadges;
+window.updateAdminMetricsAndPills = updateAdminMetricsAndPills;
 window.toggleRegisterView = toggleRegisterView;
 window.handleRegistrationSubmit = handleRegistrationSubmit;
 window.triggerPhotoPick = triggerPhotoPick;

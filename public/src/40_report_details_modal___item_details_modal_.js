@@ -3,6 +3,7 @@
    ========================================================================== */
 
 function openReportDetailsModal(reportId) {
+  ensureModalsLoaded();
   const report = appState.lostReports.find(r => r.id === reportId) ||
                  appState.foundReports.find(r => r.id === reportId);
   if (!report) {
@@ -99,7 +100,7 @@ function openReportDetailsModal(reportId) {
   `;
 
   modal.classList.add('show');
-  if (window.lucide) window.lucide.createIcons();
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
 }
 
 function closeReportDetailsModal() {

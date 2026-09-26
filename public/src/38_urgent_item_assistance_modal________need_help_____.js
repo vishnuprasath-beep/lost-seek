@@ -3,6 +3,7 @@
    ========================================================================== */
 
 function openItemHelpModal(reportId, title, location) {
+  ensureModalsLoaded();
   const modal = document.getElementById('item-help-modal');
   if (!modal) return;
 
@@ -22,7 +23,7 @@ function openItemHelpModal(reportId, title, location) {
   if (radios.length > 0) radios[0].checked = true;
 
   modal.classList.add('show');
-  if (window.lucide) window.lucide.createIcons();
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
 }
 
 function closeItemHelpModal() {

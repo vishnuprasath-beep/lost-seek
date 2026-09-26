@@ -358,7 +358,7 @@ function calculateMatchesList() {
 
 function recalculateMatches() {
   renderAIMatches();
-  updateBadges();
+  updateIndicatorPills();
   showToast('AI correlation scan completed!', 'info');
 }
 

@@ -50,7 +50,7 @@ function handleFindItemSearch() {
         <p style="color: var(--text-muted);">Try adjusting your search keywords or resetting filters.</p>
       </div>
     `;
-    if (window.lucide) window.lucide.createIcons();
+    if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
     return;
   }
 
@@ -114,7 +114,7 @@ function handleFindItemSearch() {
     `;
   }).join('');
 
-  if (window.lucide) window.lucide.createIcons();
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
 }
 
 function resetFindItemFilters() {

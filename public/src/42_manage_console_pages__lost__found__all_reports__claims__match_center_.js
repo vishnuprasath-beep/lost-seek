@@ -32,7 +32,7 @@ function normalizeReportsData() {
 }
 
 // Update Admin Navigation Badges & Dashboard Metrics
-function updateAdminMetricsAndBadges() {
+function updateAdminMetricsAndPills() {
   normalizeReportsData();
 
   const lostCount = appState.lostReports.length;
@@ -86,7 +86,7 @@ function updateAdminMetricsAndBadges() {
    -------------------------------------------------------------------------- */
 function renderAdminLostPage() {
   normalizeReportsData();
-  updateAdminMetricsAndBadges();
+  updateAdminMetricsAndPills();
 
   const tbody = document.getElementById('admin-lost-table-tbody');
   if (!tbody) return;
@@ -145,7 +145,7 @@ function renderAdminLostPage() {
         </td>
       </tr>
     `;
-    if (window.lucide) window.lucide.createIcons();
+    if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
     return;
   }
 
@@ -211,7 +211,7 @@ function renderAdminLostPage() {
     `;
   }).join('');
 
-  if (window.lucide) window.lucide.createIcons();
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
 }
 
 function handleAdminLostFilterChange() {
@@ -244,7 +244,7 @@ function getAiStatusBadgeHTML(item) {
    -------------------------------------------------------------------------- */
 function renderAdminFoundPage() {
   normalizeReportsData();
-  updateAdminMetricsAndBadges();
+  updateAdminMetricsAndPills();
 
   const tbody = document.getElementById('admin-found-table-tbody');
   if (!tbody) return;
@@ -305,7 +305,7 @@ function renderAdminFoundPage() {
         </td>
       </tr>
     `;
-    if (window.lucide) window.lucide.createIcons();
+    if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
     return;
   }
 
@@ -375,7 +375,7 @@ function renderAdminFoundPage() {
     `;
   }).join('');
 
-  if (window.lucide) window.lucide.createIcons();
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
 }
 
 function handleAdminFoundFilterChange() {
@@ -387,7 +387,7 @@ function handleAdminFoundFilterChange() {
    -------------------------------------------------------------------------- */
 function renderAdminAllReportsPage() {
   normalizeReportsData();
-  updateAdminMetricsAndBadges();
+  updateAdminMetricsAndPills();
 
   const tbody = document.getElementById('admin-all-table-tbody');
   if (!tbody) return;
@@ -442,7 +442,7 @@ function renderAdminAllReportsPage() {
         </td>
       </tr>
     `;
-    if (window.lucide) window.lucide.createIcons();
+    if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
     return;
   }
 
@@ -488,7 +488,7 @@ function renderAdminAllReportsPage() {
     `;
   }).join('');
 
-  if (window.lucide) window.lucide.createIcons();
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
 }
 
 function handleAdminAllFilterChange() {
@@ -520,7 +520,7 @@ function handleAdminClaimsFilterChange() {
 
 function renderAdminClaimsPage(filterTab = currentClaimFilterTab) {
   normalizeReportsData();
-  updateAdminMetricsAndBadges();
+  updateAdminMetricsAndPills();
 
   currentClaimFilterTab = filterTab;
   const tbody = document.getElementById('admin-claims-table-tbody');
@@ -566,7 +566,7 @@ function renderAdminClaimsPage(filterTab = currentClaimFilterTab) {
         </td>
       </tr>
     `;
-    if (window.lucide) window.lucide.createIcons();
+    if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
     return;
   }
 
@@ -629,7 +629,7 @@ function renderAdminClaimsPage(filterTab = currentClaimFilterTab) {
     `;
   }).join('');
 
-  if (window.lucide) window.lucide.createIcons();
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
 }
 
 /* --------------------------------------------------------------------------
@@ -637,7 +637,7 @@ function renderAdminClaimsPage(filterTab = currentClaimFilterTab) {
    -------------------------------------------------------------------------- */
 function renderAdminMatchCenterPage() {
   normalizeReportsData();
-  updateAdminMetricsAndBadges();
+  updateAdminMetricsAndPills();
 
   const container = document.getElementById('admin-matches-cards-container');
   if (!container) return;
@@ -679,7 +679,7 @@ function renderAdminMatchCenterPage() {
         </p>
       </div>
     `;
-    if (window.lucide) window.lucide.createIcons();
+    if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
     return;
   }
 
@@ -782,7 +782,7 @@ function renderAdminMatchCenterPage() {
     `;
   }).join('');
 
-  if (window.lucide) window.lucide.createIcons();
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
 }
 
 function handleAdminMatchFilterChange() {

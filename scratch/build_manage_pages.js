@@ -118,10 +118,7 @@ html = html.replace(adminNavManageTarget, adminNavManageReplacement);
 
 // 2. Update Admin Dashboard Metric Cards to link to real dedicated modules
 const adminHeroActionsTarget = `<div class="hero-actions-box">
-                <button class="btn btn-secondary btn-sm" onclick="resetHackathonDemoData()" title="Reload Demo Dataset">
-                  <i data-lucide="rotate-ccw"></i>
-                  <span>Reset Demo Data</span>
-                </button>
+                
                 <button class="btn btn-primary btn-sm" onclick="showPage('admin-page')">
                   <i data-lucide="shield-check"></i>
                   <span>Go to Admin Desk</span>
@@ -129,10 +126,7 @@ const adminHeroActionsTarget = `<div class="hero-actions-box">
               </div>`;
 
 const adminHeroActionsReplacement = `<div class="hero-actions-box">
-                <button class="btn btn-secondary btn-sm" onclick="resetHackathonDemoData()" title="Reload Demo Dataset">
-                  <i data-lucide="rotate-ccw"></i>
-                  <span>Reset Demo Data</span>
-                </button>
+                
                 <button class="btn btn-primary btn-sm" onclick="showPage('admin-all-page')">
                   <i data-lucide="shield-check"></i>
                   <span>Go to Reports Directory</span>

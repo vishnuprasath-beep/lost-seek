@@ -76,7 +76,7 @@ async function renderCommunityAlerts() {
         <p style="color: var(--text-muted); font-size: 0.9rem; max-width: 420px; margin: 0 auto;">No active community lost alerts currently pending. The campus radar is clear!</p>
       </div>
     `;
-    if (window.lucide) window.lucide.createIcons();
+    if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
     return;
   }
 
@@ -122,7 +122,7 @@ async function renderCommunityAlerts() {
     `;
   }).join('');
 
-  if (window.lucide) window.lucide.createIcons();
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
 }
 
 function renderNotificationsList() {
@@ -138,7 +138,7 @@ function renderNotificationsList() {
         <p style="color:var(--text-muted);">No personal notifications right now. You are all caught up!</p>
       </div>
     `;
-    if (window.lucide) window.lucide.createIcons();
+    if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
     return;
   }
 
@@ -157,7 +157,7 @@ function renderNotificationsList() {
     </div>
   `).join('');
 
-  if (window.lucide) window.lucide.createIcons();
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
 }
 
 function refreshCommunityAlerts() {

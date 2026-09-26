@@ -1,14 +1,7 @@
 /* ==========================================================================
    DEMO HELPERS & CONTROLS
    ========================================================================== */
-function resetHackathonDemoData() {
-  localStorage.removeItem(STORAGE_KEY);
-  appState = getInitialSeedData();
-  saveData();
-  setupAuthenticatedUser(appState.user);
-  renderAllViews();
-  showToast('Dataset reset cleanly: Ready for genuine campus records! 🔄', 'info');
-}
+
 
 function toggleRoleDemo() {
   if (!appState.user) return;

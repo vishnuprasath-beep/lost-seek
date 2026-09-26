@@ -2,6 +2,7 @@
    REPORT HISTORY AUDIT MODAL
    ========================================================================== */
 function openReportHistoryModal(reportId) {
+  ensureModalsLoaded();
   const report = appState.lostReports.find(r => r.id === reportId) ||
                  appState.foundReports.find(r => r.id === reportId);
   if (!report) return;

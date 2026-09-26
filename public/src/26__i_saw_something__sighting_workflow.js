@@ -2,6 +2,7 @@
    "I SAW SOMETHING" SIGHTING WORKFLOW
    ========================================================================== */
 function openSightingModal(alertId, reportId, category, area) {
+  ensureModalsLoaded();
   const modal = document.getElementById('community-sighting-modal');
   if (!modal) return;
 
@@ -29,7 +30,7 @@ function openSightingModal(alertId, reportId, category, area) {
   radios.forEach(r => { if (r.value === 'no') r.checked = true; });
 
   modal.style.display = 'flex';
-  if (window.lucide) window.lucide.createIcons();
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
 }
 
 function closeSightingModal() {
@@ -173,7 +174,7 @@ async function handleSightingSubmit(event) {
     if (submitBtn) {
       submitBtn.disabled = false;
       submitBtn.innerHTML = `<i data-lucide="send"></i><span>Submit Sighting</span>`;
-      if (window.lucide) window.lucide.createIcons();
+      if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
     }
   }
 }

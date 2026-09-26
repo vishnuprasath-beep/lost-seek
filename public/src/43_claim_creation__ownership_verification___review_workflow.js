@@ -3,6 +3,7 @@
    ========================================================================== */
 
 function openCreateClaimModal(lostId, foundId) {
+  ensureModalsLoaded();
   const lost = appState.lostReports.find(r => r.id === lostId);
   const found = appState.foundReports.find(r => r.id === foundId);
   if (!lost || !found) {
@@ -141,6 +142,7 @@ function submitCreateClaimFromModal(e) {
 }
 
 function openClaimReviewModal(claimId) {
+  ensureModalsLoaded();
   const claim = (appState.claims || []).find(c => c.id === claimId);
   if (!claim) return;
 
@@ -249,7 +251,7 @@ function openClaimReviewModal(claimId) {
   `;
 
   modal.classList.add('show');
-  if (window.lucide) window.lucide.createIcons();
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
 }
 
 function closeClaimReviewModal() {

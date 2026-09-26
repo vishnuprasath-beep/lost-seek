@@ -57,7 +57,7 @@
   <link rel="stylesheet" href="styles.css?v=2">
 
   <!-- Lucide Icons (Deferred) -->
-  <script defer src="https://unpkg.com/lucide@latest"></script>
+  <script defer src="assets/lucide.min.js"></script>
 
   <!-- External Libraries Loaded On-Demand via app.js -->
 </head>
@@ -176,7 +176,7 @@
 
           <!-- Easel chalkboard art -->
           <div class="lp-easel-board">
-            <h4>Better Together</h4>
+            <h3>Better Together</h3>
             <p>A Safer Campus</p>
             <div style="font-size: 1.1rem; margin-top: 4px;">💚</div>
           </div>
@@ -580,13 +580,817 @@
         </div>
       </div>
     </section>
-    </main>
+    <template id="lazy-admin-template">
+<section id="admin-lost-page" class="page-section" style="display: none;">
+          <div class="page-header-row" style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
+            <div>
+              <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(239, 68, 68, 0.12); color: #F87171; padding: 4px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 700; margin-bottom: 8px;">
+                <i data-lucide="search" style="width: 14px; height: 14px;"></i>
+                <span>Lost Property Registry</span>
+              </div>
+              <h1 style="margin: 0; font-size: 1.75rem; color: var(--text-primary);">Lost Items Management</h1>
+              <p style="margin: 6px 0 0; color: var(--text-secondary); font-size: 0.95rem;">
+                Displaying ONLY reports where property was reported as lost. Correlate prospective finders &amp; update resolution statuses.
+              </p>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+              <button type="button" class="btn btn-secondary" onclick="renderAdminLostPage()">
+                <i data-lucide="refresh-cw"></i>
+                <span>Refresh</span>
+              </button>
+              <button type="button" class="btn btn-primary" onclick="showPage('report-lost-page')">
+                <i data-lucide="plus"></i>
+                <span>Report Lost</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Lost Metric Pills -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 20px;">
+            <div class="glass-card stat-card" style="padding: 14px 18px;">
+              <div class="stat-label">Total Lost</div>
+              <div class="stat-value" id="admin-lost-metric-total" style="font-size: 1.5rem;">0</div>
+            </div>
+            <div class="glass-card stat-card" style="padding: 14px 18px; border-top: 3px solid #3B82F6;">
+              <div class="stat-label" style="color: #60A5FA;">Actively Looking</div>
+              <div class="stat-value" id="admin-lost-metric-looking" style="font-size: 1.5rem; color: #60A5FA;">0</div>
+            </div>
+            <div class="glass-card stat-card" style="padding: 14px 18px; border-top: 3px solid var(--ai-violet);">
+              <div class="stat-label" style="color: var(--ai-violet);">Possible Matches</div>
+              <div class="stat-value" id="admin-lost-metric-matches" style="font-size: 1.5rem; color: var(--ai-violet);">0</div>
+            </div>
+            <div class="glass-card stat-card" style="padding: 14px 18px; border-top: 3px solid #F59E0B;">
+              <div class="stat-label" style="color: #FBBF24;">Claims in Verification</div>
+              <div class="stat-value" id="admin-lost-metric-claims" style="font-size: 1.5rem; color: #FBBF24;">0</div>
+            </div>
+            <div class="glass-card stat-card" style="padding: 14px 18px; border-top: 3px solid #10B981;">
+              <div class="stat-label" style="color: #34D399;">Recovered / Reunited</div>
+              <div class="stat-value" id="admin-lost-metric-recovered" style="font-size: 1.5rem; color: #34D399;">0</div>
+            </div>
+          </div>
+
+          <!-- Filter Controls -->
+          <div class="glass-card" style="margin-bottom: 20px; padding: 16px 20px;">
+            <div class="filter-pills-row">
+              <div class="header-search" style="display: flex; flex: 1; min-width: 220px;">
+                <i data-lucide="search"></i>
+                <input type="text" id="admin-lost-search-input" aria-label="Search lost reports" class="input-glass" placeholder="Search by item title, description, brand, ID, reporter..." oninput="handleAdminLostFilterChange()">
+              </div>
+              <select id="admin-lost-filter-category" aria-label="Filter lost reports by category" class="input-glass filter-select" onchange="handleAdminLostFilterChange()">
+                <option value="">All Categories</option>
+                <option value="id-card">ID Cards</option>
+                <option value="electronics">Electronics</option>
+                <option value="wallet">Wallets</option>
+                <option value="keys">Keys</option>
+                <option value="bags">Bags</option>
+                <option value="documents">Documents</option>
+                <option value="clothing">Clothing</option>
+                <option value="accessories">Accessories</option>
+                <option value="misc">Miscellaneous</option>
+              </select>
+              <select id="admin-lost-filter-location" aria-label="Filter lost reports by location" class="input-glass filter-select" onchange="handleAdminLostFilterChange()">
+                      <option value="" disabled selected>Select Location</option>
+                      
+  <!-- OFFICIALLY VERIFIED -->
+  <option value="Administrative Block">Administrative Block</option>
+  <option value="Academic Block">Academic Block</option>
+  <option value="A Block">A Block</option>
+  <option value="B Block">B Block</option>
+  <option value="C Block">C Block</option>
+  <option value="D Block">D Block</option>
+  <option value="E Block">E Block</option>
+  <option value="F Block">F Block</option>
+  <option value="Library Block">Library Block</option>
+  <option value="Principal Quarters">Principal Quarters</option>
+  <option value="Guest House">Guest House</option>
+  <option value="Sports Club & Gymnasium">Sports Club & Gymnasium</option>
+  <option value="Auditorium">Auditorium</option>
+  <option value="Cafeteria">Cafeteria</option>
+  <option value="Boys' Hostel">Boys' Hostel</option>
+  <option value="Girls' Hostel">Girls' Hostel</option>
+  <option value="Power House">Power House</option>
+  <option value="Stationery Store">Stationery Store</option>
+  <option value="Parking">Parking</option>
+  <!-- FRIEND/STUDENT CONFIRMED -->
+  <option value="Himalayan House">Himalayan House</option>
+  <option value="Tanjore House">Tanjore House</option>
+  <option value="Madurai House">Madurai House</option>
+  <option value="Marina House">Marina House</option>
+  <option value="Nilgiri House">Nilgiri House</option>
+  <option value="Ellora House">Ellora House</option>
+  <option value="Vivekananda Hostel">Vivekananda Hostel</option>
+  <option value="Raman Block">Raman Block</option>
+  <option value="Mercury Block">Mercury Block</option>
+  <option value="Jupiter Block">Jupiter Block</option>
+  <option value="MBA Block">MBA Block</option>
+  <option value="Mechanical Block">Mechanical Block</option>
+  <option value="IT Park">IT Park</option>
+  <option value="Techno Park">Techno Park</option>
+  <option value="Founder Hall">Founder Hall</option>
+  <option value="West Mart">West Mart</option>
+  <option value="Cucumber Canteen">Cucumber Canteen</option>
+  <option value="Mustard Cafe">Mustard Cafe</option>
+  <option value="Saffron Canteen">Saffron Canteen</option>
+  <option value="Cinnamon Canteen">Cinnamon Canteen</option>
+  <option value="Bite Zone">Bite Zone</option>
+  <!-- NEEDS CONFIRMATION -->
+  <option value="Round Building">Round Building</option>
+  <option value="Women's Arts">Women's Arts</option>
+
+                    </select>
+              <select id="admin-lost-filter-status" aria-label="Filter lost reports by status" class="input-glass filter-select" onchange="handleAdminLostFilterChange()">
+                <option value="">All Statuses</option>
+                <option value="Looking">Looking</option>
+                <option value="Possible Match">Possible Match</option>
+                <option value="Claim Submitted">Claim Submitted</option>
+                <option value="Under Verification">Under Verification</option>
+                <option value="Recovered">Recovered</option>
+              </select>
+              <select id="admin-lost-filter-sort" aria-label="Sort lost reports" class="input-glass filter-select" onchange="handleAdminLostFilterChange()">
+                <option value="newest">Newest First</option>
+                <option value="oldest">Oldest First</option>
+                <option value="title">Title (A-Z)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Lost Reports Table -->
+          <div class="glass-card" style="padding: 0; overflow: hidden;">
+            <div class="admin-table-container">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Report ID</th>
+                    <th>Item &amp; Details</th>
+                    <th>Category</th>
+                    <th>Color / Brand</th>
+                    <th>Lost Location</th>
+                    <th>Date / Time</th>
+                    <th>Reporter</th>
+                    <th>Status</th>
+                    <th>Matches</th>
+                    <th style="text-align: right;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-lost-table-tbody">
+                  <!-- Rendered via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+<section id="admin-found-page" class="page-section" style="display: none;">
+          <div class="page-header-row" style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
+            <div>
+              <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(20, 184, 166, 0.12); color: var(--teal-bright); padding: 4px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 700; margin-bottom: 8px;">
+                <i data-lucide="package" style="width: 14px; height: 14px;"></i>
+                <span>Found Property Custody</span>
+              </div>
+              <h1 style="margin: 0; font-size: 1.75rem; color: var(--text-primary);">Found Items &amp; Custody Inventory</h1>
+              <p style="margin: 6px 0 0; color: var(--text-secondary); font-size: 0.95rem;">
+                Displaying ONLY reports where items were reported as found. Manage storage locker custody, identify prospective owners &amp; authorize returns.
+              </p>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+              <button type="button" class="btn btn-secondary" onclick="renderAdminFoundPage()">
+                <i data-lucide="refresh-cw"></i>
+                <span>Refresh</span>
+              </button>
+              <button type="button" class="btn btn-primary" onclick="showPage('report-found-page')">
+                <i data-lucide="plus"></i>
+                <span>Report Found</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Found Metric Pills -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 20px;">
+            <div class="glass-card stat-card" style="padding: 14px 18px;">
+              <div class="stat-label">Total Found</div>
+              <div class="stat-value" id="admin-found-metric-total" style="font-size: 1.5rem;">0</div>
+            </div>
+            <div class="glass-card stat-card" style="padding: 14px 18px; border-top: 3px solid #3B82F6;">
+              <div class="stat-label" style="color: #60A5FA;">In Security Lockers</div>
+              <div class="stat-value" id="admin-found-metric-lockers" style="font-size: 1.5rem; color: #60A5FA;">0</div>
+            </div>
+            <div class="glass-card stat-card" style="padding: 14px 18px; border-top: 3px solid #F59E0B;">
+              <div class="stat-label" style="color: #FBBF24;">With Finder</div>
+              <div class="stat-value" id="admin-found-metric-finder" style="font-size: 1.5rem; color: #FBBF24;">0</div>
+            </div>
+            <div class="glass-card stat-card" style="padding: 14px 18px; border-top: 3px solid var(--ai-violet);">
+              <div class="stat-label" style="color: var(--ai-violet);">Possible Owners</div>
+              <div class="stat-value" id="admin-found-metric-matches" style="font-size: 1.5rem; color: var(--ai-violet);">0</div>
+            </div>
+            <div class="glass-card stat-card" style="padding: 14px 18px; border-top: 3px solid #10B981;">
+              <div class="stat-label" style="color: #34D399;">Handed Over / Returned</div>
+              <div class="stat-value" id="admin-found-metric-returned" style="font-size: 1.5rem; color: #34D399;">0</div>
+            </div>
+          </div>
+
+          <!-- Filter Controls -->
+          <div class="glass-card" style="margin-bottom: 20px; padding: 16px 20px;">
+            <div class="filter-pills-row">
+              <div class="header-search" style="display: flex; flex: 1; min-width: 220px;">
+                <i data-lucide="search"></i>
+                <input type="text" id="admin-found-search-input" aria-label="Search found reports" class="input-glass" placeholder="Search by item title, description, brand, ID, finder..." oninput="handleAdminFoundFilterChange()">
+              </div>
+              <select id="admin-found-filter-category" aria-label="Filter found reports by category" class="input-glass filter-select" onchange="handleAdminFoundFilterChange()">
+                <option value="">All Categories</option>
+                <option value="id-card">ID Cards</option>
+                <option value="electronics">Electronics</option>
+                <option value="wallet">Wallets</option>
+                <option value="keys">Keys</option>
+                <option value="bags">Bags</option>
+                <option value="documents">Documents</option>
+                <option value="clothing">Clothing</option>
+                <option value="accessories">Accessories</option>
+                <option value="misc">Miscellaneous</option>
+              </select>
+              <select id="admin-found-filter-location" aria-label="Filter found reports by location" class="input-glass filter-select" onchange="handleAdminFoundFilterChange()">
+                      <option value="" disabled selected>Select Location</option>
+                      
+  <!-- OFFICIALLY VERIFIED -->
+  <option value="Administrative Block">Administrative Block</option>
+  <option value="Academic Block">Academic Block</option>
+  <option value="A Block">A Block</option>
+  <option value="B Block">B Block</option>
+  <option value="C Block">C Block</option>
+  <option value="D Block">D Block</option>
+  <option value="E Block">E Block</option>
+  <option value="F Block">F Block</option>
+  <option value="Library Block">Library Block</option>
+  <option value="Principal Quarters">Principal Quarters</option>
+  <option value="Guest House">Guest House</option>
+  <option value="Sports Club & Gymnasium">Sports Club & Gymnasium</option>
+  <option value="Auditorium">Auditorium</option>
+  <option value="Cafeteria">Cafeteria</option>
+  <option value="Boys' Hostel">Boys' Hostel</option>
+  <option value="Girls' Hostel">Girls' Hostel</option>
+  <option value="Power House">Power House</option>
+  <option value="Stationery Store">Stationery Store</option>
+  <option value="Parking">Parking</option>
+  <!-- FRIEND/STUDENT CONFIRMED -->
+  <option value="Himalayan House">Himalayan House</option>
+  <option value="Tanjore House">Tanjore House</option>
+  <option value="Madurai House">Madurai House</option>
+  <option value="Marina House">Marina House</option>
+  <option value="Nilgiri House">Nilgiri House</option>
+  <option value="Ellora House">Ellora House</option>
+  <option value="Vivekananda Hostel">Vivekananda Hostel</option>
+  <option value="Raman Block">Raman Block</option>
+  <option value="Mercury Block">Mercury Block</option>
+  <option value="Jupiter Block">Jupiter Block</option>
+  <option value="MBA Block">MBA Block</option>
+  <option value="Mechanical Block">Mechanical Block</option>
+  <option value="IT Park">IT Park</option>
+  <option value="Techno Park">Techno Park</option>
+  <option value="Founder Hall">Founder Hall</option>
+  <option value="West Mart">West Mart</option>
+  <option value="Cucumber Canteen">Cucumber Canteen</option>
+  <option value="Mustard Cafe">Mustard Cafe</option>
+  <option value="Saffron Canteen">Saffron Canteen</option>
+  <option value="Cinnamon Canteen">Cinnamon Canteen</option>
+  <option value="Bite Zone">Bite Zone</option>
+  <!-- NEEDS CONFIRMATION -->
+  <option value="Round Building">Round Building</option>
+  <option value="Women's Arts">Women's Arts</option>
+
+                    </select>
+              <select id="admin-found-filter-status" aria-label="Filter found reports by status" class="input-glass filter-select" onchange="handleAdminFoundFilterChange()">
+                <option value="">All Statuses</option>
+                <option value="Looking">Looking</option>
+                <option value="Possible Owner">Possible Owner</option>
+                <option value="Claim Submitted">Claim Submitted</option>
+                <option value="Returned">Returned</option>
+              </select>
+              <select id="admin-found-filter-custody" aria-label="Filter found reports by custody" class="input-glass filter-select" onchange="handleAdminFoundFilterChange()">
+                <option value="">All Custody</option>
+                <option value="desk">At Security Desk Lockers</option>
+                <option value="finder">With Finder</option>
+              </select>
+              <select id="admin-found-filter-sort" aria-label="Sort found reports" class="input-glass filter-select" onchange="handleAdminFoundFilterChange()">
+                <option value="newest">Newest First</option>
+                <option value="oldest">Oldest First</option>
+                <option value="title">Title (A-Z)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Found Reports Table -->
+          <div class="glass-card" style="padding: 0; overflow: hidden;">
+            <div class="admin-table-container">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Report ID</th>
+                    <th>Item &amp; Details</th>
+                    <th>Category</th>
+                    <th>Color / Brand</th>
+                    <th>Found Location</th>
+                    <th>Date / Time</th>
+                    <th>Finder &amp; Custody</th>
+                    <th>Status</th>
+                    <th>Owner Matches</th>
+                    <th style="text-align: right;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-found-table-tbody">
+                  <!-- Rendered via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+<section id="admin-all-page" class="page-section" style="display: none;">
+          <div class="page-header-row" style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
+            <div>
+              <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(59, 130, 246, 0.12); color: #60A5FA; padding: 4px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 700; margin-bottom: 8px;">
+                <i data-lucide="clipboard-list" style="width: 14px; height: 14px;"></i>
+                <span>Institutional Archive</span>
+              </div>
+              <h1 style="margin: 0; font-size: 1.75rem; color: var(--text-primary);">All Campus Reports Directory</h1>
+              <p style="margin: 6px 0 0; color: var(--text-secondary); font-size: 0.95rem;">
+                Complete master repository combining LOST and FOUND records with clear visual demarcation and multi-parameter filtering.
+              </p>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+              <button type="button" class="btn btn-secondary" onclick="renderAdminAllReportsPage()">
+                <i data-lucide="refresh-cw"></i>
+                <span>Refresh</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- All Reports Filter Bar -->
+          <div class="glass-card" style="margin-bottom: 20px; padding: 16px 20px;">
+            <div class="filter-pills-row">
+              <div class="header-search" style="display: flex; flex: 1; min-width: 220px;">
+                <i data-lucide="search"></i>
+                <input type="text" id="admin-all-search-input" aria-label="Search all reports" class="input-glass" placeholder="Search by title, description, ID, person, location..." oninput="handleAdminAllFilterChange()">
+              </div>
+              <select id="admin-all-filter-type" aria-label="Filter all reports by type" class="input-glass filter-select" onchange="handleAdminAllFilterChange()">
+                <option value="">All Report Types (Lost &amp; Found)</option>
+                <option value="LOST">Lost Reports Only</option>
+                <option value="FOUND">Found Reports Only</option>
+              </select>
+              <select id="admin-all-filter-category" aria-label="Filter all reports by category" class="input-glass filter-select" onchange="handleAdminAllFilterChange()">
+                <option value="">All Categories</option>
+                <option value="id-card">ID Cards</option>
+                <option value="electronics">Electronics</option>
+                <option value="wallet">Wallets</option>
+                <option value="keys">Keys</option>
+                <option value="bags">Bags</option>
+                <option value="documents">Documents</option>
+                <option value="clothing">Clothing</option>
+                <option value="accessories">Accessories</option>
+                <option value="misc">Miscellaneous</option>
+              </select>
+              <select id="admin-all-filter-location" aria-label="Filter all reports by location" class="input-glass filter-select" onchange="handleAdminAllFilterChange()">
+                      <option value="" disabled selected>Select Location</option>
+                      
+  <!-- OFFICIALLY VERIFIED -->
+  <option value="Administrative Block">Administrative Block</option>
+  <option value="Academic Block">Academic Block</option>
+  <option value="A Block">A Block</option>
+  <option value="B Block">B Block</option>
+  <option value="C Block">C Block</option>
+  <option value="D Block">D Block</option>
+  <option value="E Block">E Block</option>
+  <option value="F Block">F Block</option>
+  <option value="Library Block">Library Block</option>
+  <option value="Principal Quarters">Principal Quarters</option>
+  <option value="Guest House">Guest House</option>
+  <option value="Sports Club & Gymnasium">Sports Club & Gymnasium</option>
+  <option value="Auditorium">Auditorium</option>
+  <option value="Cafeteria">Cafeteria</option>
+  <option value="Boys' Hostel">Boys' Hostel</option>
+  <option value="Girls' Hostel">Girls' Hostel</option>
+  <option value="Power House">Power House</option>
+  <option value="Stationery Store">Stationery Store</option>
+  <option value="Parking">Parking</option>
+  <!-- FRIEND/STUDENT CONFIRMED -->
+  <option value="Himalayan House">Himalayan House</option>
+  <option value="Tanjore House">Tanjore House</option>
+  <option value="Madurai House">Madurai House</option>
+  <option value="Marina House">Marina House</option>
+  <option value="Nilgiri House">Nilgiri House</option>
+  <option value="Ellora House">Ellora House</option>
+  <option value="Vivekananda Hostel">Vivekananda Hostel</option>
+  <option value="Raman Block">Raman Block</option>
+  <option value="Mercury Block">Mercury Block</option>
+  <option value="Jupiter Block">Jupiter Block</option>
+  <option value="MBA Block">MBA Block</option>
+  <option value="Mechanical Block">Mechanical Block</option>
+  <option value="IT Park">IT Park</option>
+  <option value="Techno Park">Techno Park</option>
+  <option value="Founder Hall">Founder Hall</option>
+  <option value="West Mart">West Mart</option>
+  <option value="Cucumber Canteen">Cucumber Canteen</option>
+  <option value="Mustard Cafe">Mustard Cafe</option>
+  <option value="Saffron Canteen">Saffron Canteen</option>
+  <option value="Cinnamon Canteen">Cinnamon Canteen</option>
+  <option value="Bite Zone">Bite Zone</option>
+  <!-- NEEDS CONFIRMATION -->
+  <option value="Round Building">Round Building</option>
+  <option value="Women's Arts">Women's Arts</option>
+
+                    </select>
+              <select id="admin-all-filter-status" aria-label="Filter all reports by status" class="input-glass filter-select" onchange="handleAdminAllFilterChange()">
+                <option value="">All Statuses</option>
+                <option value="Looking">Looking</option>
+                <option value="Possible Match">Possible Match / Owner</option>
+                <option value="Claim Submitted">Claim Submitted</option>
+                <option value="Under Verification">Under Verification</option>
+                <option value="Recovered">Recovered / Returned</option>
+              </select>
+              <select id="admin-all-filter-sort" aria-label="Sort all reports" class="input-glass filter-select" onchange="handleAdminAllFilterChange()">
+                <option value="newest">Newest First</option>
+                <option value="oldest">Oldest First</option>
+                <option value="title">Title (A-Z)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- All Reports Table -->
+          <div class="glass-card" style="padding: 0; overflow: hidden;">
+            <div class="admin-table-container">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Type</th>
+                    <th>Report ID</th>
+                    <th>Item &amp; Details</th>
+                    <th>Category</th>
+                    <th>Color / Brand</th>
+                    <th>Campus Location</th>
+                    <th>Date Reported</th>
+                    <th>Person</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-all-table-tbody">
+                  <!-- Rendered via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+<section id="admin-claims-page" class="page-section" style="display: none;">
+          <div class="page-header-row" style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
+            <div>
+              <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(245, 158, 11, 0.12); color: #F59E0B; padding: 4px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 700; margin-bottom: 8px;">
+                <i data-lucide="shield-check" style="width: 14px; height: 14px;"></i>
+                <span>Claims Verification &amp; Release</span>
+              </div>
+              <h1 style="margin: 0; font-size: 1.75rem; color: var(--text-primary);">Claims &amp; Ownership Verification</h1>
+              <p style="margin: 6px 0 0; color: var(--text-secondary); font-size: 0.95rem;">
+                Dedicated claims management module. Evaluate claimant secret proof, examine AI matching evidence &amp; authorize safe physical handovers.
+              </p>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+              <button type="button" class="btn btn-secondary" onclick="renderAdminClaimsPage()">
+                <i data-lucide="refresh-cw"></i>
+                <span>Refresh</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Claims Metric Cards -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 20px;">
+            <div class="glass-card stat-card" style="padding: 14px 18px;">
+              <div class="stat-label">Total Claims</div>
+              <div class="stat-value" id="admin-claims-metric-total" style="font-size: 1.5rem;">0</div>
+            </div>
+            <div class="glass-card stat-card" style="padding: 14px 18px; border-top: 3px solid #F59E0B;">
+              <div class="stat-label" style="color: #FBBF24;">Pending Review</div>
+              <div class="stat-value" id="admin-claims-metric-pending" style="font-size: 1.5rem; color: #FBBF24;">0</div>
+            </div>
+            <div class="glass-card stat-card" style="padding: 14px 18px; border-top: 3px solid #3B82F6;">
+              <div class="stat-label" style="color: #60A5FA;">Under Verification</div>
+              <div class="stat-value" id="admin-claims-metric-verification" style="font-size: 1.5rem; color: #60A5FA;">0</div>
+            </div>
+            <div class="glass-card stat-card" style="padding: 14px 18px; border-top: 3px solid #10B981;">
+              <div class="stat-label" style="color: #34D399;">Approved (Ready)</div>
+              <div class="stat-value" id="admin-claims-metric-approved" style="font-size: 1.5rem; color: #34D399;">0</div>
+            </div>
+            <div class="glass-card stat-card" style="padding: 14px 18px; border-top: 3px solid #64748B;">
+              <div class="stat-label" style="color: var(--text-muted);">Completed Handover</div>
+              <div class="stat-value" id="admin-claims-metric-completed" style="font-size: 1.5rem; color: var(--text-muted);">0</div>
+            </div>
+          </div>
+
+          <!-- Claims Filter Tabs -->
+          <div class="glass-card" style="margin-bottom: 20px; padding: 16px 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+              <div class="admin-help-tabs-wrap" id="admin-claims-tabs">
+                <button type="button" class="btn btn-sm admin-claims-tab active" data-tab="all" onclick="filterAdminClaimsTab('all', this)">All Claims</button>
+                <button type="button" class="btn btn-sm btn-secondary admin-claims-tab" data-tab="Pending" onclick="filterAdminClaimsTab('Pending', this)">Pending</button>
+                <button type="button" class="btn btn-sm btn-secondary admin-claims-tab" data-tab="Under Verification" onclick="filterAdminClaimsTab('Under Verification', this)">Under Verification</button>
+                <button type="button" class="btn btn-sm btn-secondary admin-claims-tab" data-tab="Approved" onclick="filterAdminClaimsTab('Approved', this)">Approved</button>
+                <button type="button" class="btn btn-sm btn-secondary admin-claims-tab" data-tab="Rejected" onclick="filterAdminClaimsTab('Rejected', this)">Rejected</button>
+                <button type="button" class="btn btn-sm btn-secondary admin-claims-tab" data-tab="Completed" onclick="filterAdminClaimsTab('Completed', this)">Completed</button>
+              </div>
+
+              <div style="display: flex; gap: 10px; align-items: center; flex: 1; max-width: 360px;">
+                <input type="text" id="admin-claims-search-input" aria-label="Search claim requests" class="input-glass" placeholder="Search by claim ID, student, item title..." oninput="handleAdminClaimsFilterChange()">
+              </div>
+            </div>
+          </div>
+
+          <!-- Claims Table -->
+          <div class="glass-card" style="padding: 0; overflow: hidden;">
+            <div class="admin-table-container">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Claim ID</th>
+                    <th>Lost Item</th>
+                    <th>Found Item</th>
+                    <th>Claimant</th>
+                    <th>Finder</th>
+                    <th>Match Score</th>
+                    <th>Secret Verification Evidence</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-claims-table-tbody">
+                  <!-- Rendered via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+<section id="admin-matches-page" class="page-section" style="display: none;">
+          <div class="page-header-row" style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
+            <div>
+              <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(139, 92, 246, 0.12); color: var(--ai-violet); padding: 4px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 700; margin-bottom: 8px;">
+                <i data-lucide="sparkles" style="width: 14px; height: 14px;"></i>
+                <span>Multi-Signal Correlation Engine</span>
+              </div>
+              <h1 style="margin: 0; font-size: 1.75rem; color: var(--text-primary);">AI Match Center</h1>
+              <p style="margin: 6px 0 0; color: var(--text-secondary); font-size: 0.95rem;">
+                Cross-modal intelligence matching lost text descriptions (no photo required) with found item photographs and campus locations.
+              </p>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+              <button type="button" class="btn btn-secondary" onclick="renderAdminMatchCenterPage()">
+                <i data-lucide="refresh-cw"></i>
+                <span>Refresh Engine</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Match Center Metrics & Controls -->
+          <div class="glass-card" style="margin-bottom: 24px; padding: 16px 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <span style="font-weight: 700; font-size: 0.88rem; color: var(--text-primary);">Confidence Filter:</span>
+                <select id="admin-match-filter-threshold" aria-label="Filter matches by threshold" class="input-glass" style="width: auto;" onchange="handleAdminMatchFilterChange()">
+                  <option value="40">All Potential Matches (&ge; 40%)</option>
+                  <option value="60">Medium &amp; High Confidence (&ge; 60%)</option>
+                  <option value="75">High Confidence Only (&ge; 75%)</option>
+                  <option value="85">Strong Probability (&ge; 85%)</option>
+                </select>
+              </div>
+
+              <div style="display: flex; gap: 10px; align-items: center; flex: 1; max-width: 360px;">
+                <input type="text" id="admin-match-search-input" aria-label="Search matches" class="input-glass" placeholder="Search by item keywords or landmark..." oninput="handleAdminMatchFilterChange()">
+              </div>
+            </div>
+          </div>
+
+          <!-- Candidate Matches Grid / Cards Container -->
+          <div id="admin-matches-cards-container" style="display: flex; flex-direction: column; gap: 18px;">
+            <!-- Rendered dynamically by renderAdminMatchCenterPage() -->
+          </div>
+        </section>
+<section id="admin-photo-search-page" class="page-section" style="display: none;">
+          <div class="find-item-header">
+            <h1>Staff Vision: Find by Photo</h1>
+            <p>Upload a photo of a found item to run AI-assisted multi-signal correlation across all campus lost reports.</p>
+          </div>
+
+          <div class="glass-card" style="max-width: 720px; margin: 0 auto 24px;">
+            <div class="form-group">
+              <label style="font-weight: 600;">Upload Found Item Photo</label>
+              <input type="file" id="admin-photo-input" aria-label="Upload photo for similarity search" accept="image/*" class="input-glass" onchange="handleAdminPhotoSelected(event)">
+              <div id="admin-photo-preview" style="display: none; margin-top: 14px;">
+                <img id="admin-photo-preview-img" style="max-width: 200px; max-height: 160px; object-fit: cover; border-radius: 8px; border: 1.5px solid var(--teal-bright);" src="" alt="Preview">
+              </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px;">
+              <div class="form-group">
+                <label for="admin-photo-category">Item Category</label>
+                <select id="admin-photo-category" class="select-glass">
+                  <option value="">All Categories</option>
+                  <option value="electronics">Electronics</option>
+                  <option value="wallet">Wallets &amp; Bags</option>
+                  <option value="id-card">ID Cards</option>
+                  <option value="keys">Keys</option>
+                  <option value="clothing">Clothing</option>
+                  <option value="documents">Documents</option>
+                  <option value="misc">Miscellaneous</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="admin-photo-location">Found Location</label>
+                <select id="admin-photo-location" class="select-glass">
+                      <option value="" disabled selected>Select Location</option>
+                      
+  <!-- OFFICIALLY VERIFIED -->
+  <option value="Administrative Block">Administrative Block</option>
+  <option value="Academic Block">Academic Block</option>
+  <option value="A Block">A Block</option>
+  <option value="B Block">B Block</option>
+  <option value="C Block">C Block</option>
+  <option value="D Block">D Block</option>
+  <option value="E Block">E Block</option>
+  <option value="F Block">F Block</option>
+  <option value="Library Block">Library Block</option>
+  <option value="Principal Quarters">Principal Quarters</option>
+  <option value="Guest House">Guest House</option>
+  <option value="Sports Club & Gymnasium">Sports Club & Gymnasium</option>
+  <option value="Auditorium">Auditorium</option>
+  <option value="Cafeteria">Cafeteria</option>
+  <option value="Boys' Hostel">Boys' Hostel</option>
+  <option value="Girls' Hostel">Girls' Hostel</option>
+  <option value="Power House">Power House</option>
+  <option value="Stationery Store">Stationery Store</option>
+  <option value="Parking">Parking</option>
+  <!-- FRIEND/STUDENT CONFIRMED -->
+  <option value="Himalayan House">Himalayan House</option>
+  <option value="Tanjore House">Tanjore House</option>
+  <option value="Madurai House">Madurai House</option>
+  <option value="Marina House">Marina House</option>
+  <option value="Nilgiri House">Nilgiri House</option>
+  <option value="Ellora House">Ellora House</option>
+  <option value="Vivekananda Hostel">Vivekananda Hostel</option>
+  <option value="Raman Block">Raman Block</option>
+  <option value="Mercury Block">Mercury Block</option>
+  <option value="Jupiter Block">Jupiter Block</option>
+  <option value="MBA Block">MBA Block</option>
+  <option value="Mechanical Block">Mechanical Block</option>
+  <option value="IT Park">IT Park</option>
+  <option value="Techno Park">Techno Park</option>
+  <option value="Founder Hall">Founder Hall</option>
+  <option value="West Mart">West Mart</option>
+  <option value="Cucumber Canteen">Cucumber Canteen</option>
+  <option value="Mustard Cafe">Mustard Cafe</option>
+  <option value="Saffron Canteen">Saffron Canteen</option>
+  <option value="Cinnamon Canteen">Cinnamon Canteen</option>
+  <option value="Bite Zone">Bite Zone</option>
+  <!-- NEEDS CONFIRMATION -->
+  <option value="Round Building">Round Building</option>
+  <option value="Women's Arts">Women's Arts</option>
+
+                    </select>
+              </div>
+            </div>
+
+            <button type="button" class="btn btn-primary" style="margin-top: 20px; width: 100%; min-height: 46px;" onclick="runAdminPhotoSearch()">
+              <i data-lucide="sparkles"></i>
+              <span>Run AI-Assisted Match Search</span>
+            </button>
+          </div>
+
+          <div id="admin-photo-search-results"></div>
+        </section>
+<section id="admin-students-page" class="page-section" style="display: none;">
+          <div class="find-item-header">
+            <h1>Students Directory</h1>
+            <p>Campus students directory with report activity, claim history, and claim history.</p>
+          </div>
+
+          <div class="glass-card" style="margin-bottom: 20px;">
+            <div class="header-search" style="display: flex; width: 100%;">
+              <i data-lucide="search"></i>
+              <input type="text" id="students-search-input" aria-label="Search students directory" class="input-glass" placeholder="Search students by name, student ID, department..." oninput="renderAdminStudents()">
+            </div>
+          </div>
+
+          <div class="glass-card" style="padding: 0; overflow: hidden;">
+            <div class="admin-table-container">
+              <table class="admin-table" id="students-directory-table">
+                <thead>
+                  <tr>
+                    <th>Student</th>
+                    <th>Student ID</th>
+                    <th>Lost Reports</th>
+                    <th>Found Reports</th>
+                    <th>Claims</th>
+                    
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="students-directory-tbody">
+                  <!-- Populated via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+<section id="admin-help-page" class="page-section" style="display: none;">
+          <div class="page-header-row" style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
+            <div>
+              <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(239, 68, 68, 0.12); color: #F87171; padding: 4px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 700; margin-bottom: 8px;">
+                <i data-lucide="shield-alert" style="width: 14px; height: 14px;"></i>
+                <span>Staff Investigation Desk</span>
+              </div>
+              <h1 style="margin: 0; font-size: 1.75rem; color: var(--text-primary);">Help Desk &amp; Student Complaints</h1>
+              <p style="margin: 6px 0 0; color: var(--text-secondary); font-size: 0.95rem;">
+                Triage student safety escalations, urgent item disputes, extortion reports, and mediate safe campus handovers.
+              </p>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+              <button type="button" class="btn btn-secondary" onclick="renderAdminHelpDesk()">
+                <i data-lucide="refresh-cw"></i>
+                <span>Refresh</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Quick Metrics Bar -->
+          <div class="admin-help-metrics-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 24px;">
+            <div class="glass-card stat-card">
+              <div class="stat-label">Total Tickets</div>
+              <div class="stat-value" id="admin-help-metric-total">0</div>
+              <div class="stat-sub">All logged requests</div>
+            </div>
+            <div class="glass-card stat-card" style="border-top: 3px solid #EF4444;">
+              <div class="stat-label" style="color: #F87171;">Urgent / Critical</div>
+              <div class="stat-value" id="admin-help-metric-urgent" style="color: #F87171;">0</div>
+              <div class="stat-sub">Needs fast attention</div>
+            </div>
+            <div class="glass-card stat-card" style="border-top: 3px solid #F59E0B;">
+              <div class="stat-label" style="color: #FBBF24;">New / Unassigned</div>
+              <div class="stat-value" id="admin-help-metric-new" style="color: #FBBF24;">0</div>
+              <div class="stat-sub">Pending triage</div>
+            </div>
+            <div class="glass-card stat-card" style="border-top: 3px solid #3B82F6;">
+              <div class="stat-label" style="color: #60A5FA;">In Review</div>
+              <div class="stat-value" id="admin-help-metric-in-review" style="color: #60A5FA;">0</div>
+              <div class="stat-sub">Active mediation</div>
+            </div>
+            <div class="glass-card stat-card" style="border-top: 3px solid #10B981;">
+              <div class="stat-label" style="color: #34D399;">Handled / Closed</div>
+              <div class="stat-value" id="admin-help-metric-resolved" style="color: #34D399;">0</div>
+              <div class="stat-sub">Safely resolved</div>
+            </div>
+          </div>
+
+          <!-- Filter Tabs & Controls -->
+          <div class="glass-card" style="margin-bottom: 24px; padding: 16px 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+              <div class="admin-help-tabs-wrap" id="admin-help-tabs" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <button type="button" class="btn btn-sm admin-help-tab active" data-tab="all" onclick="filterAdminHelpDeskTab('all', this)">All</button>
+                <button type="button" class="btn btn-sm btn-secondary admin-help-tab" data-tab="new" onclick="filterAdminHelpDeskTab('new', this)">New</button>
+                <button type="button" class="btn btn-sm btn-secondary admin-help-tab" data-tab="urgent" onclick="filterAdminHelpDeskTab('urgent', this)">Urgent</button>
+                <button type="button" class="btn btn-sm btn-secondary admin-help-tab" data-tab="open" onclick="filterAdminHelpDeskTab('open', this)">In Review</button>
+                <button type="button" class="btn btn-sm btn-secondary admin-help-tab" data-tab="handled" onclick="filterAdminHelpDeskTab('handled', this)">Handled</button>
+                <button type="button" class="btn btn-sm btn-secondary admin-help-tab" data-tab="closed" onclick="filterAdminHelpDeskTab('closed', this)">Closed</button>
+              </div>
+
+              <div style="display: flex; gap: 10px; align-items: center; flex: 1; max-width: 380px;">
+                <input type="text" id="admin-help-search-input" aria-label="Search assistance requests" class="input-glass" placeholder="Search by student, item or ID..." oninput="handleAdminHelpSearch()">
+              </div>
+            </div>
+          </div>
+
+          <!-- Tickets Table Container -->
+          <div class="glass-card" style="padding: 0; overflow: hidden;">
+            <div class="admin-table-container">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Ticket ID</th>
+                    <th>Date</th>
+                    <th>Urgency</th>
+                    <th>Category / Reason</th>
+                    <th>Student Details</th>
+                    <th>Location</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-help-table-tbody">
+                  <!-- Populated dynamically by renderAdminHelpDesk() -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+</template>
+</main>
 
     <!-- Landing Footer -->
     <footer class="lp-footer">
       <div class="lp-footer-container">
         <div class="lp-footer-brand">
-          <picture><source srcset="assets/images/lostseek-logo.webp" type="image/webp"><img src="assets/images/lostseek-logo.png" alt="LostSeek" style="width: 30px; height: 30px; border-radius: 8px;" width="30" height="30"  decoding="async" /></picture>
+          <picture><source srcset="assets/images/lostseek-logo.webp" type="image/webp"><img src="assets/images/lostseek-logo.png" alt="LostSeek" style="width: 30px; height: 30px; border-radius: 8px;" width="30" height="30" loading="lazy" decoding="async" /></picture>
           <strong>LostSeek</strong>
           <span style="font-size: 0.8rem; color: #cbd5e1;">— AI-Powered Smart Campus Lost &amp; Found</span>
         </div>
@@ -1095,46 +1899,7 @@
             </div>
           </div>
 
-          <!-- Karma Counter Pill -->
-          <div class="karma-header-pill" id="header-karma-pill" title="Campus Karma Points">
-            <i data-lucide="zap"></i>
-            <strong id="header-karma-count">0</strong>
-            <span>Karma</span>
-          </div>
-
-          <!-- User Role Badge -->
-          <span class="badge badge-verified" id="header-role-badge">Student</span>
-        </div>
-      </header>
-
-      <!-- Dynamic Section Pages -->
-      <main class="content-area">
-
-        <!-- ===================================================================
-             PAGE 1: DASHBOARD (#dashboard-page)
-             =================================================================== -->
-        <section id="dashboard-page" class="page-section">
-          <!-- STUDENT DASHBOARD VIEW (Shown when user.role === 'Student') -->
-          <div id="student-dashboard-view">
-            <!-- Student Hero -->
-            <div class="student-hero-banner" style="background: transparent; padding: 0; box-shadow: none; border: none; margin-bottom: 32px;">
-              <h1 class="student-hero-greeting" id="student-welcome-heading" style="font-size: 2rem; color: var(--text-primary); letter-spacing: -0.02em;">Welcome back</h1>
-              <p class="student-hero-question" style="font-size: 1.1rem; color: var(--text-secondary); margin-top: 4px;">How can we help you today?</p>
-            </div>
-
-            <!-- 4 Main Action Cards -->
-            <div class="student-four-actions-grid" style="margin-top: 20px;">
-              <button type="button" class="student-action-card-btn" onclick="showPage('find-item-page')">
-                <div class="student-action-icon-wrap icon-bg-blue">
-                  <i data-lucide="search"></i>
-                </div>
-                <div class="student-action-text-col">
-                  <div class="student-action-title">
-                    <span>Find Item</span>
-                    <i data-lucide="arrow-right" style="width:14px;height:14px;opacity:0.6;"></i>
-                  </div>
-                  <div class="student-action-desc">Search all lost and found items on campus</div>
-                </div>
+          
               </button>
 
               <button type="button" class="student-action-card-btn" onclick="showPage('i-found-page')">
@@ -1245,10 +2010,7 @@
               </div>
 
               <div class="hero-actions-box">
-                <button class="btn btn-secondary btn-sm" onclick="resetHackathonDemoData()" title="Reload Demo Dataset">
-                  <i data-lucide="rotate-ccw"></i>
-                  <span>Reset Demo Data</span>
-                </button>
+                
                 <button class="btn btn-primary btn-sm" onclick="showPage('admin-all-page')">
                   <i data-lucide="shield-check"></i>
                   <span>Go to Reports Directory</span>
@@ -1378,49 +2140,55 @@
               </select>
 
               <select id="find-filter-location" aria-label="Filter by campus location" class="input-glass filter-select" onchange="handleFindItemSearch()">
-                <option value="">All Campus Locations</option>
-                    <optgroup label="Academic / Buildings">
-                      <option value="A Block">A Block</option>
-                      <option value="B Block">B Block</option>
-                      <option value="C Block">C Block</option>
-                      <option value="D Block">D Block</option>
-                      <option value="E Block">E Block</option>
-                      <option value="F Block">F Block</option>
-                      <option value="Administrative Block">Administrative Block</option>
-                      <option value="Academic Block">Academic Block</option>
-                    </optgroup>
-                    <optgroup label="Food / Shops">
-                      <option value="Saffron Canteen">Saffron Canteen</option>
-                      <option value="West Mart">West Mart</option>
-                      <option value="Cinnamon Cafe">Cinnamon Cafe</option>
-                      <option value="Cucumber Cafe">Cucumber Cafe</option>
-                      <option value="Mustard Cafe">Mustard Cafe</option>
-                    </optgroup>
-                    <optgroup label="Services">
-                      <option value="Post Office">Post Office</option>
-                    </optgroup>
-                    <optgroup label="Hostel / House Areas">
-                      <option value="Himalayan House">Himalayan House</option>
-                      <option value="Tanjore House">Tanjore House</option>
-                      <option value="Marina House">Marina House</option>
-                      <option value="Nilgiri House">Nilgiri House</option>
-                      <option value="Madura House">Madura House</option>
-                    </optgroup>
-                    <optgroup label="Other Campus Areas">
-                      <option value="Library">Library</option>
-                      <option value="Cafeteria">Cafeteria</option>
-                      <option value="Main Building">Main Building</option>
-                      <option value="Hostel Block A">Hostel Block A</option>
-                      <option value="Hostel Block B">Hostel Block B</option>
-                      <option value="Hostel Block C">Hostel Block C</option>
-                      <option value="Sports Ground">Sports Ground</option>
-                      <option value="Lab Complex">Lab Complex</option>
-                      <option value="Parking Area">Parking Area</option>
-                      <option value="Auditorium">Auditorium</option>
-                      <option value="Admin Block">Admin Block</option>
-                      <option value="Other">Other / Custom Location</option>
-                    </optgroup>
-              </select>
+                      <option value="" disabled selected>Select Location</option>
+                      
+  <!-- OFFICIALLY VERIFIED -->
+  <option value="Administrative Block">Administrative Block</option>
+  <option value="Academic Block">Academic Block</option>
+  <option value="A Block">A Block</option>
+  <option value="B Block">B Block</option>
+  <option value="C Block">C Block</option>
+  <option value="D Block">D Block</option>
+  <option value="E Block">E Block</option>
+  <option value="F Block">F Block</option>
+  <option value="Library Block">Library Block</option>
+  <option value="Principal Quarters">Principal Quarters</option>
+  <option value="Guest House">Guest House</option>
+  <option value="Sports Club & Gymnasium">Sports Club & Gymnasium</option>
+  <option value="Auditorium">Auditorium</option>
+  <option value="Cafeteria">Cafeteria</option>
+  <option value="Boys' Hostel">Boys' Hostel</option>
+  <option value="Girls' Hostel">Girls' Hostel</option>
+  <option value="Power House">Power House</option>
+  <option value="Stationery Store">Stationery Store</option>
+  <option value="Parking">Parking</option>
+  <!-- FRIEND/STUDENT CONFIRMED -->
+  <option value="Himalayan House">Himalayan House</option>
+  <option value="Tanjore House">Tanjore House</option>
+  <option value="Madurai House">Madurai House</option>
+  <option value="Marina House">Marina House</option>
+  <option value="Nilgiri House">Nilgiri House</option>
+  <option value="Ellora House">Ellora House</option>
+  <option value="Vivekananda Hostel">Vivekananda Hostel</option>
+  <option value="Raman Block">Raman Block</option>
+  <option value="Mercury Block">Mercury Block</option>
+  <option value="Jupiter Block">Jupiter Block</option>
+  <option value="MBA Block">MBA Block</option>
+  <option value="Mechanical Block">Mechanical Block</option>
+  <option value="IT Park">IT Park</option>
+  <option value="Techno Park">Techno Park</option>
+  <option value="Founder Hall">Founder Hall</option>
+  <option value="West Mart">West Mart</option>
+  <option value="Cucumber Canteen">Cucumber Canteen</option>
+  <option value="Mustard Cafe">Mustard Cafe</option>
+  <option value="Saffron Canteen">Saffron Canteen</option>
+  <option value="Cinnamon Canteen">Cinnamon Canteen</option>
+  <option value="Bite Zone">Bite Zone</option>
+  <!-- NEEDS CONFIRMATION -->
+  <option value="Round Building">Round Building</option>
+  <option value="Women's Arts">Women's Arts</option>
+
+                    </select>
 
               <select id="find-filter-status" aria-label="Filter by item status" class="input-glass filter-select" onchange="handleFindItemSearch()">
                 <option value="">All Statuses</option>
@@ -1541,48 +2309,54 @@
                   <div class="form-group">
                     <label for="lost-location">Last Seen Location *</label>
                     <select id="lost-location" class="input-glass" required onchange="handleLocationSelectChange(this, 'lost-location-other-wrap')">
-                      <option value="">Select Campus Location...</option>
-                    <optgroup label="Academic / Buildings">
-                      <option value="A Block">A Block</option>
-                      <option value="B Block">B Block</option>
-                      <option value="C Block">C Block</option>
-                      <option value="D Block">D Block</option>
-                      <option value="E Block">E Block</option>
-                      <option value="F Block">F Block</option>
-                      <option value="Administrative Block">Administrative Block</option>
-                      <option value="Academic Block">Academic Block</option>
-                    </optgroup>
-                    <optgroup label="Food / Shops">
-                      <option value="Saffron Canteen">Saffron Canteen</option>
-                      <option value="West Mart">West Mart</option>
-                      <option value="Cinnamon Cafe">Cinnamon Cafe</option>
-                      <option value="Cucumber Cafe">Cucumber Cafe</option>
-                      <option value="Mustard Cafe">Mustard Cafe</option>
-                    </optgroup>
-                    <optgroup label="Services">
-                      <option value="Post Office">Post Office</option>
-                    </optgroup>
-                    <optgroup label="Hostel / House Areas">
-                      <option value="Himalayan House">Himalayan House</option>
-                      <option value="Tanjore House">Tanjore House</option>
-                      <option value="Marina House">Marina House</option>
-                      <option value="Nilgiri House">Nilgiri House</option>
-                      <option value="Madura House">Madura House</option>
-                    </optgroup>
-                    <optgroup label="Other Campus Areas">
-                      <option value="Library">Library</option>
-                      <option value="Cafeteria">Cafeteria</option>
-                      <option value="Main Building">Main Building</option>
-                      <option value="Hostel Block A">Hostel Block A</option>
-                      <option value="Hostel Block B">Hostel Block B</option>
-                      <option value="Hostel Block C">Hostel Block C</option>
-                      <option value="Sports Ground">Sports Ground</option>
-                      <option value="Lab Complex">Lab Complex</option>
-                      <option value="Parking Area">Parking Area</option>
-                      <option value="Auditorium">Auditorium</option>
-                      <option value="Admin Block">Admin Block</option>
-                      <option value="Other">Other / Custom Location</option>
-                    </optgroup>
+                      <option value="" disabled selected>Select Location</option>
+                      
+  <!-- OFFICIALLY VERIFIED -->
+  <option value="Administrative Block">Administrative Block</option>
+  <option value="Academic Block">Academic Block</option>
+  <option value="A Block">A Block</option>
+  <option value="B Block">B Block</option>
+  <option value="C Block">C Block</option>
+  <option value="D Block">D Block</option>
+  <option value="E Block">E Block</option>
+  <option value="F Block">F Block</option>
+  <option value="Library Block">Library Block</option>
+  <option value="Principal Quarters">Principal Quarters</option>
+  <option value="Guest House">Guest House</option>
+  <option value="Sports Club & Gymnasium">Sports Club & Gymnasium</option>
+  <option value="Auditorium">Auditorium</option>
+  <option value="Cafeteria">Cafeteria</option>
+  <option value="Boys' Hostel">Boys' Hostel</option>
+  <option value="Girls' Hostel">Girls' Hostel</option>
+  <option value="Power House">Power House</option>
+  <option value="Stationery Store">Stationery Store</option>
+  <option value="Parking">Parking</option>
+  <!-- FRIEND/STUDENT CONFIRMED -->
+  <option value="Himalayan House">Himalayan House</option>
+  <option value="Tanjore House">Tanjore House</option>
+  <option value="Madurai House">Madurai House</option>
+  <option value="Marina House">Marina House</option>
+  <option value="Nilgiri House">Nilgiri House</option>
+  <option value="Ellora House">Ellora House</option>
+  <option value="Vivekananda Hostel">Vivekananda Hostel</option>
+  <option value="Raman Block">Raman Block</option>
+  <option value="Mercury Block">Mercury Block</option>
+  <option value="Jupiter Block">Jupiter Block</option>
+  <option value="MBA Block">MBA Block</option>
+  <option value="Mechanical Block">Mechanical Block</option>
+  <option value="IT Park">IT Park</option>
+  <option value="Techno Park">Techno Park</option>
+  <option value="Founder Hall">Founder Hall</option>
+  <option value="West Mart">West Mart</option>
+  <option value="Cucumber Canteen">Cucumber Canteen</option>
+  <option value="Mustard Cafe">Mustard Cafe</option>
+  <option value="Saffron Canteen">Saffron Canteen</option>
+  <option value="Cinnamon Canteen">Cinnamon Canteen</option>
+  <option value="Bite Zone">Bite Zone</option>
+  <!-- NEEDS CONFIRMATION -->
+  <option value="Round Building">Round Building</option>
+  <option value="Women's Arts">Women's Arts</option>
+
                     </select>
                     <div id="lost-location-other-wrap" style="display: none; margin-top: 8px;">
                       <input type="text" id="lost-location-other" aria-label="Specify custom lost location" class="input-glass" placeholder="Specify landmark or campus area...">
@@ -1788,48 +2562,54 @@
                   <div class="form-group">
                     <label for="found-location">Found Location *</label>
                     <select id="found-location" class="input-glass" required onchange="handleLocationSelectChange(this, 'found-location-other-wrap')">
-                      <option value="">Select Campus Location...</option>
-                    <optgroup label="Academic / Buildings">
-                      <option value="A Block">A Block</option>
-                      <option value="B Block">B Block</option>
-                      <option value="C Block">C Block</option>
-                      <option value="D Block">D Block</option>
-                      <option value="E Block">E Block</option>
-                      <option value="F Block">F Block</option>
-                      <option value="Administrative Block">Administrative Block</option>
-                      <option value="Academic Block">Academic Block</option>
-                    </optgroup>
-                    <optgroup label="Food / Shops">
-                      <option value="Saffron Canteen">Saffron Canteen</option>
-                      <option value="West Mart">West Mart</option>
-                      <option value="Cinnamon Cafe">Cinnamon Cafe</option>
-                      <option value="Cucumber Cafe">Cucumber Cafe</option>
-                      <option value="Mustard Cafe">Mustard Cafe</option>
-                    </optgroup>
-                    <optgroup label="Services">
-                      <option value="Post Office">Post Office</option>
-                    </optgroup>
-                    <optgroup label="Hostel / House Areas">
-                      <option value="Himalayan House">Himalayan House</option>
-                      <option value="Tanjore House">Tanjore House</option>
-                      <option value="Marina House">Marina House</option>
-                      <option value="Nilgiri House">Nilgiri House</option>
-                      <option value="Madura House">Madura House</option>
-                    </optgroup>
-                    <optgroup label="Other Campus Areas">
-                      <option value="Library">Library</option>
-                      <option value="Cafeteria">Cafeteria</option>
-                      <option value="Main Building">Main Building</option>
-                      <option value="Hostel Block A">Hostel Block A</option>
-                      <option value="Hostel Block B">Hostel Block B</option>
-                      <option value="Hostel Block C">Hostel Block C</option>
-                      <option value="Sports Ground">Sports Ground</option>
-                      <option value="Lab Complex">Lab Complex</option>
-                      <option value="Parking Area">Parking Area</option>
-                      <option value="Auditorium">Auditorium</option>
-                      <option value="Admin Block">Admin Block</option>
-                      <option value="Other">Other / Custom Location</option>
-                    </optgroup>
+                      <option value="" disabled selected>Select Location</option>
+                      
+  <!-- OFFICIALLY VERIFIED -->
+  <option value="Administrative Block">Administrative Block</option>
+  <option value="Academic Block">Academic Block</option>
+  <option value="A Block">A Block</option>
+  <option value="B Block">B Block</option>
+  <option value="C Block">C Block</option>
+  <option value="D Block">D Block</option>
+  <option value="E Block">E Block</option>
+  <option value="F Block">F Block</option>
+  <option value="Library Block">Library Block</option>
+  <option value="Principal Quarters">Principal Quarters</option>
+  <option value="Guest House">Guest House</option>
+  <option value="Sports Club & Gymnasium">Sports Club & Gymnasium</option>
+  <option value="Auditorium">Auditorium</option>
+  <option value="Cafeteria">Cafeteria</option>
+  <option value="Boys' Hostel">Boys' Hostel</option>
+  <option value="Girls' Hostel">Girls' Hostel</option>
+  <option value="Power House">Power House</option>
+  <option value="Stationery Store">Stationery Store</option>
+  <option value="Parking">Parking</option>
+  <!-- FRIEND/STUDENT CONFIRMED -->
+  <option value="Himalayan House">Himalayan House</option>
+  <option value="Tanjore House">Tanjore House</option>
+  <option value="Madurai House">Madurai House</option>
+  <option value="Marina House">Marina House</option>
+  <option value="Nilgiri House">Nilgiri House</option>
+  <option value="Ellora House">Ellora House</option>
+  <option value="Vivekananda Hostel">Vivekananda Hostel</option>
+  <option value="Raman Block">Raman Block</option>
+  <option value="Mercury Block">Mercury Block</option>
+  <option value="Jupiter Block">Jupiter Block</option>
+  <option value="MBA Block">MBA Block</option>
+  <option value="Mechanical Block">Mechanical Block</option>
+  <option value="IT Park">IT Park</option>
+  <option value="Techno Park">Techno Park</option>
+  <option value="Founder Hall">Founder Hall</option>
+  <option value="West Mart">West Mart</option>
+  <option value="Cucumber Canteen">Cucumber Canteen</option>
+  <option value="Mustard Cafe">Mustard Cafe</option>
+  <option value="Saffron Canteen">Saffron Canteen</option>
+  <option value="Cinnamon Canteen">Cinnamon Canteen</option>
+  <option value="Bite Zone">Bite Zone</option>
+  <!-- NEEDS CONFIRMATION -->
+  <option value="Round Building">Round Building</option>
+  <option value="Women's Arts">Women's Arts</option>
+
                     </select>
                     <div id="found-location-other-wrap" style="display: none; margin-top: 8px;">
                       <input type="text" id="found-location-other" aria-label="Specify custom found location" class="input-glass" placeholder="Specify landmark or campus area...">
@@ -2007,592 +2787,27 @@
         <!-- ===================================================================
              PAGE: ADMIN LOST ITEMS ONLY (#admin-lost-page)
              =================================================================== -->
-        <section id="admin-lost-page" class="page-section" style="display: none;">
-          <div class="page-header-row" style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
-            <div>
-              <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(239, 68, 68, 0.12); color: #F87171; padding: 4px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 700; margin-bottom: 8px;">
-                <i data-lucide="search" style="width: 14px; height: 14px;"></i>
-                <span>Lost Property Registry</span>
-              </div>
-              <h1 style="margin: 0; font-size: 1.75rem; color: var(--text-primary);">Lost Items Management</h1>
-              <p style="margin: 6px 0 0; color: var(--text-secondary); font-size: 0.95rem;">
-                Displaying ONLY reports where property was reported as lost. Correlate prospective finders &amp; update resolution statuses.
-              </p>
-            </div>
-            <div style="display: flex; gap: 10px; align-items: center;">
-              <button type="button" class="btn btn-secondary" onclick="renderAdminLostPage()">
-                <i data-lucide="refresh-cw"></i>
-                <span>Refresh</span>
-              </button>
-              <button type="button" class="btn btn-primary" onclick="showPage('report-lost-page')">
-                <i data-lucide="plus"></i>
-                <span>Report Lost</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- Lost Metric Pills -->
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 20px;">
-            <div class="glass-card stat-card" style="padding: 14px 18px;">
-              <div class="stat-label">Total Lost</div>
-              <div class="stat-value" id="admin-lost-metric-total" style="font-size: 1.5rem;">0</div>
-            </div>
-            <div class="glass-card stat-card" style="padding: 14px 18px; border-top: 3px solid #3B82F6;">
-              <div class="stat-label" style="color: #60A5FA;">Actively Looking</div>
-              <div class="stat-value" id="admin-lost-metric-looking" style="font-size: 1.5rem; color: #60A5FA;">0</div>
-            </div>
-            <div class="glass-card stat-card" style="padding: 14px 18px; border-top: 3px solid var(--ai-violet);">
-              <div class="stat-label" style="color: var(--ai-violet);">Possible Matches</div>
-              <div class="stat-value" id="admin-lost-metric-matches" style="font-size: 1.5rem; color: var(--ai-violet);">0</div>
-            </div>
-            <div class="glass-card stat-card" style="padding: 14px 18px; border-top: 3px solid #F59E0B;">
-              <div class="stat-label" style="color: #FBBF24;">Claims in Verification</div>
-              <div class="stat-value" id="admin-lost-metric-claims" style="font-size: 1.5rem; color: #FBBF24;">0</div>
-            </div>
-            <div class="glass-card stat-card" style="padding: 14px 18px; border-top: 3px solid #10B981;">
-              <div class="stat-label" style="color: #34D399;">Recovered / Reunited</div>
-              <div class="stat-value" id="admin-lost-metric-recovered" style="font-size: 1.5rem; color: #34D399;">0</div>
-            </div>
-          </div>
-
-          <!-- Filter Controls -->
-          <div class="glass-card" style="margin-bottom: 20px; padding: 16px 20px;">
-            <div class="filter-pills-row">
-              <div class="header-search" style="display: flex; flex: 1; min-width: 220px;">
-                <i data-lucide="search"></i>
-                <input type="text" id="admin-lost-search-input" aria-label="Search lost reports" class="input-glass" placeholder="Search by item title, description, brand, ID, reporter..." oninput="handleAdminLostFilterChange()">
-              </div>
-              <select id="admin-lost-filter-category" aria-label="Filter lost reports by category" class="input-glass filter-select" onchange="handleAdminLostFilterChange()">
-                <option value="">All Categories</option>
-                <option value="id-card">ID Cards</option>
-                <option value="electronics">Electronics</option>
-                <option value="wallet">Wallets</option>
-                <option value="keys">Keys</option>
-                <option value="bags">Bags</option>
-                <option value="documents">Documents</option>
-                <option value="clothing">Clothing</option>
-                <option value="accessories">Accessories</option>
-                <option value="misc">Miscellaneous</option>
-              </select>
-              <select id="admin-lost-filter-location" aria-label="Filter lost reports by location" class="input-glass filter-select" onchange="handleAdminLostFilterChange()">
-                <option value="">All Campus Locations</option>
-                
-                    <optgroup label="Academic / Buildings">
-                      <option value="A Block">A Block</option>
-                      <option value="B Block">B Block</option>
-                      <option value="C Block">C Block</option>
-                      <option value="D Block">D Block</option>
-                      <option value="E Block">E Block</option>
-                      <option value="F Block">F Block</option>
-                      <option value="Administrative Block">Administrative Block</option>
-                      <option value="Academic Block">Academic Block</option>
-                    </optgroup>
-                    <optgroup label="Food / Shops">
-                      <option value="Saffron Canteen">Saffron Canteen</option>
-                      <option value="West Mart">West Mart</option>
-                      <option value="Cinnamon Cafe">Cinnamon Cafe</option>
-                      <option value="Cucumber Cafe">Cucumber Cafe</option>
-                      <option value="Mustard Cafe">Mustard Cafe</option>
-                    </optgroup>
-                    <optgroup label="Services">
-                      <option value="Post Office">Post Office</option>
-                    </optgroup>
-                    <optgroup label="Hostel / House Areas">
-                      <option value="Himalayan House">Himalayan House</option>
-                      <option value="Tanjore House">Tanjore House</option>
-                      <option value="Marina House">Marina House</option>
-                      <option value="Nilgiri House">Nilgiri House</option>
-                      <option value="Madura House">Madura House</option>
-                    </optgroup>
-                    <optgroup label="Other Campus Areas">
-                      <option value="Library">Library</option>
-                      <option value="Cafeteria">Cafeteria</option>
-                      <option value="Main Building">Main Building</option>
-                      <option value="Hostel Block A">Hostel Block A</option>
-                      <option value="Hostel Block B">Hostel Block B</option>
-                      <option value="Hostel Block C">Hostel Block C</option>
-                      <option value="Sports Ground">Sports Ground</option>
-                      <option value="Lab Complex">Lab Complex</option>
-                      <option value="Parking Area">Parking Area</option>
-                      <option value="Auditorium">Auditorium</option>
-                      <option value="Admin Block">Admin Block</option>
-                      <option value="Other">Other / Custom Location</option>
-                    </optgroup>
-              </select>
-              <select id="admin-lost-filter-status" aria-label="Filter lost reports by status" class="input-glass filter-select" onchange="handleAdminLostFilterChange()">
-                <option value="">All Statuses</option>
-                <option value="Looking">Looking</option>
-                <option value="Possible Match">Possible Match</option>
-                <option value="Claim Submitted">Claim Submitted</option>
-                <option value="Under Verification">Under Verification</option>
-                <option value="Recovered">Recovered</option>
-              </select>
-              <select id="admin-lost-filter-sort" aria-label="Sort lost reports" class="input-glass filter-select" onchange="handleAdminLostFilterChange()">
-                <option value="newest">Newest First</option>
-                <option value="oldest">Oldest First</option>
-                <option value="title">Title (A-Z)</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Lost Reports Table -->
-          <div class="glass-card" style="padding: 0; overflow: hidden;">
-            <div class="admin-table-container">
-              <table class="admin-table">
-                <thead>
-                  <tr>
-                    <th>Report ID</th>
-                    <th>Item &amp; Details</th>
-                    <th>Category</th>
-                    <th>Color / Brand</th>
-                    <th>Lost Location</th>
-                    <th>Date / Time</th>
-                    <th>Reporter</th>
-                    <th>Status</th>
-                    <th>Matches</th>
-                    <th style="text-align: right;">Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="admin-lost-table-tbody">
-                  <!-- Rendered via JS -->
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </section>
+        
 
         <!-- ===================================================================
              PAGE: ADMIN FOUND ITEMS ONLY (#admin-found-page)
              =================================================================== -->
-        <section id="admin-found-page" class="page-section" style="display: none;">
-          <div class="page-header-row" style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
-            <div>
-              <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(20, 184, 166, 0.12); color: var(--teal-bright); padding: 4px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 700; margin-bottom: 8px;">
-                <i data-lucide="package" style="width: 14px; height: 14px;"></i>
-                <span>Found Property Custody</span>
-              </div>
-              <h1 style="margin: 0; font-size: 1.75rem; color: var(--text-primary);">Found Items &amp; Custody Inventory</h1>
-              <p style="margin: 6px 0 0; color: var(--text-secondary); font-size: 0.95rem;">
-                Displaying ONLY reports where items were reported as found. Manage storage locker custody, identify prospective owners &amp; authorize returns.
-              </p>
-            </div>
-            <div style="display: flex; gap: 10px; align-items: center;">
-              <button type="button" class="btn btn-secondary" onclick="renderAdminFoundPage()">
-                <i data-lucide="refresh-cw"></i>
-                <span>Refresh</span>
-              </button>
-              <button type="button" class="btn btn-primary" onclick="showPage('report-found-page')">
-                <i data-lucide="plus"></i>
-                <span>Report Found</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- Found Metric Pills -->
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 20px;">
-            <div class="glass-card stat-card" style="padding: 14px 18px;">
-              <div class="stat-label">Total Found</div>
-              <div class="stat-value" id="admin-found-metric-total" style="font-size: 1.5rem;">0</div>
-            </div>
-            <div class="glass-card stat-card" style="padding: 14px 18px; border-top: 3px solid #3B82F6;">
-              <div class="stat-label" style="color: #60A5FA;">In Security Lockers</div>
-              <div class="stat-value" id="admin-found-metric-lockers" style="font-size: 1.5rem; color: #60A5FA;">0</div>
-            </div>
-            <div class="glass-card stat-card" style="padding: 14px 18px; border-top: 3px solid #F59E0B;">
-              <div class="stat-label" style="color: #FBBF24;">With Finder</div>
-              <div class="stat-value" id="admin-found-metric-finder" style="font-size: 1.5rem; color: #FBBF24;">0</div>
-            </div>
-            <div class="glass-card stat-card" style="padding: 14px 18px; border-top: 3px solid var(--ai-violet);">
-              <div class="stat-label" style="color: var(--ai-violet);">Possible Owners</div>
-              <div class="stat-value" id="admin-found-metric-matches" style="font-size: 1.5rem; color: var(--ai-violet);">0</div>
-            </div>
-            <div class="glass-card stat-card" style="padding: 14px 18px; border-top: 3px solid #10B981;">
-              <div class="stat-label" style="color: #34D399;">Handed Over / Returned</div>
-              <div class="stat-value" id="admin-found-metric-returned" style="font-size: 1.5rem; color: #34D399;">0</div>
-            </div>
-          </div>
-
-          <!-- Filter Controls -->
-          <div class="glass-card" style="margin-bottom: 20px; padding: 16px 20px;">
-            <div class="filter-pills-row">
-              <div class="header-search" style="display: flex; flex: 1; min-width: 220px;">
-                <i data-lucide="search"></i>
-                <input type="text" id="admin-found-search-input" aria-label="Search found reports" class="input-glass" placeholder="Search by item title, description, brand, ID, finder..." oninput="handleAdminFoundFilterChange()">
-              </div>
-              <select id="admin-found-filter-category" aria-label="Filter found reports by category" class="input-glass filter-select" onchange="handleAdminFoundFilterChange()">
-                <option value="">All Categories</option>
-                <option value="id-card">ID Cards</option>
-                <option value="electronics">Electronics</option>
-                <option value="wallet">Wallets</option>
-                <option value="keys">Keys</option>
-                <option value="bags">Bags</option>
-                <option value="documents">Documents</option>
-                <option value="clothing">Clothing</option>
-                <option value="accessories">Accessories</option>
-                <option value="misc">Miscellaneous</option>
-              </select>
-              <select id="admin-found-filter-location" aria-label="Filter found reports by location" class="input-glass filter-select" onchange="handleAdminFoundFilterChange()">
-                <option value="">All Campus Locations</option>
-                
-                    <optgroup label="Academic / Buildings">
-                      <option value="A Block">A Block</option>
-                      <option value="B Block">B Block</option>
-                      <option value="C Block">C Block</option>
-                      <option value="D Block">D Block</option>
-                      <option value="E Block">E Block</option>
-                      <option value="F Block">F Block</option>
-                      <option value="Administrative Block">Administrative Block</option>
-                      <option value="Academic Block">Academic Block</option>
-                    </optgroup>
-                    <optgroup label="Food / Shops">
-                      <option value="Saffron Canteen">Saffron Canteen</option>
-                      <option value="West Mart">West Mart</option>
-                      <option value="Cinnamon Cafe">Cinnamon Cafe</option>
-                      <option value="Cucumber Cafe">Cucumber Cafe</option>
-                      <option value="Mustard Cafe">Mustard Cafe</option>
-                    </optgroup>
-                    <optgroup label="Services">
-                      <option value="Post Office">Post Office</option>
-                    </optgroup>
-                    <optgroup label="Hostel / House Areas">
-                      <option value="Himalayan House">Himalayan House</option>
-                      <option value="Tanjore House">Tanjore House</option>
-                      <option value="Marina House">Marina House</option>
-                      <option value="Nilgiri House">Nilgiri House</option>
-                      <option value="Madura House">Madura House</option>
-                    </optgroup>
-                    <optgroup label="Other Campus Areas">
-                      <option value="Library">Library</option>
-                      <option value="Cafeteria">Cafeteria</option>
-                      <option value="Main Building">Main Building</option>
-                      <option value="Hostel Block A">Hostel Block A</option>
-                      <option value="Hostel Block B">Hostel Block B</option>
-                      <option value="Hostel Block C">Hostel Block C</option>
-                      <option value="Sports Ground">Sports Ground</option>
-                      <option value="Lab Complex">Lab Complex</option>
-                      <option value="Parking Area">Parking Area</option>
-                      <option value="Auditorium">Auditorium</option>
-                      <option value="Admin Block">Admin Block</option>
-                      <option value="Other">Other / Custom Location</option>
-                    </optgroup>
-              </select>
-              <select id="admin-found-filter-status" aria-label="Filter found reports by status" class="input-glass filter-select" onchange="handleAdminFoundFilterChange()">
-                <option value="">All Statuses</option>
-                <option value="Looking">Looking</option>
-                <option value="Possible Owner">Possible Owner</option>
-                <option value="Claim Submitted">Claim Submitted</option>
-                <option value="Returned">Returned</option>
-              </select>
-              <select id="admin-found-filter-custody" aria-label="Filter found reports by custody" class="input-glass filter-select" onchange="handleAdminFoundFilterChange()">
-                <option value="">All Custody</option>
-                <option value="desk">At Security Desk Lockers</option>
-                <option value="finder">With Finder</option>
-              </select>
-              <select id="admin-found-filter-sort" aria-label="Sort found reports" class="input-glass filter-select" onchange="handleAdminFoundFilterChange()">
-                <option value="newest">Newest First</option>
-                <option value="oldest">Oldest First</option>
-                <option value="title">Title (A-Z)</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Found Reports Table -->
-          <div class="glass-card" style="padding: 0; overflow: hidden;">
-            <div class="admin-table-container">
-              <table class="admin-table">
-                <thead>
-                  <tr>
-                    <th>Report ID</th>
-                    <th>Item &amp; Details</th>
-                    <th>Category</th>
-                    <th>Color / Brand</th>
-                    <th>Found Location</th>
-                    <th>Date / Time</th>
-                    <th>Finder &amp; Custody</th>
-                    <th>Status</th>
-                    <th>Owner Matches</th>
-                    <th style="text-align: right;">Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="admin-found-table-tbody">
-                  <!-- Rendered via JS -->
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </section>
+        
 
         <!-- ===================================================================
              PAGE: ADMIN ALL REPORTS COMBINED (#admin-all-page)
              =================================================================== -->
-        <section id="admin-all-page" class="page-section" style="display: none;">
-          <div class="page-header-row" style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
-            <div>
-              <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(59, 130, 246, 0.12); color: #60A5FA; padding: 4px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 700; margin-bottom: 8px;">
-                <i data-lucide="clipboard-list" style="width: 14px; height: 14px;"></i>
-                <span>Institutional Archive</span>
-              </div>
-              <h1 style="margin: 0; font-size: 1.75rem; color: var(--text-primary);">All Campus Reports Directory</h1>
-              <p style="margin: 6px 0 0; color: var(--text-secondary); font-size: 0.95rem;">
-                Complete master repository combining LOST and FOUND records with clear visual demarcation and multi-parameter filtering.
-              </p>
-            </div>
-            <div style="display: flex; gap: 10px; align-items: center;">
-              <button type="button" class="btn btn-secondary" onclick="renderAdminAllReportsPage()">
-                <i data-lucide="refresh-cw"></i>
-                <span>Refresh</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- All Reports Filter Bar -->
-          <div class="glass-card" style="margin-bottom: 20px; padding: 16px 20px;">
-            <div class="filter-pills-row">
-              <div class="header-search" style="display: flex; flex: 1; min-width: 220px;">
-                <i data-lucide="search"></i>
-                <input type="text" id="admin-all-search-input" aria-label="Search all reports" class="input-glass" placeholder="Search by title, description, ID, person, location..." oninput="handleAdminAllFilterChange()">
-              </div>
-              <select id="admin-all-filter-type" aria-label="Filter all reports by type" class="input-glass filter-select" onchange="handleAdminAllFilterChange()">
-                <option value="">All Report Types (Lost &amp; Found)</option>
-                <option value="LOST">Lost Reports Only</option>
-                <option value="FOUND">Found Reports Only</option>
-              </select>
-              <select id="admin-all-filter-category" aria-label="Filter all reports by category" class="input-glass filter-select" onchange="handleAdminAllFilterChange()">
-                <option value="">All Categories</option>
-                <option value="id-card">ID Cards</option>
-                <option value="electronics">Electronics</option>
-                <option value="wallet">Wallets</option>
-                <option value="keys">Keys</option>
-                <option value="bags">Bags</option>
-                <option value="documents">Documents</option>
-                <option value="clothing">Clothing</option>
-                <option value="accessories">Accessories</option>
-                <option value="misc">Miscellaneous</option>
-              </select>
-              <select id="admin-all-filter-location" aria-label="Filter all reports by location" class="input-glass filter-select" onchange="handleAdminAllFilterChange()">
-                <option value="">All Campus Locations</option>
-                
-                    <optgroup label="Academic / Buildings">
-                      <option value="A Block">A Block</option>
-                      <option value="B Block">B Block</option>
-                      <option value="C Block">C Block</option>
-                      <option value="D Block">D Block</option>
-                      <option value="E Block">E Block</option>
-                      <option value="F Block">F Block</option>
-                      <option value="Administrative Block">Administrative Block</option>
-                      <option value="Academic Block">Academic Block</option>
-                    </optgroup>
-                    <optgroup label="Food / Shops">
-                      <option value="Saffron Canteen">Saffron Canteen</option>
-                      <option value="West Mart">West Mart</option>
-                      <option value="Cinnamon Cafe">Cinnamon Cafe</option>
-                      <option value="Cucumber Cafe">Cucumber Cafe</option>
-                      <option value="Mustard Cafe">Mustard Cafe</option>
-                    </optgroup>
-                    <optgroup label="Services">
-                      <option value="Post Office">Post Office</option>
-                    </optgroup>
-                    <optgroup label="Hostel / House Areas">
-                      <option value="Himalayan House">Himalayan House</option>
-                      <option value="Tanjore House">Tanjore House</option>
-                      <option value="Marina House">Marina House</option>
-                      <option value="Nilgiri House">Nilgiri House</option>
-                      <option value="Madura House">Madura House</option>
-                    </optgroup>
-                    <optgroup label="Other Campus Areas">
-                      <option value="Library">Library</option>
-                      <option value="Cafeteria">Cafeteria</option>
-                      <option value="Main Building">Main Building</option>
-                      <option value="Hostel Block A">Hostel Block A</option>
-                      <option value="Hostel Block B">Hostel Block B</option>
-                      <option value="Hostel Block C">Hostel Block C</option>
-                      <option value="Sports Ground">Sports Ground</option>
-                      <option value="Lab Complex">Lab Complex</option>
-                      <option value="Parking Area">Parking Area</option>
-                      <option value="Auditorium">Auditorium</option>
-                      <option value="Admin Block">Admin Block</option>
-                      <option value="Other">Other / Custom Location</option>
-                    </optgroup>
-              </select>
-              <select id="admin-all-filter-status" aria-label="Filter all reports by status" class="input-glass filter-select" onchange="handleAdminAllFilterChange()">
-                <option value="">All Statuses</option>
-                <option value="Looking">Looking</option>
-                <option value="Possible Match">Possible Match / Owner</option>
-                <option value="Claim Submitted">Claim Submitted</option>
-                <option value="Under Verification">Under Verification</option>
-                <option value="Recovered">Recovered / Returned</option>
-              </select>
-              <select id="admin-all-filter-sort" aria-label="Sort all reports" class="input-glass filter-select" onchange="handleAdminAllFilterChange()">
-                <option value="newest">Newest First</option>
-                <option value="oldest">Oldest First</option>
-                <option value="title">Title (A-Z)</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- All Reports Table -->
-          <div class="glass-card" style="padding: 0; overflow: hidden;">
-            <div class="admin-table-container">
-              <table class="admin-table">
-                <thead>
-                  <tr>
-                    <th>Type</th>
-                    <th>Report ID</th>
-                    <th>Item &amp; Details</th>
-                    <th>Category</th>
-                    <th>Color / Brand</th>
-                    <th>Campus Location</th>
-                    <th>Date Reported</th>
-                    <th>Person</th>
-                    <th>Status</th>
-                    <th style="text-align: right;">Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="admin-all-table-tbody">
-                  <!-- Rendered via JS -->
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </section>
+        
 
         <!-- ===================================================================
              PAGE: ADMIN CLAIMS & VERIFICATION (#admin-claims-page)
              =================================================================== -->
-        <section id="admin-claims-page" class="page-section" style="display: none;">
-          <div class="page-header-row" style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
-            <div>
-              <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(245, 158, 11, 0.12); color: #F59E0B; padding: 4px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 700; margin-bottom: 8px;">
-                <i data-lucide="shield-check" style="width: 14px; height: 14px;"></i>
-                <span>Claims Verification &amp; Release</span>
-              </div>
-              <h1 style="margin: 0; font-size: 1.75rem; color: var(--text-primary);">Claims &amp; Ownership Verification</h1>
-              <p style="margin: 6px 0 0; color: var(--text-secondary); font-size: 0.95rem;">
-                Dedicated claims management module. Evaluate claimant secret proof, examine AI matching evidence &amp; authorize safe physical handovers.
-              </p>
-            </div>
-            <div style="display: flex; gap: 10px; align-items: center;">
-              <button type="button" class="btn btn-secondary" onclick="renderAdminClaimsPage()">
-                <i data-lucide="refresh-cw"></i>
-                <span>Refresh</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- Claims Metric Cards -->
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 20px;">
-            <div class="glass-card stat-card" style="padding: 14px 18px;">
-              <div class="stat-label">Total Claims</div>
-              <div class="stat-value" id="admin-claims-metric-total" style="font-size: 1.5rem;">0</div>
-            </div>
-            <div class="glass-card stat-card" style="padding: 14px 18px; border-top: 3px solid #F59E0B;">
-              <div class="stat-label" style="color: #FBBF24;">Pending Review</div>
-              <div class="stat-value" id="admin-claims-metric-pending" style="font-size: 1.5rem; color: #FBBF24;">0</div>
-            </div>
-            <div class="glass-card stat-card" style="padding: 14px 18px; border-top: 3px solid #3B82F6;">
-              <div class="stat-label" style="color: #60A5FA;">Under Verification</div>
-              <div class="stat-value" id="admin-claims-metric-verification" style="font-size: 1.5rem; color: #60A5FA;">0</div>
-            </div>
-            <div class="glass-card stat-card" style="padding: 14px 18px; border-top: 3px solid #10B981;">
-              <div class="stat-label" style="color: #34D399;">Approved (Ready)</div>
-              <div class="stat-value" id="admin-claims-metric-approved" style="font-size: 1.5rem; color: #34D399;">0</div>
-            </div>
-            <div class="glass-card stat-card" style="padding: 14px 18px; border-top: 3px solid #64748B;">
-              <div class="stat-label" style="color: var(--text-muted);">Completed Handover</div>
-              <div class="stat-value" id="admin-claims-metric-completed" style="font-size: 1.5rem; color: var(--text-muted);">0</div>
-            </div>
-          </div>
-
-          <!-- Claims Filter Tabs -->
-          <div class="glass-card" style="margin-bottom: 20px; padding: 16px 20px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
-              <div class="admin-help-tabs-wrap" id="admin-claims-tabs">
-                <button type="button" class="btn btn-sm admin-claims-tab active" data-tab="all" onclick="filterAdminClaimsTab('all', this)">All Claims</button>
-                <button type="button" class="btn btn-sm btn-secondary admin-claims-tab" data-tab="Pending" onclick="filterAdminClaimsTab('Pending', this)">Pending</button>
-                <button type="button" class="btn btn-sm btn-secondary admin-claims-tab" data-tab="Under Verification" onclick="filterAdminClaimsTab('Under Verification', this)">Under Verification</button>
-                <button type="button" class="btn btn-sm btn-secondary admin-claims-tab" data-tab="Approved" onclick="filterAdminClaimsTab('Approved', this)">Approved</button>
-                <button type="button" class="btn btn-sm btn-secondary admin-claims-tab" data-tab="Rejected" onclick="filterAdminClaimsTab('Rejected', this)">Rejected</button>
-                <button type="button" class="btn btn-sm btn-secondary admin-claims-tab" data-tab="Completed" onclick="filterAdminClaimsTab('Completed', this)">Completed</button>
-              </div>
-
-              <div style="display: flex; gap: 10px; align-items: center; flex: 1; max-width: 360px;">
-                <input type="text" id="admin-claims-search-input" aria-label="Search claim requests" class="input-glass" placeholder="Search by claim ID, student, item title..." oninput="handleAdminClaimsFilterChange()">
-              </div>
-            </div>
-          </div>
-
-          <!-- Claims Table -->
-          <div class="glass-card" style="padding: 0; overflow: hidden;">
-            <div class="admin-table-container">
-              <table class="admin-table">
-                <thead>
-                  <tr>
-                    <th>Claim ID</th>
-                    <th>Lost Item</th>
-                    <th>Found Item</th>
-                    <th>Claimant</th>
-                    <th>Finder</th>
-                    <th>Match Score</th>
-                    <th>Secret Verification Evidence</th>
-                    <th>Status</th>
-                    <th style="text-align: right;">Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="admin-claims-table-tbody">
-                  <!-- Rendered via JS -->
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </section>
+        
 
         <!-- ===================================================================
              PAGE: ADMIN MATCH CENTER (#admin-matches-page)
              =================================================================== -->
-        <section id="admin-matches-page" class="page-section" style="display: none;">
-          <div class="page-header-row" style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
-            <div>
-              <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(139, 92, 246, 0.12); color: var(--ai-violet); padding: 4px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 700; margin-bottom: 8px;">
-                <i data-lucide="sparkles" style="width: 14px; height: 14px;"></i>
-                <span>Multi-Signal Correlation Engine</span>
-              </div>
-              <h1 style="margin: 0; font-size: 1.75rem; color: var(--text-primary);">AI Match Center</h1>
-              <p style="margin: 6px 0 0; color: var(--text-secondary); font-size: 0.95rem;">
-                Cross-modal intelligence matching lost text descriptions (no photo required) with found item photographs and campus locations.
-              </p>
-            </div>
-            <div style="display: flex; gap: 10px; align-items: center;">
-              <button type="button" class="btn btn-secondary" onclick="renderAdminMatchCenterPage()">
-                <i data-lucide="refresh-cw"></i>
-                <span>Refresh Engine</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- Match Center Metrics & Controls -->
-          <div class="glass-card" style="margin-bottom: 24px; padding: 16px 20px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
-              <div style="display: flex; align-items: center; gap: 12px;">
-                <span style="font-weight: 700; font-size: 0.88rem; color: var(--text-primary);">Confidence Filter:</span>
-                <select id="admin-match-filter-threshold" aria-label="Filter matches by threshold" class="input-glass" style="width: auto;" onchange="handleAdminMatchFilterChange()">
-                  <option value="40">All Potential Matches (&ge; 40%)</option>
-                  <option value="60">Medium &amp; High Confidence (&ge; 60%)</option>
-                  <option value="75">High Confidence Only (&ge; 75%)</option>
-                  <option value="85">Strong Probability (&ge; 85%)</option>
-                </select>
-              </div>
-
-              <div style="display: flex; gap: 10px; align-items: center; flex: 1; max-width: 360px;">
-                <input type="text" id="admin-match-search-input" aria-label="Search matches" class="input-glass" placeholder="Search by item keywords or landmark..." oninput="handleAdminMatchFilterChange()">
-              </div>
-            </div>
-          </div>
-
-          <!-- Candidate Matches Grid / Cards Container -->
-          <div id="admin-matches-cards-container" style="display: flex; flex-direction: column; gap: 18px;">
-            <!-- Rendered dynamically by renderAdminMatchCenterPage() -->
-          </div>
-        </section>
+        
 
 
         <!-- ===================================================================
@@ -2642,7 +2857,7 @@
               </div>
               <div class="stat-card-data">
                 <span class="stat-card-value" id="an-avg-confidence">0%</span>
-                <span class="stat-card-label">AI Match Precision</span>
+                <span class="stat-card-label">Match Results</span>
               </div>
             </div>
           </div>
@@ -2694,7 +2909,7 @@
         <section id="profile-page" class="page-section">
           <div style="margin-bottom: 24px;">
             <h1>Campus Profile</h1>
-            <p>Your institutional credentials, verified reports, and campus reputation status.</p>
+            <p>Your institutional credentials and verified reports.</p>
           </div>
 
           <div id="profile-content-container">
@@ -2835,10 +3050,7 @@
             <p style="margin-bottom: 16px;">Local session and demo datasets:</p>
 
             <div style="display: flex; gap: 14px; align-items: center; flex-wrap: wrap;">
-              <button class="btn btn-secondary" onclick="resetHackathonDemoData()">
-                <i data-lucide="rotate-ccw"></i>
-                <span>Reload Demo Dataset (12 Items)</span>
-              </button>
+              
               <button class="btn btn-danger" onclick="logout()">
                 <i data-lucide="log-out"></i>
                 <span>Sign Out of Session</span>
@@ -2930,49 +3142,55 @@
               <div class="form-group">
                 <label for="ifound-location" style="font-weight: 600;">Where did you find it? *</label>
                 <select id="ifound-location" class="select-glass" required onchange="handleLocationSelectChange(this, 'ifound-location-other-wrap')">
-                  <option value="">-- Select location on campus --</option>
-                    <optgroup label="Academic / Buildings">
-                      <option value="A Block">A Block</option>
-                      <option value="B Block">B Block</option>
-                      <option value="C Block">C Block</option>
-                      <option value="D Block">D Block</option>
-                      <option value="E Block">E Block</option>
-                      <option value="F Block">F Block</option>
-                      <option value="Administrative Block">Administrative Block</option>
-                      <option value="Academic Block">Academic Block</option>
-                    </optgroup>
-                    <optgroup label="Food / Shops">
-                      <option value="Saffron Canteen">Saffron Canteen</option>
-                      <option value="West Mart">West Mart</option>
-                      <option value="Cinnamon Cafe">Cinnamon Cafe</option>
-                      <option value="Cucumber Cafe">Cucumber Cafe</option>
-                      <option value="Mustard Cafe">Mustard Cafe</option>
-                    </optgroup>
-                    <optgroup label="Services">
-                      <option value="Post Office">Post Office</option>
-                    </optgroup>
-                    <optgroup label="Hostel / House Areas">
-                      <option value="Himalayan House">Himalayan House</option>
-                      <option value="Tanjore House">Tanjore House</option>
-                      <option value="Marina House">Marina House</option>
-                      <option value="Nilgiri House">Nilgiri House</option>
-                      <option value="Madura House">Madura House</option>
-                    </optgroup>
-                    <optgroup label="Other Campus Areas">
-                      <option value="Library">Library</option>
-                      <option value="Cafeteria">Cafeteria</option>
-                      <option value="Main Building">Main Building</option>
-                      <option value="Hostel Block A">Hostel Block A</option>
-                      <option value="Hostel Block B">Hostel Block B</option>
-                      <option value="Hostel Block C">Hostel Block C</option>
-                      <option value="Sports Ground">Sports Ground</option>
-                      <option value="Lab Complex">Lab Complex</option>
-                      <option value="Parking Area">Parking Area</option>
-                      <option value="Auditorium">Auditorium</option>
-                      <option value="Admin Block">Admin Block</option>
-                      <option value="Other">Other / Custom Location</option>
-                    </optgroup>
-                </select>
+                      <option value="" disabled selected>Select Location</option>
+                      
+  <!-- OFFICIALLY VERIFIED -->
+  <option value="Administrative Block">Administrative Block</option>
+  <option value="Academic Block">Academic Block</option>
+  <option value="A Block">A Block</option>
+  <option value="B Block">B Block</option>
+  <option value="C Block">C Block</option>
+  <option value="D Block">D Block</option>
+  <option value="E Block">E Block</option>
+  <option value="F Block">F Block</option>
+  <option value="Library Block">Library Block</option>
+  <option value="Principal Quarters">Principal Quarters</option>
+  <option value="Guest House">Guest House</option>
+  <option value="Sports Club & Gymnasium">Sports Club & Gymnasium</option>
+  <option value="Auditorium">Auditorium</option>
+  <option value="Cafeteria">Cafeteria</option>
+  <option value="Boys' Hostel">Boys' Hostel</option>
+  <option value="Girls' Hostel">Girls' Hostel</option>
+  <option value="Power House">Power House</option>
+  <option value="Stationery Store">Stationery Store</option>
+  <option value="Parking">Parking</option>
+  <!-- FRIEND/STUDENT CONFIRMED -->
+  <option value="Himalayan House">Himalayan House</option>
+  <option value="Tanjore House">Tanjore House</option>
+  <option value="Madurai House">Madurai House</option>
+  <option value="Marina House">Marina House</option>
+  <option value="Nilgiri House">Nilgiri House</option>
+  <option value="Ellora House">Ellora House</option>
+  <option value="Vivekananda Hostel">Vivekananda Hostel</option>
+  <option value="Raman Block">Raman Block</option>
+  <option value="Mercury Block">Mercury Block</option>
+  <option value="Jupiter Block">Jupiter Block</option>
+  <option value="MBA Block">MBA Block</option>
+  <option value="Mechanical Block">Mechanical Block</option>
+  <option value="IT Park">IT Park</option>
+  <option value="Techno Park">Techno Park</option>
+  <option value="Founder Hall">Founder Hall</option>
+  <option value="West Mart">West Mart</option>
+  <option value="Cucumber Canteen">Cucumber Canteen</option>
+  <option value="Mustard Cafe">Mustard Cafe</option>
+  <option value="Saffron Canteen">Saffron Canteen</option>
+  <option value="Cinnamon Canteen">Cinnamon Canteen</option>
+  <option value="Bite Zone">Bite Zone</option>
+  <!-- NEEDS CONFIRMATION -->
+  <option value="Round Building">Round Building</option>
+  <option value="Women's Arts">Women's Arts</option>
+
+                    </select>
                 <div id="ifound-location-other-wrap" style="display: none; margin-top: 8px;">
                   <input type="text" id="ifound-location-other" aria-label="Specify custom sighting location" class="input-glass" placeholder="Specify landmark or campus area...">
                 </div>
@@ -3018,131 +3236,12 @@
         <!-- ===================================================================
              PAGE: ADMIN FIND BY PHOTO (#admin-photo-search-page)
              =================================================================== -->
-        <section id="admin-photo-search-page" class="page-section" style="display: none;">
-          <div class="find-item-header">
-            <h1>Staff Vision: Find by Photo</h1>
-            <p>Upload a photo of a found item to run AI-assisted multi-signal correlation across all campus lost reports.</p>
-          </div>
-
-          <div class="glass-card" style="max-width: 720px; margin: 0 auto 24px;">
-            <div class="form-group">
-              <label style="font-weight: 600;">Upload Found Item Photo</label>
-              <input type="file" id="admin-photo-input" aria-label="Upload photo for similarity search" accept="image/*" class="input-glass" onchange="handleAdminPhotoSelected(event)">
-              <div id="admin-photo-preview" style="display: none; margin-top: 14px;">
-                <img id="admin-photo-preview-img" style="max-width: 200px; max-height: 160px; object-fit: cover; border-radius: 8px; border: 1.5px solid var(--teal-bright);" src="" alt="Preview">
-              </div>
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px;">
-              <div class="form-group">
-                <label for="admin-photo-category">Item Category</label>
-                <select id="admin-photo-category" class="select-glass">
-                  <option value="">All Categories</option>
-                  <option value="electronics">Electronics</option>
-                  <option value="wallet">Wallets &amp; Bags</option>
-                  <option value="id-card">ID Cards</option>
-                  <option value="keys">Keys</option>
-                  <option value="clothing">Clothing</option>
-                  <option value="documents">Documents</option>
-                  <option value="misc">Miscellaneous</option>
-                </select>
-              </div>
-
-              <div class="form-group">
-                <label for="admin-photo-location">Found Location</label>
-                <select id="admin-photo-location" class="select-glass">
-                  <option value="">All Campus Locations</option>
-                    <optgroup label="Academic / Buildings">
-                      <option value="A Block">A Block</option>
-                      <option value="B Block">B Block</option>
-                      <option value="C Block">C Block</option>
-                      <option value="D Block">D Block</option>
-                      <option value="E Block">E Block</option>
-                      <option value="F Block">F Block</option>
-                      <option value="Administrative Block">Administrative Block</option>
-                      <option value="Academic Block">Academic Block</option>
-                    </optgroup>
-                    <optgroup label="Food / Shops">
-                      <option value="Saffron Canteen">Saffron Canteen</option>
-                      <option value="West Mart">West Mart</option>
-                      <option value="Cinnamon Cafe">Cinnamon Cafe</option>
-                      <option value="Cucumber Cafe">Cucumber Cafe</option>
-                      <option value="Mustard Cafe">Mustard Cafe</option>
-                    </optgroup>
-                    <optgroup label="Services">
-                      <option value="Post Office">Post Office</option>
-                    </optgroup>
-                    <optgroup label="Hostel / House Areas">
-                      <option value="Himalayan House">Himalayan House</option>
-                      <option value="Tanjore House">Tanjore House</option>
-                      <option value="Marina House">Marina House</option>
-                      <option value="Nilgiri House">Nilgiri House</option>
-                      <option value="Madura House">Madura House</option>
-                    </optgroup>
-                    <optgroup label="Other Campus Areas">
-                      <option value="Library">Library</option>
-                      <option value="Cafeteria">Cafeteria</option>
-                      <option value="Main Building">Main Building</option>
-                      <option value="Hostel Block A">Hostel Block A</option>
-                      <option value="Hostel Block B">Hostel Block B</option>
-                      <option value="Hostel Block C">Hostel Block C</option>
-                      <option value="Sports Ground">Sports Ground</option>
-                      <option value="Lab Complex">Lab Complex</option>
-                      <option value="Parking Area">Parking Area</option>
-                      <option value="Auditorium">Auditorium</option>
-                      <option value="Admin Block">Admin Block</option>
-                      <option value="Other">Other / Custom Location</option>
-                    </optgroup>
-                </select>
-              </div>
-            </div>
-
-            <button type="button" class="btn btn-primary" style="margin-top: 20px; width: 100%; min-height: 46px;" onclick="runAdminPhotoSearch()">
-              <i data-lucide="sparkles"></i>
-              <span>Run AI-Assisted Match Search</span>
-            </button>
-          </div>
-
-          <div id="admin-photo-search-results"></div>
-        </section>
+        
 
         <!-- ===================================================================
              PAGE: ADMIN STUDENTS DIRECTORY (#admin-students-page)
              =================================================================== -->
-        <section id="admin-students-page" class="page-section" style="display: none;">
-          <div class="find-item-header">
-            <h1>Students Directory</h1>
-            <p>Campus students directory with report activity, claim history, and karma standings.</p>
-          </div>
-
-          <div class="glass-card" style="margin-bottom: 20px;">
-            <div class="header-search" style="display: flex; width: 100%;">
-              <i data-lucide="search"></i>
-              <input type="text" id="students-search-input" aria-label="Search students directory" class="input-glass" placeholder="Search students by name, student ID, department..." oninput="renderAdminStudents()">
-            </div>
-          </div>
-
-          <div class="glass-card" style="padding: 0; overflow: hidden;">
-            <div class="admin-table-container">
-              <table class="admin-table" id="students-directory-table">
-                <thead>
-                  <tr>
-                    <th>Student</th>
-                    <th>Student ID</th>
-                    <th>Lost Reports</th>
-                    <th>Found Reports</th>
-                    <th>Claims</th>
-                    <th>Karma</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody id="students-directory-tbody">
-                  <!-- Populated via JS -->
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </section>
+        
 
         <!-- ===================================================================
              PAGE: ALERTS (#alerts-page)
@@ -3443,50 +3542,55 @@
                 <div class="form-group">
                   <label for="complaint-location">Incident Campus Location *</label>
                   <select id="complaint-location" class="input-glass" required onchange="handleLocationSelectChange(this, 'complaint-location-other-wrap')">
-                    <option value="">Select Incident Location...</option>
-                    
-                    <optgroup label="Academic / Buildings">
-                      <option value="A Block">A Block</option>
-                      <option value="B Block">B Block</option>
-                      <option value="C Block">C Block</option>
-                      <option value="D Block">D Block</option>
-                      <option value="E Block">E Block</option>
-                      <option value="F Block">F Block</option>
-                      <option value="Administrative Block">Administrative Block</option>
-                      <option value="Academic Block">Academic Block</option>
-                    </optgroup>
-                    <optgroup label="Food / Shops">
-                      <option value="Saffron Canteen">Saffron Canteen</option>
-                      <option value="West Mart">West Mart</option>
-                      <option value="Cinnamon Cafe">Cinnamon Cafe</option>
-                      <option value="Cucumber Cafe">Cucumber Cafe</option>
-                      <option value="Mustard Cafe">Mustard Cafe</option>
-                    </optgroup>
-                    <optgroup label="Services">
-                      <option value="Post Office">Post Office</option>
-                    </optgroup>
-                    <optgroup label="Hostel / House Areas">
-                      <option value="Himalayan House">Himalayan House</option>
-                      <option value="Tanjore House">Tanjore House</option>
-                      <option value="Marina House">Marina House</option>
-                      <option value="Nilgiri House">Nilgiri House</option>
-                      <option value="Madura House">Madura House</option>
-                    </optgroup>
-                    <optgroup label="Other Campus Areas">
-                      <option value="Library">Library</option>
-                      <option value="Cafeteria">Cafeteria</option>
-                      <option value="Main Building">Main Building</option>
-                      <option value="Hostel Block A">Hostel Block A</option>
-                      <option value="Hostel Block B">Hostel Block B</option>
-                      <option value="Hostel Block C">Hostel Block C</option>
-                      <option value="Sports Ground">Sports Ground</option>
-                      <option value="Lab Complex">Lab Complex</option>
-                      <option value="Parking Area">Parking Area</option>
-                      <option value="Auditorium">Auditorium</option>
-                      <option value="Admin Block">Admin Block</option>
-                      <option value="Other">Other / Custom Location</option>
-                    </optgroup>
-                  </select>
+                      <option value="" disabled selected>Select Location</option>
+                      
+  <!-- OFFICIALLY VERIFIED -->
+  <option value="Administrative Block">Administrative Block</option>
+  <option value="Academic Block">Academic Block</option>
+  <option value="A Block">A Block</option>
+  <option value="B Block">B Block</option>
+  <option value="C Block">C Block</option>
+  <option value="D Block">D Block</option>
+  <option value="E Block">E Block</option>
+  <option value="F Block">F Block</option>
+  <option value="Library Block">Library Block</option>
+  <option value="Principal Quarters">Principal Quarters</option>
+  <option value="Guest House">Guest House</option>
+  <option value="Sports Club & Gymnasium">Sports Club & Gymnasium</option>
+  <option value="Auditorium">Auditorium</option>
+  <option value="Cafeteria">Cafeteria</option>
+  <option value="Boys' Hostel">Boys' Hostel</option>
+  <option value="Girls' Hostel">Girls' Hostel</option>
+  <option value="Power House">Power House</option>
+  <option value="Stationery Store">Stationery Store</option>
+  <option value="Parking">Parking</option>
+  <!-- FRIEND/STUDENT CONFIRMED -->
+  <option value="Himalayan House">Himalayan House</option>
+  <option value="Tanjore House">Tanjore House</option>
+  <option value="Madurai House">Madurai House</option>
+  <option value="Marina House">Marina House</option>
+  <option value="Nilgiri House">Nilgiri House</option>
+  <option value="Ellora House">Ellora House</option>
+  <option value="Vivekananda Hostel">Vivekananda Hostel</option>
+  <option value="Raman Block">Raman Block</option>
+  <option value="Mercury Block">Mercury Block</option>
+  <option value="Jupiter Block">Jupiter Block</option>
+  <option value="MBA Block">MBA Block</option>
+  <option value="Mechanical Block">Mechanical Block</option>
+  <option value="IT Park">IT Park</option>
+  <option value="Techno Park">Techno Park</option>
+  <option value="Founder Hall">Founder Hall</option>
+  <option value="West Mart">West Mart</option>
+  <option value="Cucumber Canteen">Cucumber Canteen</option>
+  <option value="Mustard Cafe">Mustard Cafe</option>
+  <option value="Saffron Canteen">Saffron Canteen</option>
+  <option value="Cinnamon Canteen">Cinnamon Canteen</option>
+  <option value="Bite Zone">Bite Zone</option>
+  <!-- NEEDS CONFIRMATION -->
+  <option value="Round Building">Round Building</option>
+  <option value="Women's Arts">Women's Arts</option>
+
+                    </select>
                   <div id="complaint-location-other-wrap" style="display: none; margin-top: 8px;">
                     <input type="text" id="complaint-location-other" aria-label="Specify custom incident location" class="input-glass" placeholder="Specify landmark or campus location...">
                   </div>
@@ -3520,96 +3624,7 @@
         <!-- ===================================================================
              PAGE: ADMIN HELP & COMPLAINTS DESK (#admin-help-page)
              =================================================================== -->
-        <section id="admin-help-page" class="page-section" style="display: none;">
-          <div class="page-header-row" style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
-            <div>
-              <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(239, 68, 68, 0.12); color: #F87171; padding: 4px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 700; margin-bottom: 8px;">
-                <i data-lucide="shield-alert" style="width: 14px; height: 14px;"></i>
-                <span>Staff Investigation Desk</span>
-              </div>
-              <h1 style="margin: 0; font-size: 1.75rem; color: var(--text-primary);">Help Desk &amp; Student Complaints</h1>
-              <p style="margin: 6px 0 0; color: var(--text-secondary); font-size: 0.95rem;">
-                Triage student safety escalations, urgent item disputes, extortion reports, and mediate safe campus handovers.
-              </p>
-            </div>
-            <div style="display: flex; gap: 10px; align-items: center;">
-              <button type="button" class="btn btn-secondary" onclick="renderAdminHelpDesk()">
-                <i data-lucide="refresh-cw"></i>
-                <span>Refresh</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- Quick Metrics Bar -->
-          <div class="admin-help-metrics-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 24px;">
-            <div class="glass-card stat-card">
-              <div class="stat-label">Total Tickets</div>
-              <div class="stat-value" id="admin-help-metric-total">0</div>
-              <div class="stat-sub">All logged requests</div>
-            </div>
-            <div class="glass-card stat-card" style="border-top: 3px solid #EF4444;">
-              <div class="stat-label" style="color: #F87171;">Urgent / Critical</div>
-              <div class="stat-value" id="admin-help-metric-urgent" style="color: #F87171;">0</div>
-              <div class="stat-sub">Needs fast attention</div>
-            </div>
-            <div class="glass-card stat-card" style="border-top: 3px solid #F59E0B;">
-              <div class="stat-label" style="color: #FBBF24;">New / Unassigned</div>
-              <div class="stat-value" id="admin-help-metric-new" style="color: #FBBF24;">0</div>
-              <div class="stat-sub">Pending triage</div>
-            </div>
-            <div class="glass-card stat-card" style="border-top: 3px solid #3B82F6;">
-              <div class="stat-label" style="color: #60A5FA;">In Review</div>
-              <div class="stat-value" id="admin-help-metric-in-review" style="color: #60A5FA;">0</div>
-              <div class="stat-sub">Active mediation</div>
-            </div>
-            <div class="glass-card stat-card" style="border-top: 3px solid #10B981;">
-              <div class="stat-label" style="color: #34D399;">Handled / Closed</div>
-              <div class="stat-value" id="admin-help-metric-resolved" style="color: #34D399;">0</div>
-              <div class="stat-sub">Safely resolved</div>
-            </div>
-          </div>
-
-          <!-- Filter Tabs & Controls -->
-          <div class="glass-card" style="margin-bottom: 24px; padding: 16px 20px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
-              <div class="admin-help-tabs-wrap" id="admin-help-tabs" style="display: flex; gap: 8px; flex-wrap: wrap;">
-                <button type="button" class="btn btn-sm admin-help-tab active" data-tab="all" onclick="filterAdminHelpDeskTab('all', this)">All</button>
-                <button type="button" class="btn btn-sm btn-secondary admin-help-tab" data-tab="new" onclick="filterAdminHelpDeskTab('new', this)">New</button>
-                <button type="button" class="btn btn-sm btn-secondary admin-help-tab" data-tab="urgent" onclick="filterAdminHelpDeskTab('urgent', this)">Urgent</button>
-                <button type="button" class="btn btn-sm btn-secondary admin-help-tab" data-tab="open" onclick="filterAdminHelpDeskTab('open', this)">In Review</button>
-                <button type="button" class="btn btn-sm btn-secondary admin-help-tab" data-tab="handled" onclick="filterAdminHelpDeskTab('handled', this)">Handled</button>
-                <button type="button" class="btn btn-sm btn-secondary admin-help-tab" data-tab="closed" onclick="filterAdminHelpDeskTab('closed', this)">Closed</button>
-              </div>
-
-              <div style="display: flex; gap: 10px; align-items: center; flex: 1; max-width: 380px;">
-                <input type="text" id="admin-help-search-input" aria-label="Search assistance requests" class="input-glass" placeholder="Search by student, item or ID..." oninput="handleAdminHelpSearch()">
-              </div>
-            </div>
-          </div>
-
-          <!-- Tickets Table Container -->
-          <div class="glass-card" style="padding: 0; overflow: hidden;">
-            <div class="admin-table-container">
-              <table class="admin-table">
-                <thead>
-                  <tr>
-                    <th>Ticket ID</th>
-                    <th>Date</th>
-                    <th>Urgency</th>
-                    <th>Category / Reason</th>
-                    <th>Student Details</th>
-                    <th>Location</th>
-                    <th>Status</th>
-                    <th style="text-align: right;">Action</th>
-                  </tr>
-                </thead>
-                <tbody id="admin-help-table-tbody">
-                  <!-- Populated dynamically by renderAdminHelpDesk() -->
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </section>
+        
 
       </main>
     </div>
@@ -3620,7 +3635,8 @@
     </nav>
   </div>
 
-  <!-- =========================================================================
+  <template id="lazy-modals-template">
+<!-- =========================================================================
        3. CLAIM VERIFICATION MODAL (#claim-modal)
        ========================================================================= -->
   <div class="modal-overlay" id="claim-modal">
@@ -4434,5 +4450,7 @@
   </div>
 
 
+
+</template>
 </body>
 </html>

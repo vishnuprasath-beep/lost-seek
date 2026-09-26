@@ -5,6 +5,7 @@ const PROD_BASE_URL = 'https://smart-campus-pro.vercel.app';
 let currentQrItemId = null;
 
 function openQrModal(itemId) {
+  ensureModalsLoaded();
   let item = appState.lostReports.find(r => r.id === itemId) || appState.foundReports.find(r => r.id === itemId);
   if (!item) return;
 
@@ -312,7 +313,7 @@ async function openPublicVerification(reportId) {
     `;
   }
 
-  if (window.lucide) window.lucide.createIcons();
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
 }
 
 function closePublicVerificationModal() {

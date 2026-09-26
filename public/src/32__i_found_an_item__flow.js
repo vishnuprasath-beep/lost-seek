@@ -18,7 +18,7 @@ function initIFoundPage() {
     now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
     dtInput.value = now.toISOString().slice(0, 16);
   }
-  if (window.lucide) window.lucide.createIcons();
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
 }
 
 function handleIFoundPhotoSelected(e) {
@@ -38,7 +38,7 @@ function handleIFoundPhotoSelected(e) {
     if (preview) preview.style.display = 'block';
     if (buttonsRow) buttonsRow.style.display = 'none';
     showToast('Photo attached successfully!', 'success');
-    if (window.lucide) window.lucide.createIcons();
+    if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
   };
   reader.readAsDataURL(file);
 }
@@ -171,7 +171,7 @@ function handleIFoundSearch(e) {
     `;
   }
 
-  if (window.lucide) window.lucide.createIcons();
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
 }
 
 function postAsFoundDirectly(title, category, location, datetime, photo, phone, sharePhone) {
@@ -202,11 +202,11 @@ function postAsFoundDirectly(title, category, location, datetime, photo, phone, 
   };
 
   appState.foundReports.unshift(newReport);
-  addKarma(10, 'Found Item Reported');
+  
   saveData();
   renderAllViews();
 
-  showToast('Found item posted to LostSeek! 📦 +10 Karma', 'success');
+  showToast('Found item posted to LostSeek! 📦 ', 'success');
 
   // Asynchronous cloud persistence & blob upload
   (async () => {

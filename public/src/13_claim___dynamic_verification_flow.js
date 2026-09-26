@@ -21,6 +21,7 @@ function getVerificationQuestion(category) {
 }
 
 function openClaimModal(lostId, foundId, title, category = 'misc') {
+  ensureModalsLoaded();
   const modal = document.getElementById('claim-modal');
   const titleEl = document.getElementById('modal-item-title');
   const lostInput = document.getElementById('claim-lost-id');

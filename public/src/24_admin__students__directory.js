@@ -18,7 +18,7 @@ function renderAdminStudents() {
         studentMap.set(u.name, {
           name: u.name,
           id: u.studentId || u.username || 'STU-2026',
-          karma: 50,
+          
           status: 'Active',
           avatarUrl: u.avatarUrl || null,
           lostCount: 0,
@@ -103,7 +103,7 @@ function renderAdminStudents() {
       <td data-label="Lost Reports">${s.lostCount}</td>
       <td data-label="Found Reports">${s.foundCount}</td>
       <td data-label="Claims">${s.claimsCount}</td>
-      <td data-label="Karma"><span style="color:var(--color-warning);font-weight:700;">⚡ ${s.karma}</span></td>
+      
       <td data-label="Status"><span class="badge badge-verified">${s.status}</span></td>
     </tr>
   `).join('');

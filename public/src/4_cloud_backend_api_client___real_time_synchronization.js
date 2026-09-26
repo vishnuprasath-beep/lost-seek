@@ -7,11 +7,8 @@ const API_BASE = (window.location.origin && window.location.origin !== 'null' &&
 
 function getAuthHeaders() {
   const headers = { 'Content-Type': 'application/json' };
-  if (window.appState && window.appState.user) {
-    headers['x-lostseek-user'] = encodeURIComponent(JSON.stringify(window.appState.user));
-    if (window.appState.user.token) {
-      headers['Authorization'] = 'Bearer ' + window.appState.user.token;
-    }
+  if (window.appState && window.appState.user && window.appState.user.token) {
+    headers['Authorization'] = 'Bearer ' + window.appState.user.token;
   }
   return headers;
 }
@@ -174,13 +171,30 @@ function loadData() {
       if (Array.isArray(appState.lostReports)) appState.lostReports.forEach(normalizeCachedReport);
       if (Array.isArray(appState.foundReports)) appState.foundReports.forEach(normalizeCachedReport);
       if (appState.user) {
-        const canonical = appState.user.avatarUrl || appState.user.avatar || appState.user.avatar_url || appState.user.profilePicture || appState.user.profilePictureUrl || appState.user.photoUrl || null;
-        appState.user.avatarUrl = canonical;
-        appState.user.avatar = canonical;
-        appState.user.avatar_url = canonical;
-        appState.user.profilePicture = canonical;
-        appState.user.profilePictureUrl = canonical;
-        appState.user.photoUrl = canonical;
+        // [KARMA MIGRATION CLEANUP]
+        if ('karma' in appState.user) delete appState.user.karma;
+        if ('karmaScore' in appState.user) delete appState.user.karmaScore;
+        if ('badges' in appState.user) delete appState.user.badges;
+        if ('karma' in appState) delete appState.karma;
+        
+        // [SESSION MIGRATION / CACHE BUSTING]
+        // If the user object lacks a valid Supabase JWT token, it's an obsolete session from before the security migration.
+        if (!appState.user.token || appState.user.token.startsWith('legacy-token')) {
+          console.warn('[DEBUG] Obsolete auth session detected (missing valid JWT). Forcing logout.');
+          appState.user = null;
+          saveData(); // Persist the cleared session immediately
+          if (typeof showToast === 'function') {
+            setTimeout(() => showToast('Session expired. Please log in again.', 'warning'), 1500);
+          }
+        } else {
+          const canonical = appState.user.avatarUrl || appState.user.avatar || appState.user.avatar_url || appState.user.profilePicture || appState.user.profilePictureUrl || appState.user.photoUrl || null;
+          appState.user.avatarUrl = canonical;
+          appState.user.avatar = canonical;
+          appState.user.avatar_url = canonical;
+          appState.user.profilePicture = canonical;
+          appState.user.profilePictureUrl = canonical;
+          appState.user.photoUrl = canonical;
+        }
       }
     } catch (e) {
       console.warn('Failed to parse localStorage data. Re-seeding...', e);

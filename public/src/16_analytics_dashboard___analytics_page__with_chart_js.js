@@ -1,5 +1,4 @@
-/* ==========================================================================
-   ANALYTICS DASHBOARD (#analytics-page) with Chart.js
+/*undefined
    ========================================================================== */
 let analyticsChartInstances = {};
 
@@ -12,13 +11,13 @@ function renderAnalyticsPage() {
 function renderAnalyticsStats() {
   const totalReports = appState.lostReports.length + appState.foundReports.length;
   const returnedCount = appState.lostReports.filter(r => r.status === 'Returned' || r.status === 'Verified').length +
-                        appState.foundReports.filter(r => r.status === 'Returned' || r.status === 'Verified').length;
+    appState.foundReports.filter(r => r.status === 'Returned' || r.status === 'Verified').length;
   const recoveryRate = totalReports > 0 ? Math.round((returnedCount / totalReports) * 100) : 0;
 
   const matches = calculateMatchesList();
   const avgConfidence = matches.length > 0
     ? Math.round(matches.reduce((acc, m) => acc + m.score, 0) / matches.length)
-    : 87;
+    : "No data";
 
   const totalEl = document.getElementById('an-total-reports');
   const recoveryEl = document.getElementById('an-recovery-rate');
@@ -27,13 +26,13 @@ function renderAnalyticsStats() {
 
   if (totalEl) totalEl.textContent = totalReports;
   if (recoveryEl) recoveryEl.textContent = `${recoveryRate}%`;
-  if (confEl) confEl.textContent = `${avgConfidence}%`;
-  if (timeEl) timeEl.textContent = '2.8 hrs';
+  if (confEl) confEl.textContent = avgConfidence === "No data" ? avgConfidence : `${avgConfidence}%`;
+  if (timeEl) timeEl.textContent = 'No data';
 }
 
 function initAnalyticsCharts() {
   if (typeof Chart === 'undefined') {
-    loadScriptAsync('https://cdn.jsdelivr.net/npm/chart.js').then(() => initAnalyticsCharts()).catch(() => {});
+    loadScriptAsync('https://cdn.jsdelivr.net/npm/chart.js').then(() => initAnalyticsCharts()).catch(() => { });
     return;
   }
 
@@ -47,6 +46,22 @@ function initAnalyticsCharts() {
     if (existing) existing.destroy();
   });
 
+  const allItems = [...appState.lostReports, ...appState.foundReports];
+  if (allItems.length === 0) {
+    const chartCanvases = document.querySelectorAll('.chart-card canvas');
+    chartCanvases.forEach(canvas => {
+      const parent = canvas.parentElement;
+      if (parent) {
+        parent.innerHTML = `<div class="empty-state" style="padding: 40px 20px; text-align: center; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
+          <i data-lucide="bar-chart-2" style="width: 32px; height: 32px; margin-bottom: 12px; opacity: 0.5;"></i>
+          <p>No data available yet</p>
+        </div>`;
+      }
+    });
+    if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
+    return;
+  }
+
   const categories = [
     { key: 'id-card', label: 'ID Cards' },
     { key: 'electronics', label: 'Electronics' },
@@ -57,8 +72,6 @@ function initAnalyticsCharts() {
     { key: 'clothing', label: 'Clothing' },
     { key: 'misc', label: 'Misc' }
   ];
-
-  const allItems = [...appState.lostReports, ...appState.foundReports];
 
   // 1. Doughnut Chart: Items by Category
   const catCounts = categories.map(c => allItems.filter(i => (i.category === c.key || i.category === c.key + 's')).length);
@@ -94,7 +107,27 @@ function initAnalyticsCharts() {
   // 2. Line Chart: Reports Over Time (Last 7 Days)
   const timelineCanvas = document.getElementById('chart-timeline');
   if (timelineCanvas) {
-    const days = ['Sep 11', 'Sep 12', 'Sep 13', 'Sep 14', 'Sep 15', 'Sep 16', 'Sep 17'];
+    const days = [];
+    const lostCounts = [];
+    const foundCounts = [];
+    const now = new Date();
+
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      const dateString = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      days.push(dateString);
+
+      const isSameDay = (isoStr) => {
+        if (!isoStr) return false;
+        const target = new Date(isoStr);
+        return target.getDate() === d.getDate() && target.getMonth() === d.getMonth() && target.getFullYear() === d.getFullYear();
+      };
+
+      lostCounts.push(appState.lostReports.filter(r => isSameDay(r.createdAt)).length);
+      foundCounts.push(appState.foundReports.filter(r => isSameDay(r.createdAt)).length);
+    }
+
     analyticsChartInstances['chart-timeline'] = new Chart(timelineCanvas, {
       type: 'line',
       data: {
@@ -102,7 +135,7 @@ function initAnalyticsCharts() {
         datasets: [
           {
             label: 'Lost Reports',
-            data: [2, 3, 1, 4, 3, 5, 2],
+            data: lostCounts,
             borderColor: '#6c63ff',
             backgroundColor: 'rgba(108, 99, 255, 0.15)',
             tension: 0.35,
@@ -110,7 +143,7 @@ function initAnalyticsCharts() {
           },
           {
             label: 'Found Reports',
-            data: [1, 2, 2, 3, 4, 3, 1],
+            data: foundCounts,
             borderColor: '#00d4aa',
             backgroundColor: 'rgba(0, 212, 170, 0.15)',
             tension: 0.35,
@@ -137,9 +170,9 @@ function initAnalyticsCharts() {
   if (recoveryCanvas) {
     const recoveryRates = categories.map(c => {
       const itemsInCat = allItems.filter(i => i.category === c.key || i.category === c.key + 's');
-      if (itemsInCat.length === 0) return 65; // realistic fallback
+      if (itemsInCat.length === 0) return 0; // realistic fallback
       const returnedInCat = itemsInCat.filter(i => i.status === 'Returned' || i.status === 'Verified').length;
-      return Math.round((returnedInCat / itemsInCat.length) * 100) || 50;
+      return Math.round((returnedInCat / itemsInCat.length) * 100) || 0;
     });
 
     analyticsChartInstances['chart-recovery'] = new Chart(recoveryCanvas, {
@@ -170,16 +203,21 @@ function initAnalyticsCharts() {
   // 4. Horizontal Bar: Top Loss Locations
   const locationsCanvas = document.getElementById('chart-locations');
   if (locationsCanvas) {
-    const zones = ['Library', 'Cafeteria', 'Lab Complex', 'Main Building', 'Sports Ground', 'Parking Area'];
-    const zoneCounts = zones.map(z => allItems.filter(i => i.location && i.location.includes(z)).length);
+    const zoneCountsData = CAMPUS_LOCATIONS.map(c => c.name).map(z => ({
+      name: z,
+      count: allItems.filter(i => normalizeLocationName(i.location) === normalizeLocationName(z)).length
+    }));
+
+    zoneCountsData.sort((a, b) => b.count - a.count);
+    const topZones = zoneCountsData.slice(0, 6);
 
     analyticsChartInstances['chart-locations'] = new Chart(locationsCanvas, {
       type: 'bar',
       data: {
-        labels: zones,
+        labels: topZones.map(z => z.name),
         datasets: [{
           label: 'Incident Reports',
-          data: zoneCounts,
+          data: topZones.map(z => z.count),
           backgroundColor: '#ffa502',
           borderRadius: 6
         }]
@@ -204,21 +242,20 @@ function renderCampusHeatmap() {
   const container = document.getElementById('campus-heatmap-container');
   if (!container) return;
 
-  const campusZones = [
-    { name: 'Library', icon: '📚', desc: 'Study halls & circulation' },
-    { name: 'Cafeteria', icon: '☕', desc: 'Dining & student union' },
-    { name: 'Main Building', icon: '🏛️', desc: 'Central administrative quad' },
-    { name: 'Lab Complex', icon: '🧪', desc: 'Computer & robotics labs' },
-    { name: 'Sports Ground', icon: '⚽', desc: 'Cricket nets & fields' },
-    { name: 'Parking Area', icon: '🚗', desc: 'Bike stands & visitor lot' },
-    { name: 'Hostel Block A', icon: '🏢', desc: 'Student dormitories' },
-    { name: 'Auditorium', icon: '🎭', desc: 'Main amphitheater hall' }
-  ];
+  const categoryIcons = {
+    'Academic & Administrative': '🏢',
+    'Services': '📍',
+    'Hostel / House Areas': '🏠',
+    'Recreation': '📍',
+    'Food & Dining': '☕',
+    'Unknown': '📍'
+  };
+  const campusZones = CAMPUS_LOCATIONS.map(c => ({ name: c.name, icon: categoryIcons[c.category] || '📍', desc: c.status }));
 
   const allItems = [...appState.lostReports, ...appState.foundReports];
 
   container.innerHTML = campusZones.map(zone => {
-    const count = allItems.filter(i => i.location && i.location.toLowerCase().includes(zone.name.toLowerCase())).length;
+    const count = allItems.filter(i => normalizeLocationName(i.location) === normalizeLocationName(zone.name)).length;
 
     let intensityClass = 'heat-low';
     if (count >= 3) intensityClass = 'heat-high';

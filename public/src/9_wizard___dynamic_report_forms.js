@@ -54,7 +54,7 @@ function goToWizardStep(type, stepNum) {
   // Scroll to top of wizard container for smooth mobile experience
   const wizardContainer = document.querySelector(`#report-${type}-page .wizard-container`);
   if (wizardContainer) wizardContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  if (window.lucide) window.lucide.createIcons();
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
 }
 
 function renderDynamicFields(type, catKey) {
@@ -373,7 +373,7 @@ function generateReportReview(type) {
     </div>
   `;
 
-  if (window.lucide) window.lucide.createIcons();
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
 }
 
 
@@ -404,7 +404,7 @@ async function finalizeReportSubmit(type) {
   if (submitBtn) {
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<i data-lucide="loader-2" class="spin"></i> <span>Submitting to Cloud...</span>';
-    if (window.lucide) window.lucide.createIcons();
+    if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
   }
 
   try {
@@ -413,7 +413,7 @@ async function finalizeReportSubmit(type) {
     if (photo && photo.startsWith('data:')) {
       if (submitBtn) {
         submitBtn.innerHTML = '<i data-lucide="upload-cloud" class="spin"></i> <span>Uploading Image...</span>';
-        if (window.lucide) window.lucide.createIcons();
+        if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
       }
       try {
         cloudImgUrl = await uploadImageToCloud(photo, `${type}-report.jpg`);
@@ -457,7 +457,7 @@ async function finalizeReportSubmit(type) {
 
     if (submitBtn) {
       submitBtn.innerHTML = '<i data-lucide="loader-2" class="spin"></i> <span>Saving Report...</span>';
-      if (window.lucide) window.lucide.createIcons();
+      if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
     }
 
     // 3. Perform real POST to serverless reports endpoint
@@ -505,7 +505,7 @@ async function finalizeReportSubmit(type) {
     if (submitBtn) {
       submitBtn.disabled = false;
       submitBtn.innerHTML = originalBtnHTML || (isFound ? '<i data-lucide="check"></i> <span>Submit Found Report</span>' : '<i data-lucide="check"></i> <span>Submit Lost Report</span>');
-      if (window.lucide) window.lucide.createIcons();
+      if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
     }
   }
 }

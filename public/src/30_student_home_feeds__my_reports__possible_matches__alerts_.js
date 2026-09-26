@@ -86,5 +86,5 @@ function renderStudentHomeFeeds() {
     }
   }
 
-  if (window.lucide) window.lucide.createIcons();
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
 }

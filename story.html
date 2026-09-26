@@ -699,47 +699,7 @@
             </div>
           </div>
 
-          <!-- Karma Counter Pill -->
-          <div class="karma-header-pill" id="header-karma-pill" title="Campus Karma Points">
-            <i data-lucide="zap"></i>
-            <strong id="header-karma-count">0</strong>
-            <span>Karma</span>
-          </div>
-
-          <!-- User Role Badge -->
-          <span class="badge badge-verified" id="header-role-badge">Student</span>
-        </div>
-      </header>
-
-      <!-- Dynamic Section Pages -->
-      <main class="content-area">
-
-        <!-- ===================================================================
-             PAGE 1: DASHBOARD (#dashboard-page)
-             =================================================================== -->
-        <section id="dashboard-page" class="page-section">
-          <!-- STUDENT DASHBOARD VIEW (Shown when user.role === 'Student') -->
-          <div id="student-dashboard-view">
-            <!-- Student Hero -->
-            <div class="student-hero-banner">
-              <div class="student-hero-tagline">LOSTSEEK • Find what's lost. Find it faster.</div>
-              <h1 class="student-hero-greeting" id="student-welcome-heading">Hello, Student</h1>
-              <p class="student-hero-question">What do you want to do?</p>
-            </div>
-
-            <!-- 4 Main Action Cards -->
-            <div class="student-four-actions-grid" style="margin-top: 20px;">
-              <button type="button" class="student-action-card-btn" onclick="showPage('find-item-page')">
-                <div class="student-action-icon-wrap icon-bg-blue">
-                  <i data-lucide="search"></i>
-                </div>
-                <div class="student-action-text-col">
-                  <div class="student-action-title">
-                    <span>Find Item</span>
-                    <i data-lucide="arrow-right" style="width:14px;height:14px;opacity:0.6;"></i>
-                  </div>
-                  <div class="student-action-desc">Search all lost and found items on campus</div>
-                </div>
+          
               </button>
 
               <button type="button" class="student-action-card-btn" onclick="showPage('i-found-page')">
@@ -850,10 +810,7 @@
               </div>
 
               <div class="hero-actions-box">
-                <button class="btn btn-secondary btn-sm" onclick="resetHackathonDemoData()" title="Reload Demo Dataset">
-                  <i data-lucide="rotate-ccw"></i>
-                  <span>Reset Demo Data</span>
-                </button>
+                
                 <button class="btn btn-primary btn-sm" onclick="showPage('admin-all-page')">
                   <i data-lucide="shield-check"></i>
                   <span>Go to Reports Directory</span>
@@ -983,49 +940,55 @@
               </select>
 
               <select id="find-filter-location" aria-label="Filter by campus location" class="input-glass filter-select" onchange="handleFindItemSearch()">
-                <option value="">All Campus Locations</option>
-                    <optgroup label="Academic / Buildings">
-                      <option value="A Block">A Block</option>
-                      <option value="B Block">B Block</option>
-                      <option value="C Block">C Block</option>
-                      <option value="D Block">D Block</option>
-                      <option value="E Block">E Block</option>
-                      <option value="F Block">F Block</option>
-                      <option value="Administrative Block">Administrative Block</option>
-                      <option value="Academic Block">Academic Block</option>
-                    </optgroup>
-                    <optgroup label="Food / Shops">
-                      <option value="Saffron Canteen">Saffron Canteen</option>
-                      <option value="West Mart">West Mart</option>
-                      <option value="Cinnamon Cafe">Cinnamon Cafe</option>
-                      <option value="Cucumber Cafe">Cucumber Cafe</option>
-                      <option value="Mustard Cafe">Mustard Cafe</option>
-                    </optgroup>
-                    <optgroup label="Services">
-                      <option value="Post Office">Post Office</option>
-                    </optgroup>
-                    <optgroup label="Hostel / House Areas">
-                      <option value="Himalayan House">Himalayan House</option>
-                      <option value="Tanjore House">Tanjore House</option>
-                      <option value="Marina House">Marina House</option>
-                      <option value="Nilgiri House">Nilgiri House</option>
-                      <option value="Madura House">Madura House</option>
-                    </optgroup>
-                    <optgroup label="Other Campus Areas">
-                      <option value="Library">Library</option>
-                      <option value="Cafeteria">Cafeteria</option>
-                      <option value="Main Building">Main Building</option>
-                      <option value="Hostel Block A">Hostel Block A</option>
-                      <option value="Hostel Block B">Hostel Block B</option>
-                      <option value="Hostel Block C">Hostel Block C</option>
-                      <option value="Sports Ground">Sports Ground</option>
-                      <option value="Lab Complex">Lab Complex</option>
-                      <option value="Parking Area">Parking Area</option>
-                      <option value="Auditorium">Auditorium</option>
-                      <option value="Admin Block">Admin Block</option>
-                      <option value="Other">Other / Custom Location</option>
-                    </optgroup>
-              </select>
+                      <option value="" disabled selected>Select Location</option>
+                      
+  <!-- OFFICIALLY VERIFIED -->
+  <option value="Administrative Block">Administrative Block</option>
+  <option value="Academic Block">Academic Block</option>
+  <option value="A Block">A Block</option>
+  <option value="B Block">B Block</option>
+  <option value="C Block">C Block</option>
+  <option value="D Block">D Block</option>
+  <option value="E Block">E Block</option>
+  <option value="F Block">F Block</option>
+  <option value="Library Block">Library Block</option>
+  <option value="Principal Quarters">Principal Quarters</option>
+  <option value="Guest House">Guest House</option>
+  <option value="Sports Club & Gymnasium">Sports Club & Gymnasium</option>
+  <option value="Auditorium">Auditorium</option>
+  <option value="Cafeteria">Cafeteria</option>
+  <option value="Boys' Hostel">Boys' Hostel</option>
+  <option value="Girls' Hostel">Girls' Hostel</option>
+  <option value="Power House">Power House</option>
+  <option value="Stationery Store">Stationery Store</option>
+  <option value="Parking">Parking</option>
+  <!-- FRIEND/STUDENT CONFIRMED -->
+  <option value="Himalayan House">Himalayan House</option>
+  <option value="Tanjore House">Tanjore House</option>
+  <option value="Madurai House">Madurai House</option>
+  <option value="Marina House">Marina House</option>
+  <option value="Nilgiri House">Nilgiri House</option>
+  <option value="Ellora House">Ellora House</option>
+  <option value="Vivekananda Hostel">Vivekananda Hostel</option>
+  <option value="Raman Block">Raman Block</option>
+  <option value="Mercury Block">Mercury Block</option>
+  <option value="Jupiter Block">Jupiter Block</option>
+  <option value="MBA Block">MBA Block</option>
+  <option value="Mechanical Block">Mechanical Block</option>
+  <option value="IT Park">IT Park</option>
+  <option value="Techno Park">Techno Park</option>
+  <option value="Founder Hall">Founder Hall</option>
+  <option value="West Mart">West Mart</option>
+  <option value="Cucumber Canteen">Cucumber Canteen</option>
+  <option value="Mustard Cafe">Mustard Cafe</option>
+  <option value="Saffron Canteen">Saffron Canteen</option>
+  <option value="Cinnamon Canteen">Cinnamon Canteen</option>
+  <option value="Bite Zone">Bite Zone</option>
+  <!-- NEEDS CONFIRMATION -->
+  <option value="Round Building">Round Building</option>
+  <option value="Women's Arts">Women's Arts</option>
+
+                    </select>
 
               <select id="find-filter-status" aria-label="Filter by item status" class="input-glass filter-select" onchange="handleFindItemSearch()">
                 <option value="">All Statuses</option>
@@ -1146,48 +1109,54 @@
                   <div class="form-group">
                     <label for="lost-location">Last Seen Location *</label>
                     <select id="lost-location" class="input-glass" required onchange="handleLocationSelectChange(this, 'lost-location-other-wrap')">
-                      <option value="">Select Campus Location...</option>
-                    <optgroup label="Academic / Buildings">
-                      <option value="A Block">A Block</option>
-                      <option value="B Block">B Block</option>
-                      <option value="C Block">C Block</option>
-                      <option value="D Block">D Block</option>
-                      <option value="E Block">E Block</option>
-                      <option value="F Block">F Block</option>
-                      <option value="Administrative Block">Administrative Block</option>
-                      <option value="Academic Block">Academic Block</option>
-                    </optgroup>
-                    <optgroup label="Food / Shops">
-                      <option value="Saffron Canteen">Saffron Canteen</option>
-                      <option value="West Mart">West Mart</option>
-                      <option value="Cinnamon Cafe">Cinnamon Cafe</option>
-                      <option value="Cucumber Cafe">Cucumber Cafe</option>
-                      <option value="Mustard Cafe">Mustard Cafe</option>
-                    </optgroup>
-                    <optgroup label="Services">
-                      <option value="Post Office">Post Office</option>
-                    </optgroup>
-                    <optgroup label="Hostel / House Areas">
-                      <option value="Himalayan House">Himalayan House</option>
-                      <option value="Tanjore House">Tanjore House</option>
-                      <option value="Marina House">Marina House</option>
-                      <option value="Nilgiri House">Nilgiri House</option>
-                      <option value="Madura House">Madura House</option>
-                    </optgroup>
-                    <optgroup label="Other Campus Areas">
-                      <option value="Library">Library</option>
-                      <option value="Cafeteria">Cafeteria</option>
-                      <option value="Main Building">Main Building</option>
-                      <option value="Hostel Block A">Hostel Block A</option>
-                      <option value="Hostel Block B">Hostel Block B</option>
-                      <option value="Hostel Block C">Hostel Block C</option>
-                      <option value="Sports Ground">Sports Ground</option>
-                      <option value="Lab Complex">Lab Complex</option>
-                      <option value="Parking Area">Parking Area</option>
-                      <option value="Auditorium">Auditorium</option>
-                      <option value="Admin Block">Admin Block</option>
-                      <option value="Other">Other / Custom Location</option>
-                    </optgroup>
+                      <option value="" disabled selected>Select Location</option>
+                      
+  <!-- OFFICIALLY VERIFIED -->
+  <option value="Administrative Block">Administrative Block</option>
+  <option value="Academic Block">Academic Block</option>
+  <option value="A Block">A Block</option>
+  <option value="B Block">B Block</option>
+  <option value="C Block">C Block</option>
+  <option value="D Block">D Block</option>
+  <option value="E Block">E Block</option>
+  <option value="F Block">F Block</option>
+  <option value="Library Block">Library Block</option>
+  <option value="Principal Quarters">Principal Quarters</option>
+  <option value="Guest House">Guest House</option>
+  <option value="Sports Club & Gymnasium">Sports Club & Gymnasium</option>
+  <option value="Auditorium">Auditorium</option>
+  <option value="Cafeteria">Cafeteria</option>
+  <option value="Boys' Hostel">Boys' Hostel</option>
+  <option value="Girls' Hostel">Girls' Hostel</option>
+  <option value="Power House">Power House</option>
+  <option value="Stationery Store">Stationery Store</option>
+  <option value="Parking">Parking</option>
+  <!-- FRIEND/STUDENT CONFIRMED -->
+  <option value="Himalayan House">Himalayan House</option>
+  <option value="Tanjore House">Tanjore House</option>
+  <option value="Madurai House">Madurai House</option>
+  <option value="Marina House">Marina House</option>
+  <option value="Nilgiri House">Nilgiri House</option>
+  <option value="Ellora House">Ellora House</option>
+  <option value="Vivekananda Hostel">Vivekananda Hostel</option>
+  <option value="Raman Block">Raman Block</option>
+  <option value="Mercury Block">Mercury Block</option>
+  <option value="Jupiter Block">Jupiter Block</option>
+  <option value="MBA Block">MBA Block</option>
+  <option value="Mechanical Block">Mechanical Block</option>
+  <option value="IT Park">IT Park</option>
+  <option value="Techno Park">Techno Park</option>
+  <option value="Founder Hall">Founder Hall</option>
+  <option value="West Mart">West Mart</option>
+  <option value="Cucumber Canteen">Cucumber Canteen</option>
+  <option value="Mustard Cafe">Mustard Cafe</option>
+  <option value="Saffron Canteen">Saffron Canteen</option>
+  <option value="Cinnamon Canteen">Cinnamon Canteen</option>
+  <option value="Bite Zone">Bite Zone</option>
+  <!-- NEEDS CONFIRMATION -->
+  <option value="Round Building">Round Building</option>
+  <option value="Women's Arts">Women's Arts</option>
+
                     </select>
                     <div id="lost-location-other-wrap" style="display: none; margin-top: 8px;">
                       <input type="text" id="lost-location-other" aria-label="Specify custom lost location" class="input-glass" placeholder="Specify landmark or campus area...">
@@ -1393,48 +1362,54 @@
                   <div class="form-group">
                     <label for="found-location">Found Location *</label>
                     <select id="found-location" class="input-glass" required onchange="handleLocationSelectChange(this, 'found-location-other-wrap')">
-                      <option value="">Select Campus Location...</option>
-                    <optgroup label="Academic / Buildings">
-                      <option value="A Block">A Block</option>
-                      <option value="B Block">B Block</option>
-                      <option value="C Block">C Block</option>
-                      <option value="D Block">D Block</option>
-                      <option value="E Block">E Block</option>
-                      <option value="F Block">F Block</option>
-                      <option value="Administrative Block">Administrative Block</option>
-                      <option value="Academic Block">Academic Block</option>
-                    </optgroup>
-                    <optgroup label="Food / Shops">
-                      <option value="Saffron Canteen">Saffron Canteen</option>
-                      <option value="West Mart">West Mart</option>
-                      <option value="Cinnamon Cafe">Cinnamon Cafe</option>
-                      <option value="Cucumber Cafe">Cucumber Cafe</option>
-                      <option value="Mustard Cafe">Mustard Cafe</option>
-                    </optgroup>
-                    <optgroup label="Services">
-                      <option value="Post Office">Post Office</option>
-                    </optgroup>
-                    <optgroup label="Hostel / House Areas">
-                      <option value="Himalayan House">Himalayan House</option>
-                      <option value="Tanjore House">Tanjore House</option>
-                      <option value="Marina House">Marina House</option>
-                      <option value="Nilgiri House">Nilgiri House</option>
-                      <option value="Madura House">Madura House</option>
-                    </optgroup>
-                    <optgroup label="Other Campus Areas">
-                      <option value="Library">Library</option>
-                      <option value="Cafeteria">Cafeteria</option>
-                      <option value="Main Building">Main Building</option>
-                      <option value="Hostel Block A">Hostel Block A</option>
-                      <option value="Hostel Block B">Hostel Block B</option>
-                      <option value="Hostel Block C">Hostel Block C</option>
-                      <option value="Sports Ground">Sports Ground</option>
-                      <option value="Lab Complex">Lab Complex</option>
-                      <option value="Parking Area">Parking Area</option>
-                      <option value="Auditorium">Auditorium</option>
-                      <option value="Admin Block">Admin Block</option>
-                      <option value="Other">Other / Custom Location</option>
-                    </optgroup>
+                      <option value="" disabled selected>Select Location</option>
+                      
+  <!-- OFFICIALLY VERIFIED -->
+  <option value="Administrative Block">Administrative Block</option>
+  <option value="Academic Block">Academic Block</option>
+  <option value="A Block">A Block</option>
+  <option value="B Block">B Block</option>
+  <option value="C Block">C Block</option>
+  <option value="D Block">D Block</option>
+  <option value="E Block">E Block</option>
+  <option value="F Block">F Block</option>
+  <option value="Library Block">Library Block</option>
+  <option value="Principal Quarters">Principal Quarters</option>
+  <option value="Guest House">Guest House</option>
+  <option value="Sports Club & Gymnasium">Sports Club & Gymnasium</option>
+  <option value="Auditorium">Auditorium</option>
+  <option value="Cafeteria">Cafeteria</option>
+  <option value="Boys' Hostel">Boys' Hostel</option>
+  <option value="Girls' Hostel">Girls' Hostel</option>
+  <option value="Power House">Power House</option>
+  <option value="Stationery Store">Stationery Store</option>
+  <option value="Parking">Parking</option>
+  <!-- FRIEND/STUDENT CONFIRMED -->
+  <option value="Himalayan House">Himalayan House</option>
+  <option value="Tanjore House">Tanjore House</option>
+  <option value="Madurai House">Madurai House</option>
+  <option value="Marina House">Marina House</option>
+  <option value="Nilgiri House">Nilgiri House</option>
+  <option value="Ellora House">Ellora House</option>
+  <option value="Vivekananda Hostel">Vivekananda Hostel</option>
+  <option value="Raman Block">Raman Block</option>
+  <option value="Mercury Block">Mercury Block</option>
+  <option value="Jupiter Block">Jupiter Block</option>
+  <option value="MBA Block">MBA Block</option>
+  <option value="Mechanical Block">Mechanical Block</option>
+  <option value="IT Park">IT Park</option>
+  <option value="Techno Park">Techno Park</option>
+  <option value="Founder Hall">Founder Hall</option>
+  <option value="West Mart">West Mart</option>
+  <option value="Cucumber Canteen">Cucumber Canteen</option>
+  <option value="Mustard Cafe">Mustard Cafe</option>
+  <option value="Saffron Canteen">Saffron Canteen</option>
+  <option value="Cinnamon Canteen">Cinnamon Canteen</option>
+  <option value="Bite Zone">Bite Zone</option>
+  <!-- NEEDS CONFIRMATION -->
+  <option value="Round Building">Round Building</option>
+  <option value="Women's Arts">Women's Arts</option>
+
                     </select>
                     <div id="found-location-other-wrap" style="display: none; margin-top: 8px;">
                       <input type="text" id="found-location-other" aria-label="Specify custom found location" class="input-glass" placeholder="Specify landmark or campus area...">
@@ -1680,50 +1655,55 @@
                 <option value="misc">Miscellaneous</option>
               </select>
               <select id="admin-lost-filter-location" aria-label="Filter lost reports by location" class="input-glass filter-select" onchange="handleAdminLostFilterChange()">
-                <option value="">All Campus Locations</option>
-                
-                    <optgroup label="Academic / Buildings">
-                      <option value="A Block">A Block</option>
-                      <option value="B Block">B Block</option>
-                      <option value="C Block">C Block</option>
-                      <option value="D Block">D Block</option>
-                      <option value="E Block">E Block</option>
-                      <option value="F Block">F Block</option>
-                      <option value="Administrative Block">Administrative Block</option>
-                      <option value="Academic Block">Academic Block</option>
-                    </optgroup>
-                    <optgroup label="Food / Shops">
-                      <option value="Saffron Canteen">Saffron Canteen</option>
-                      <option value="West Mart">West Mart</option>
-                      <option value="Cinnamon Cafe">Cinnamon Cafe</option>
-                      <option value="Cucumber Cafe">Cucumber Cafe</option>
-                      <option value="Mustard Cafe">Mustard Cafe</option>
-                    </optgroup>
-                    <optgroup label="Services">
-                      <option value="Post Office">Post Office</option>
-                    </optgroup>
-                    <optgroup label="Hostel / House Areas">
-                      <option value="Himalayan House">Himalayan House</option>
-                      <option value="Tanjore House">Tanjore House</option>
-                      <option value="Marina House">Marina House</option>
-                      <option value="Nilgiri House">Nilgiri House</option>
-                      <option value="Madura House">Madura House</option>
-                    </optgroup>
-                    <optgroup label="Other Campus Areas">
-                      <option value="Library">Library</option>
-                      <option value="Cafeteria">Cafeteria</option>
-                      <option value="Main Building">Main Building</option>
-                      <option value="Hostel Block A">Hostel Block A</option>
-                      <option value="Hostel Block B">Hostel Block B</option>
-                      <option value="Hostel Block C">Hostel Block C</option>
-                      <option value="Sports Ground">Sports Ground</option>
-                      <option value="Lab Complex">Lab Complex</option>
-                      <option value="Parking Area">Parking Area</option>
-                      <option value="Auditorium">Auditorium</option>
-                      <option value="Admin Block">Admin Block</option>
-                      <option value="Other">Other / Custom Location</option>
-                    </optgroup>
-              </select>
+                      <option value="" disabled selected>Select Location</option>
+                      
+  <!-- OFFICIALLY VERIFIED -->
+  <option value="Administrative Block">Administrative Block</option>
+  <option value="Academic Block">Academic Block</option>
+  <option value="A Block">A Block</option>
+  <option value="B Block">B Block</option>
+  <option value="C Block">C Block</option>
+  <option value="D Block">D Block</option>
+  <option value="E Block">E Block</option>
+  <option value="F Block">F Block</option>
+  <option value="Library Block">Library Block</option>
+  <option value="Principal Quarters">Principal Quarters</option>
+  <option value="Guest House">Guest House</option>
+  <option value="Sports Club & Gymnasium">Sports Club & Gymnasium</option>
+  <option value="Auditorium">Auditorium</option>
+  <option value="Cafeteria">Cafeteria</option>
+  <option value="Boys' Hostel">Boys' Hostel</option>
+  <option value="Girls' Hostel">Girls' Hostel</option>
+  <option value="Power House">Power House</option>
+  <option value="Stationery Store">Stationery Store</option>
+  <option value="Parking">Parking</option>
+  <!-- FRIEND/STUDENT CONFIRMED -->
+  <option value="Himalayan House">Himalayan House</option>
+  <option value="Tanjore House">Tanjore House</option>
+  <option value="Madurai House">Madurai House</option>
+  <option value="Marina House">Marina House</option>
+  <option value="Nilgiri House">Nilgiri House</option>
+  <option value="Ellora House">Ellora House</option>
+  <option value="Vivekananda Hostel">Vivekananda Hostel</option>
+  <option value="Raman Block">Raman Block</option>
+  <option value="Mercury Block">Mercury Block</option>
+  <option value="Jupiter Block">Jupiter Block</option>
+  <option value="MBA Block">MBA Block</option>
+  <option value="Mechanical Block">Mechanical Block</option>
+  <option value="IT Park">IT Park</option>
+  <option value="Techno Park">Techno Park</option>
+  <option value="Founder Hall">Founder Hall</option>
+  <option value="West Mart">West Mart</option>
+  <option value="Cucumber Canteen">Cucumber Canteen</option>
+  <option value="Mustard Cafe">Mustard Cafe</option>
+  <option value="Saffron Canteen">Saffron Canteen</option>
+  <option value="Cinnamon Canteen">Cinnamon Canteen</option>
+  <option value="Bite Zone">Bite Zone</option>
+  <!-- NEEDS CONFIRMATION -->
+  <option value="Round Building">Round Building</option>
+  <option value="Women's Arts">Women's Arts</option>
+
+                    </select>
               <select id="admin-lost-filter-status" aria-label="Filter lost reports by status" class="input-glass filter-select" onchange="handleAdminLostFilterChange()">
                 <option value="">All Statuses</option>
                 <option value="Looking">Looking</option>
@@ -1837,50 +1817,55 @@
                 <option value="misc">Miscellaneous</option>
               </select>
               <select id="admin-found-filter-location" aria-label="Filter found reports by location" class="input-glass filter-select" onchange="handleAdminFoundFilterChange()">
-                <option value="">All Campus Locations</option>
-                
-                    <optgroup label="Academic / Buildings">
-                      <option value="A Block">A Block</option>
-                      <option value="B Block">B Block</option>
-                      <option value="C Block">C Block</option>
-                      <option value="D Block">D Block</option>
-                      <option value="E Block">E Block</option>
-                      <option value="F Block">F Block</option>
-                      <option value="Administrative Block">Administrative Block</option>
-                      <option value="Academic Block">Academic Block</option>
-                    </optgroup>
-                    <optgroup label="Food / Shops">
-                      <option value="Saffron Canteen">Saffron Canteen</option>
-                      <option value="West Mart">West Mart</option>
-                      <option value="Cinnamon Cafe">Cinnamon Cafe</option>
-                      <option value="Cucumber Cafe">Cucumber Cafe</option>
-                      <option value="Mustard Cafe">Mustard Cafe</option>
-                    </optgroup>
-                    <optgroup label="Services">
-                      <option value="Post Office">Post Office</option>
-                    </optgroup>
-                    <optgroup label="Hostel / House Areas">
-                      <option value="Himalayan House">Himalayan House</option>
-                      <option value="Tanjore House">Tanjore House</option>
-                      <option value="Marina House">Marina House</option>
-                      <option value="Nilgiri House">Nilgiri House</option>
-                      <option value="Madura House">Madura House</option>
-                    </optgroup>
-                    <optgroup label="Other Campus Areas">
-                      <option value="Library">Library</option>
-                      <option value="Cafeteria">Cafeteria</option>
-                      <option value="Main Building">Main Building</option>
-                      <option value="Hostel Block A">Hostel Block A</option>
-                      <option value="Hostel Block B">Hostel Block B</option>
-                      <option value="Hostel Block C">Hostel Block C</option>
-                      <option value="Sports Ground">Sports Ground</option>
-                      <option value="Lab Complex">Lab Complex</option>
-                      <option value="Parking Area">Parking Area</option>
-                      <option value="Auditorium">Auditorium</option>
-                      <option value="Admin Block">Admin Block</option>
-                      <option value="Other">Other / Custom Location</option>
-                    </optgroup>
-              </select>
+                      <option value="" disabled selected>Select Location</option>
+                      
+  <!-- OFFICIALLY VERIFIED -->
+  <option value="Administrative Block">Administrative Block</option>
+  <option value="Academic Block">Academic Block</option>
+  <option value="A Block">A Block</option>
+  <option value="B Block">B Block</option>
+  <option value="C Block">C Block</option>
+  <option value="D Block">D Block</option>
+  <option value="E Block">E Block</option>
+  <option value="F Block">F Block</option>
+  <option value="Library Block">Library Block</option>
+  <option value="Principal Quarters">Principal Quarters</option>
+  <option value="Guest House">Guest House</option>
+  <option value="Sports Club & Gymnasium">Sports Club & Gymnasium</option>
+  <option value="Auditorium">Auditorium</option>
+  <option value="Cafeteria">Cafeteria</option>
+  <option value="Boys' Hostel">Boys' Hostel</option>
+  <option value="Girls' Hostel">Girls' Hostel</option>
+  <option value="Power House">Power House</option>
+  <option value="Stationery Store">Stationery Store</option>
+  <option value="Parking">Parking</option>
+  <!-- FRIEND/STUDENT CONFIRMED -->
+  <option value="Himalayan House">Himalayan House</option>
+  <option value="Tanjore House">Tanjore House</option>
+  <option value="Madurai House">Madurai House</option>
+  <option value="Marina House">Marina House</option>
+  <option value="Nilgiri House">Nilgiri House</option>
+  <option value="Ellora House">Ellora House</option>
+  <option value="Vivekananda Hostel">Vivekananda Hostel</option>
+  <option value="Raman Block">Raman Block</option>
+  <option value="Mercury Block">Mercury Block</option>
+  <option value="Jupiter Block">Jupiter Block</option>
+  <option value="MBA Block">MBA Block</option>
+  <option value="Mechanical Block">Mechanical Block</option>
+  <option value="IT Park">IT Park</option>
+  <option value="Techno Park">Techno Park</option>
+  <option value="Founder Hall">Founder Hall</option>
+  <option value="West Mart">West Mart</option>
+  <option value="Cucumber Canteen">Cucumber Canteen</option>
+  <option value="Mustard Cafe">Mustard Cafe</option>
+  <option value="Saffron Canteen">Saffron Canteen</option>
+  <option value="Cinnamon Canteen">Cinnamon Canteen</option>
+  <option value="Bite Zone">Bite Zone</option>
+  <!-- NEEDS CONFIRMATION -->
+  <option value="Round Building">Round Building</option>
+  <option value="Women's Arts">Women's Arts</option>
+
+                    </select>
               <select id="admin-found-filter-status" aria-label="Filter found reports by status" class="input-glass filter-select" onchange="handleAdminFoundFilterChange()">
                 <option value="">All Statuses</option>
                 <option value="Looking">Looking</option>
@@ -1975,50 +1960,55 @@
                 <option value="misc">Miscellaneous</option>
               </select>
               <select id="admin-all-filter-location" aria-label="Filter all reports by location" class="input-glass filter-select" onchange="handleAdminAllFilterChange()">
-                <option value="">All Campus Locations</option>
-                
-                    <optgroup label="Academic / Buildings">
-                      <option value="A Block">A Block</option>
-                      <option value="B Block">B Block</option>
-                      <option value="C Block">C Block</option>
-                      <option value="D Block">D Block</option>
-                      <option value="E Block">E Block</option>
-                      <option value="F Block">F Block</option>
-                      <option value="Administrative Block">Administrative Block</option>
-                      <option value="Academic Block">Academic Block</option>
-                    </optgroup>
-                    <optgroup label="Food / Shops">
-                      <option value="Saffron Canteen">Saffron Canteen</option>
-                      <option value="West Mart">West Mart</option>
-                      <option value="Cinnamon Cafe">Cinnamon Cafe</option>
-                      <option value="Cucumber Cafe">Cucumber Cafe</option>
-                      <option value="Mustard Cafe">Mustard Cafe</option>
-                    </optgroup>
-                    <optgroup label="Services">
-                      <option value="Post Office">Post Office</option>
-                    </optgroup>
-                    <optgroup label="Hostel / House Areas">
-                      <option value="Himalayan House">Himalayan House</option>
-                      <option value="Tanjore House">Tanjore House</option>
-                      <option value="Marina House">Marina House</option>
-                      <option value="Nilgiri House">Nilgiri House</option>
-                      <option value="Madura House">Madura House</option>
-                    </optgroup>
-                    <optgroup label="Other Campus Areas">
-                      <option value="Library">Library</option>
-                      <option value="Cafeteria">Cafeteria</option>
-                      <option value="Main Building">Main Building</option>
-                      <option value="Hostel Block A">Hostel Block A</option>
-                      <option value="Hostel Block B">Hostel Block B</option>
-                      <option value="Hostel Block C">Hostel Block C</option>
-                      <option value="Sports Ground">Sports Ground</option>
-                      <option value="Lab Complex">Lab Complex</option>
-                      <option value="Parking Area">Parking Area</option>
-                      <option value="Auditorium">Auditorium</option>
-                      <option value="Admin Block">Admin Block</option>
-                      <option value="Other">Other / Custom Location</option>
-                    </optgroup>
-              </select>
+                      <option value="" disabled selected>Select Location</option>
+                      
+  <!-- OFFICIALLY VERIFIED -->
+  <option value="Administrative Block">Administrative Block</option>
+  <option value="Academic Block">Academic Block</option>
+  <option value="A Block">A Block</option>
+  <option value="B Block">B Block</option>
+  <option value="C Block">C Block</option>
+  <option value="D Block">D Block</option>
+  <option value="E Block">E Block</option>
+  <option value="F Block">F Block</option>
+  <option value="Library Block">Library Block</option>
+  <option value="Principal Quarters">Principal Quarters</option>
+  <option value="Guest House">Guest House</option>
+  <option value="Sports Club & Gymnasium">Sports Club & Gymnasium</option>
+  <option value="Auditorium">Auditorium</option>
+  <option value="Cafeteria">Cafeteria</option>
+  <option value="Boys' Hostel">Boys' Hostel</option>
+  <option value="Girls' Hostel">Girls' Hostel</option>
+  <option value="Power House">Power House</option>
+  <option value="Stationery Store">Stationery Store</option>
+  <option value="Parking">Parking</option>
+  <!-- FRIEND/STUDENT CONFIRMED -->
+  <option value="Himalayan House">Himalayan House</option>
+  <option value="Tanjore House">Tanjore House</option>
+  <option value="Madurai House">Madurai House</option>
+  <option value="Marina House">Marina House</option>
+  <option value="Nilgiri House">Nilgiri House</option>
+  <option value="Ellora House">Ellora House</option>
+  <option value="Vivekananda Hostel">Vivekananda Hostel</option>
+  <option value="Raman Block">Raman Block</option>
+  <option value="Mercury Block">Mercury Block</option>
+  <option value="Jupiter Block">Jupiter Block</option>
+  <option value="MBA Block">MBA Block</option>
+  <option value="Mechanical Block">Mechanical Block</option>
+  <option value="IT Park">IT Park</option>
+  <option value="Techno Park">Techno Park</option>
+  <option value="Founder Hall">Founder Hall</option>
+  <option value="West Mart">West Mart</option>
+  <option value="Cucumber Canteen">Cucumber Canteen</option>
+  <option value="Mustard Cafe">Mustard Cafe</option>
+  <option value="Saffron Canteen">Saffron Canteen</option>
+  <option value="Cinnamon Canteen">Cinnamon Canteen</option>
+  <option value="Bite Zone">Bite Zone</option>
+  <!-- NEEDS CONFIRMATION -->
+  <option value="Round Building">Round Building</option>
+  <option value="Women's Arts">Women's Arts</option>
+
+                    </select>
               <select id="admin-all-filter-status" aria-label="Filter all reports by status" class="input-glass filter-select" onchange="handleAdminAllFilterChange()">
                 <option value="">All Statuses</option>
                 <option value="Looking">Looking</option>
@@ -2247,7 +2237,7 @@
               </div>
               <div class="stat-card-data">
                 <span class="stat-card-value" id="an-avg-confidence">0%</span>
-                <span class="stat-card-label">AI Match Precision</span>
+                <span class="stat-card-label">Match Results</span>
               </div>
             </div>
           </div>
@@ -2440,10 +2430,7 @@
             <p style="margin-bottom: 16px;">Local session and demo datasets:</p>
 
             <div style="display: flex; gap: 14px; align-items: center; flex-wrap: wrap;">
-              <button class="btn btn-secondary" onclick="resetHackathonDemoData()">
-                <i data-lucide="rotate-ccw"></i>
-                <span>Reload Demo Dataset (12 Items)</span>
-              </button>
+              
               <button class="btn btn-danger" onclick="logout()">
                 <i data-lucide="log-out"></i>
                 <span>Sign Out of Session</span>
@@ -2535,49 +2522,55 @@
               <div class="form-group">
                 <label for="ifound-location" style="font-weight: 600;">Where did you find it? *</label>
                 <select id="ifound-location" class="select-glass" required onchange="handleLocationSelectChange(this, 'ifound-location-other-wrap')">
-                  <option value="">-- Select location on campus --</option>
-                    <optgroup label="Academic / Buildings">
-                      <option value="A Block">A Block</option>
-                      <option value="B Block">B Block</option>
-                      <option value="C Block">C Block</option>
-                      <option value="D Block">D Block</option>
-                      <option value="E Block">E Block</option>
-                      <option value="F Block">F Block</option>
-                      <option value="Administrative Block">Administrative Block</option>
-                      <option value="Academic Block">Academic Block</option>
-                    </optgroup>
-                    <optgroup label="Food / Shops">
-                      <option value="Saffron Canteen">Saffron Canteen</option>
-                      <option value="West Mart">West Mart</option>
-                      <option value="Cinnamon Cafe">Cinnamon Cafe</option>
-                      <option value="Cucumber Cafe">Cucumber Cafe</option>
-                      <option value="Mustard Cafe">Mustard Cafe</option>
-                    </optgroup>
-                    <optgroup label="Services">
-                      <option value="Post Office">Post Office</option>
-                    </optgroup>
-                    <optgroup label="Hostel / House Areas">
-                      <option value="Himalayan House">Himalayan House</option>
-                      <option value="Tanjore House">Tanjore House</option>
-                      <option value="Marina House">Marina House</option>
-                      <option value="Nilgiri House">Nilgiri House</option>
-                      <option value="Madura House">Madura House</option>
-                    </optgroup>
-                    <optgroup label="Other Campus Areas">
-                      <option value="Library">Library</option>
-                      <option value="Cafeteria">Cafeteria</option>
-                      <option value="Main Building">Main Building</option>
-                      <option value="Hostel Block A">Hostel Block A</option>
-                      <option value="Hostel Block B">Hostel Block B</option>
-                      <option value="Hostel Block C">Hostel Block C</option>
-                      <option value="Sports Ground">Sports Ground</option>
-                      <option value="Lab Complex">Lab Complex</option>
-                      <option value="Parking Area">Parking Area</option>
-                      <option value="Auditorium">Auditorium</option>
-                      <option value="Admin Block">Admin Block</option>
-                      <option value="Other">Other / Custom Location</option>
-                    </optgroup>
-                </select>
+                      <option value="" disabled selected>Select Location</option>
+                      
+  <!-- OFFICIALLY VERIFIED -->
+  <option value="Administrative Block">Administrative Block</option>
+  <option value="Academic Block">Academic Block</option>
+  <option value="A Block">A Block</option>
+  <option value="B Block">B Block</option>
+  <option value="C Block">C Block</option>
+  <option value="D Block">D Block</option>
+  <option value="E Block">E Block</option>
+  <option value="F Block">F Block</option>
+  <option value="Library Block">Library Block</option>
+  <option value="Principal Quarters">Principal Quarters</option>
+  <option value="Guest House">Guest House</option>
+  <option value="Sports Club & Gymnasium">Sports Club & Gymnasium</option>
+  <option value="Auditorium">Auditorium</option>
+  <option value="Cafeteria">Cafeteria</option>
+  <option value="Boys' Hostel">Boys' Hostel</option>
+  <option value="Girls' Hostel">Girls' Hostel</option>
+  <option value="Power House">Power House</option>
+  <option value="Stationery Store">Stationery Store</option>
+  <option value="Parking">Parking</option>
+  <!-- FRIEND/STUDENT CONFIRMED -->
+  <option value="Himalayan House">Himalayan House</option>
+  <option value="Tanjore House">Tanjore House</option>
+  <option value="Madurai House">Madurai House</option>
+  <option value="Marina House">Marina House</option>
+  <option value="Nilgiri House">Nilgiri House</option>
+  <option value="Ellora House">Ellora House</option>
+  <option value="Vivekananda Hostel">Vivekananda Hostel</option>
+  <option value="Raman Block">Raman Block</option>
+  <option value="Mercury Block">Mercury Block</option>
+  <option value="Jupiter Block">Jupiter Block</option>
+  <option value="MBA Block">MBA Block</option>
+  <option value="Mechanical Block">Mechanical Block</option>
+  <option value="IT Park">IT Park</option>
+  <option value="Techno Park">Techno Park</option>
+  <option value="Founder Hall">Founder Hall</option>
+  <option value="West Mart">West Mart</option>
+  <option value="Cucumber Canteen">Cucumber Canteen</option>
+  <option value="Mustard Cafe">Mustard Cafe</option>
+  <option value="Saffron Canteen">Saffron Canteen</option>
+  <option value="Cinnamon Canteen">Cinnamon Canteen</option>
+  <option value="Bite Zone">Bite Zone</option>
+  <!-- NEEDS CONFIRMATION -->
+  <option value="Round Building">Round Building</option>
+  <option value="Women's Arts">Women's Arts</option>
+
+                    </select>
                 <div id="ifound-location-other-wrap" style="display: none; margin-top: 8px;">
                   <input type="text" id="ifound-location-other" aria-label="Specify custom sighting location" class="input-glass" placeholder="Specify landmark or campus area...">
                 </div>
@@ -2656,49 +2649,55 @@
               <div class="form-group">
                 <label for="admin-photo-location">Found Location</label>
                 <select id="admin-photo-location" class="select-glass">
-                  <option value="">All Campus Locations</option>
-                    <optgroup label="Academic / Buildings">
-                      <option value="A Block">A Block</option>
-                      <option value="B Block">B Block</option>
-                      <option value="C Block">C Block</option>
-                      <option value="D Block">D Block</option>
-                      <option value="E Block">E Block</option>
-                      <option value="F Block">F Block</option>
-                      <option value="Administrative Block">Administrative Block</option>
-                      <option value="Academic Block">Academic Block</option>
-                    </optgroup>
-                    <optgroup label="Food / Shops">
-                      <option value="Saffron Canteen">Saffron Canteen</option>
-                      <option value="West Mart">West Mart</option>
-                      <option value="Cinnamon Cafe">Cinnamon Cafe</option>
-                      <option value="Cucumber Cafe">Cucumber Cafe</option>
-                      <option value="Mustard Cafe">Mustard Cafe</option>
-                    </optgroup>
-                    <optgroup label="Services">
-                      <option value="Post Office">Post Office</option>
-                    </optgroup>
-                    <optgroup label="Hostel / House Areas">
-                      <option value="Himalayan House">Himalayan House</option>
-                      <option value="Tanjore House">Tanjore House</option>
-                      <option value="Marina House">Marina House</option>
-                      <option value="Nilgiri House">Nilgiri House</option>
-                      <option value="Madura House">Madura House</option>
-                    </optgroup>
-                    <optgroup label="Other Campus Areas">
-                      <option value="Library">Library</option>
-                      <option value="Cafeteria">Cafeteria</option>
-                      <option value="Main Building">Main Building</option>
-                      <option value="Hostel Block A">Hostel Block A</option>
-                      <option value="Hostel Block B">Hostel Block B</option>
-                      <option value="Hostel Block C">Hostel Block C</option>
-                      <option value="Sports Ground">Sports Ground</option>
-                      <option value="Lab Complex">Lab Complex</option>
-                      <option value="Parking Area">Parking Area</option>
-                      <option value="Auditorium">Auditorium</option>
-                      <option value="Admin Block">Admin Block</option>
-                      <option value="Other">Other / Custom Location</option>
-                    </optgroup>
-                </select>
+                      <option value="" disabled selected>Select Location</option>
+                      
+  <!-- OFFICIALLY VERIFIED -->
+  <option value="Administrative Block">Administrative Block</option>
+  <option value="Academic Block">Academic Block</option>
+  <option value="A Block">A Block</option>
+  <option value="B Block">B Block</option>
+  <option value="C Block">C Block</option>
+  <option value="D Block">D Block</option>
+  <option value="E Block">E Block</option>
+  <option value="F Block">F Block</option>
+  <option value="Library Block">Library Block</option>
+  <option value="Principal Quarters">Principal Quarters</option>
+  <option value="Guest House">Guest House</option>
+  <option value="Sports Club & Gymnasium">Sports Club & Gymnasium</option>
+  <option value="Auditorium">Auditorium</option>
+  <option value="Cafeteria">Cafeteria</option>
+  <option value="Boys' Hostel">Boys' Hostel</option>
+  <option value="Girls' Hostel">Girls' Hostel</option>
+  <option value="Power House">Power House</option>
+  <option value="Stationery Store">Stationery Store</option>
+  <option value="Parking">Parking</option>
+  <!-- FRIEND/STUDENT CONFIRMED -->
+  <option value="Himalayan House">Himalayan House</option>
+  <option value="Tanjore House">Tanjore House</option>
+  <option value="Madurai House">Madurai House</option>
+  <option value="Marina House">Marina House</option>
+  <option value="Nilgiri House">Nilgiri House</option>
+  <option value="Ellora House">Ellora House</option>
+  <option value="Vivekananda Hostel">Vivekananda Hostel</option>
+  <option value="Raman Block">Raman Block</option>
+  <option value="Mercury Block">Mercury Block</option>
+  <option value="Jupiter Block">Jupiter Block</option>
+  <option value="MBA Block">MBA Block</option>
+  <option value="Mechanical Block">Mechanical Block</option>
+  <option value="IT Park">IT Park</option>
+  <option value="Techno Park">Techno Park</option>
+  <option value="Founder Hall">Founder Hall</option>
+  <option value="West Mart">West Mart</option>
+  <option value="Cucumber Canteen">Cucumber Canteen</option>
+  <option value="Mustard Cafe">Mustard Cafe</option>
+  <option value="Saffron Canteen">Saffron Canteen</option>
+  <option value="Cinnamon Canteen">Cinnamon Canteen</option>
+  <option value="Bite Zone">Bite Zone</option>
+  <!-- NEEDS CONFIRMATION -->
+  <option value="Round Building">Round Building</option>
+  <option value="Women's Arts">Women's Arts</option>
+
+                    </select>
               </div>
             </div>
 
@@ -2717,7 +2716,7 @@
         <section id="admin-students-page" class="page-section" style="display: none;">
           <div class="find-item-header">
             <h1>Students Directory</h1>
-            <p>Campus students directory with report activity, claim history, and karma standings.</p>
+            <p>Campus students directory with report activity, claim history, and claim history.</p>
           </div>
 
           <div class="glass-card" style="margin-bottom: 20px;">
@@ -2737,7 +2736,7 @@
                     <th>Lost Reports</th>
                     <th>Found Reports</th>
                     <th>Claims</th>
-                    <th>Karma</th>
+                    
                     <th>Status</th>
                   </tr>
                 </thead>
@@ -3048,50 +3047,55 @@
                 <div class="form-group">
                   <label for="complaint-location">Incident Campus Location *</label>
                   <select id="complaint-location" class="input-glass" required onchange="handleLocationSelectChange(this, 'complaint-location-other-wrap')">
-                    <option value="">Select Incident Location...</option>
-                    
-                    <optgroup label="Academic / Buildings">
-                      <option value="A Block">A Block</option>
-                      <option value="B Block">B Block</option>
-                      <option value="C Block">C Block</option>
-                      <option value="D Block">D Block</option>
-                      <option value="E Block">E Block</option>
-                      <option value="F Block">F Block</option>
-                      <option value="Administrative Block">Administrative Block</option>
-                      <option value="Academic Block">Academic Block</option>
-                    </optgroup>
-                    <optgroup label="Food / Shops">
-                      <option value="Saffron Canteen">Saffron Canteen</option>
-                      <option value="West Mart">West Mart</option>
-                      <option value="Cinnamon Cafe">Cinnamon Cafe</option>
-                      <option value="Cucumber Cafe">Cucumber Cafe</option>
-                      <option value="Mustard Cafe">Mustard Cafe</option>
-                    </optgroup>
-                    <optgroup label="Services">
-                      <option value="Post Office">Post Office</option>
-                    </optgroup>
-                    <optgroup label="Hostel / House Areas">
-                      <option value="Himalayan House">Himalayan House</option>
-                      <option value="Tanjore House">Tanjore House</option>
-                      <option value="Marina House">Marina House</option>
-                      <option value="Nilgiri House">Nilgiri House</option>
-                      <option value="Madura House">Madura House</option>
-                    </optgroup>
-                    <optgroup label="Other Campus Areas">
-                      <option value="Library">Library</option>
-                      <option value="Cafeteria">Cafeteria</option>
-                      <option value="Main Building">Main Building</option>
-                      <option value="Hostel Block A">Hostel Block A</option>
-                      <option value="Hostel Block B">Hostel Block B</option>
-                      <option value="Hostel Block C">Hostel Block C</option>
-                      <option value="Sports Ground">Sports Ground</option>
-                      <option value="Lab Complex">Lab Complex</option>
-                      <option value="Parking Area">Parking Area</option>
-                      <option value="Auditorium">Auditorium</option>
-                      <option value="Admin Block">Admin Block</option>
-                      <option value="Other">Other / Custom Location</option>
-                    </optgroup>
-                  </select>
+                      <option value="" disabled selected>Select Location</option>
+                      
+  <!-- OFFICIALLY VERIFIED -->
+  <option value="Administrative Block">Administrative Block</option>
+  <option value="Academic Block">Academic Block</option>
+  <option value="A Block">A Block</option>
+  <option value="B Block">B Block</option>
+  <option value="C Block">C Block</option>
+  <option value="D Block">D Block</option>
+  <option value="E Block">E Block</option>
+  <option value="F Block">F Block</option>
+  <option value="Library Block">Library Block</option>
+  <option value="Principal Quarters">Principal Quarters</option>
+  <option value="Guest House">Guest House</option>
+  <option value="Sports Club & Gymnasium">Sports Club & Gymnasium</option>
+  <option value="Auditorium">Auditorium</option>
+  <option value="Cafeteria">Cafeteria</option>
+  <option value="Boys' Hostel">Boys' Hostel</option>
+  <option value="Girls' Hostel">Girls' Hostel</option>
+  <option value="Power House">Power House</option>
+  <option value="Stationery Store">Stationery Store</option>
+  <option value="Parking">Parking</option>
+  <!-- FRIEND/STUDENT CONFIRMED -->
+  <option value="Himalayan House">Himalayan House</option>
+  <option value="Tanjore House">Tanjore House</option>
+  <option value="Madurai House">Madurai House</option>
+  <option value="Marina House">Marina House</option>
+  <option value="Nilgiri House">Nilgiri House</option>
+  <option value="Ellora House">Ellora House</option>
+  <option value="Vivekananda Hostel">Vivekananda Hostel</option>
+  <option value="Raman Block">Raman Block</option>
+  <option value="Mercury Block">Mercury Block</option>
+  <option value="Jupiter Block">Jupiter Block</option>
+  <option value="MBA Block">MBA Block</option>
+  <option value="Mechanical Block">Mechanical Block</option>
+  <option value="IT Park">IT Park</option>
+  <option value="Techno Park">Techno Park</option>
+  <option value="Founder Hall">Founder Hall</option>
+  <option value="West Mart">West Mart</option>
+  <option value="Cucumber Canteen">Cucumber Canteen</option>
+  <option value="Mustard Cafe">Mustard Cafe</option>
+  <option value="Saffron Canteen">Saffron Canteen</option>
+  <option value="Cinnamon Canteen">Cinnamon Canteen</option>
+  <option value="Bite Zone">Bite Zone</option>
+  <!-- NEEDS CONFIRMATION -->
+  <option value="Round Building">Round Building</option>
+  <option value="Women's Arts">Women's Arts</option>
+
+                    </select>
                   <div id="complaint-location-other-wrap" style="display: none; margin-top: 8px;">
                     <input type="text" id="complaint-location-other" aria-label="Specify custom incident location" class="input-glass" placeholder="Specify landmark or campus location...">
                   </div>

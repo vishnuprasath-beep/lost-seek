@@ -18,7 +18,7 @@ function renderProfile() {
   const userLost = (appState.lostReports || []).filter(r => r.reporterName === user.name || r.reporterId === user.username).length;
   const userFound = (appState.foundReports || []).filter(r => r.finderName === user.name || r.reporterName === user.name || r.reporterId === user.username).length;
   const userClaims = (appState.claims || []).filter(c => c.claimantName === user.name || c.claimantId === user.studentId || c.claimantId === user.username).length;
-  const karma = appState.karma || 50;
+  
 
   const userHasAvatar = !!(user.avatarUrl || user.avatar || user.avatar_url || user.profilePicture || user.profilePictureUrl || user.photoUrl);
 
@@ -62,14 +62,6 @@ function renderProfile() {
     </div>
 
     <div class="profile-stats-row">
-      <div class="stat-card">
-        <div class="stat-card-header">
-          <span class="stat-card-title">Campus Karma</span>
-          <i data-lucide="award" class="stat-card-icon" style="color: var(--teal-bright);"></i>
-        </div>
-        <div class="stat-card-value">${karma}</div>
-        <div class="stat-card-subtitle">Reputation Points</div>
-      </div>
       <div class="stat-card">
         <div class="stat-card-header">
           <span class="stat-card-title">Lost Reports</span>
@@ -148,10 +140,11 @@ function renderProfile() {
     </div>
   `;
 
-  if (window.lucide) window.lucide.createIcons();
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
 }
 
 function openEditProfilePictureModal() {
+  ensureModalsLoaded();
   const modal = document.getElementById('edit-profile-picture-modal');
   if (!modal) return;
   const u = appState.user;
@@ -165,7 +158,7 @@ function openEditProfilePictureModal() {
     recropBtn.style.display = currentAvatar ? 'inline-flex' : 'none';
   }
   modal.style.display = 'flex';
-  if (window.lucide) window.lucide.createIcons();
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
 }
 
 function closeEditProfilePictureModal() {
@@ -551,7 +544,7 @@ function openProfileCropEditor(img, rawUrl) {
   bindCropEditorEvents();
   applyCropTransform(false);
 
-  if (window.lucide) window.lucide.createIcons();
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
 }
 
 function closeProfileCropEditorModal() {
@@ -746,7 +739,7 @@ async function handleProfilePasswordChange(e) {
   if (btn) {
     btn.disabled = true;
     btn.innerHTML = '<i data-lucide="loader-2" class="spin"></i> Updating password...';
-    if (window.lucide) window.lucide.createIcons();
+    if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
   }
 
   try {
@@ -774,7 +767,7 @@ async function handleProfilePasswordChange(e) {
     if (btn) {
       btn.disabled = false;
       btn.innerHTML = '<i data-lucide="lock"></i> <span>Change Password</span>';
-      if (window.lucide) window.lucide.createIcons();
+      if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
     }
   }
 }
@@ -798,7 +791,7 @@ function renderSettings() {
     }
   }
 
-  if (window.lucide) window.lucide.createIcons();
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
 }
 
 

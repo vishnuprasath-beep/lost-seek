@@ -117,6 +117,10 @@ module.exports = async function handler(req, res) {
       // 1. Try Supabase Auth direct sign-in first
       const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({ email, password: cleanPass });
       
+      if (signInError) {
+        console.warn(`[DEBUG] Auth: Direct Supabase signIn failed for ${email}:`, signInError.message);
+      }
+
       if (!signInError && signInData.session) {
         // User exists in Supabase Auth and password is correct
         jwtToken = signInData.session.access_token;
@@ -191,11 +195,11 @@ module.exports = async function handler(req, res) {
         }
         
         // 4. Sign in again to get the JWT
-        const { data: secondSignIn } = await supabase.auth.signInWithPassword({ email, password: cleanPass });
+        const { data: secondSignIn, error: secondSignInError } = await supabase.auth.signInWithPassword({ email, password: cleanPass });
         if (secondSignIn && secondSignIn.session) {
           jwtToken = secondSignIn.session.access_token;
         } else {
-          // Fallback if signIn fails after create (shouldn't happen)
+          console.warn('[DEBUG] Auth Warning: secondSignIn failed after createUser:', secondSignInError);
           jwtToken = `legacy-token-${authenticatedUser.id}-${Date.now()}`;
         }
       }

@@ -98,7 +98,7 @@ function renderAdminHelpDesk(filterTab = currentAdminHelpTab) {
         </td>
       </tr>
     `;
-    if (window.lucide) window.lucide.createIcons();
+    if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
     return;
   }
 
@@ -174,10 +174,11 @@ function renderAdminHelpDesk(filterTab = currentAdminHelpTab) {
     `;
   }).join('');
 
-  if (window.lucide) window.lucide.createIcons();
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
 }
 
 function openAdminHelpDetailsModal(ticketId) {
+  ensureModalsLoaded();
   activeAdminHelpTicketId = ticketId;
   const ticket = (appState.adminHelpRequests || []).find(r => r.id === ticketId);
   if (!ticket) return;
@@ -225,7 +226,7 @@ function openAdminHelpDetailsModal(ticketId) {
   }
 
   modal.classList.add('show');
-  if (window.lucide) window.lucide.createIcons();
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
 }
 
 function renderAdminHelpModalNotes(ticket) {

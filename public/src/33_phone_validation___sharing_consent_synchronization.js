@@ -110,7 +110,7 @@ function handleFileSelected(e, type) {
     `;
 
     if (dropZone) dropZone.style.display = 'none';
-    if (window.lucide) window.lucide.createIcons();
+    if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
     showToast('Photo attached successfully! 📷', 'success');
   };
   reader.readAsDataURL(file);

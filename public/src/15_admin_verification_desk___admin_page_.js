@@ -302,7 +302,7 @@ function adminApproveClaim(claimId) {
   const found = appState.foundReports.find(r => r.id === claim.foundReportId);
   if (found) found.status = 'Verified';
 
-  addKarma(25, 'Claim Approved by Admin');
+  
 
   appState.notifications.unshift({
     id: generateId('notif'),
@@ -398,7 +398,7 @@ function adminMarkReturned(itemId) {
     if (associatedFound) associatedFound.status = 'Returned';
   }
 
-  addKarma(25, 'Physical Return Finalized');
+  
 
   saveData();
   renderAllViews();

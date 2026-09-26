@@ -33,10 +33,10 @@ function renderContactCard(report, roleLabel = 'Finder') {
           <div class="contact-number-large">Phone number kept private</div>
           <span class="contact-sub-note">The ${roleLabel.toLowerCase()} chose to keep their contact details private.</span>
         </div>
-        <button type="button" class="contact-admin-help-btn" onclick="openAdminContactHelpModal('${report.id}')">
+        ${appState.user?.role?.toLowerCase() === 'admin' ? '' : `<button type="button" class="contact-admin-help-btn" onclick="openAdminContactHelpModal('${report.id}')">
           <i data-lucide="shield"></i>
           <span>Ask Admin to Help</span>
-        </button>
+        </button>`}
       </div>
     `;
   }
@@ -49,10 +49,10 @@ function renderContactCard(report, roleLabel = 'Finder') {
           <div class="contact-number-large">No phone number provided</div>
           <span class="contact-sub-note">No phone number was registered for this ${roleLabel.toLowerCase()}.</span>
         </div>
-        <button type="button" class="contact-admin-help-btn" onclick="openAdminContactHelpModal('${report.id}')">
+        ${appState.user?.role?.toLowerCase() === 'admin' ? '' : `<button type="button" class="contact-admin-help-btn" onclick="openAdminContactHelpModal('${report.id}')">
           <i data-lucide="shield"></i>
           <span>Ask Admin to Help</span>
-        </button>
+        </button>`}
       </div>
     `;
   }
