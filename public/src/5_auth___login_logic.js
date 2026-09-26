@@ -558,3 +558,12 @@ function handleLandingNav(e, sectionId) {
     if (targetLink) targetLink.classList.add('active');
   }
 }
+
+window.goToAppLogin = goToAppLogin;
+window.goToReportLost = goToReportLost;
+window.goToReportFound = goToReportFound;
+window.handleLandingNav = handleLandingNav;
+window.setLoginRole = setLoginRole;
+window.toggleLoginPassword = toggleLoginPassword;
+window.handleLoginSubmit = handleLoginSubmit;
+window.showLoginPage = showLoginPage;

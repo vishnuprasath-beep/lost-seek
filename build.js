@@ -31,16 +31,9 @@ for (const file of files) {
 }
 
 (async () => {
-  try {
-    const { minify } = require('terser');
-    console.log('Minifying app.js with terser...');
-    const minified = await minify(combinedCode, { sourceMap: true });
-    combinedCode = minified.code;
-    console.log('Minification successful.');
-  } catch (e) {
-    console.log('Terser not found or minification failed, using unminified code.');
-    console.error(e);
-  }
+  // Removed terser minification to prevent stripping of global functions
+  // used in inline HTML handlers.
+  console.log('Skipping minification to ensure all global functions are preserved.');
 
   fs.writeFileSync(outputFile, combinedCode, 'utf8');
   const publicOutputFile = path.join(__dirname, 'public', 'app.js');

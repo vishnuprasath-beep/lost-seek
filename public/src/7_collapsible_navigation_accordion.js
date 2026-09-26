@@ -44,3 +44,9 @@ function closeMobileSidebar() {
     backdrop.classList.remove('open');
   }
 }
+
+window.toggleNavGroup = toggleNavGroup;
+window.openAdminContactHelpModal = openAdminContactHelpModal;
+window.closeAdminContactHelpModal = closeAdminContactHelpModal;
+window.toggleMobileSidebar = toggleMobileSidebar;
+window.closeMobileSidebar = closeMobileSidebar;

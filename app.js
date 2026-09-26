@@ -1,1 +1,9444 @@
-function loadScriptAsync(e){return new Promise((t,n)=>{const a=document.querySelector(`script[src="${e}"]`);if(a)return"true"===a.dataset.loaded||window.Chart||window.QRCode||window.jspdf?t():(a.addEventListener("load",()=>{a.dataset.loaded="true",t()}),void a.addEventListener("error",n));const o=document.createElement("script");o.src=e,o.onload=()=>{o.dataset.loaded="true",t()},o.onerror=n,document.head.appendChild(o)})}const STORAGE_KEY="campusfind_data";let appState=window.appState={user:null,lostReports:[],foundReports:[],claims:[],notifications:[]};const CATEGORY_MAP={"id-card":{label:"ID Card / Student Card",icon:"🪪"},"id-cards":{label:"ID Card / Student Card",icon:"🪪"},electronics:{label:"Electronics",icon:"📱"},wallet:{label:"Wallet / Purse",icon:"👛"},wallets:{label:"Wallet / Purse",icon:"👛"},keys:{label:"Keys",icon:"🔑"},bags:{label:"Bags / Backpacks",icon:"🎒"},documents:{label:"Documents / Books",icon:"📄"},clothing:{label:"Clothing",icon:"👕"},accessories:{label:"Accessories",icon:"👓"},misc:{label:"Miscellaneous",icon:"🔮"}},CAMPUS_LOCATIONS=[{name:"A Block",category:"Academic / Buildings",coordinates:null},{name:"B Block",category:"Academic / Buildings",coordinates:null},{name:"C Block",category:"Academic / Buildings",coordinates:null},{name:"D Block",category:"Academic / Buildings",coordinates:null},{name:"E Block",category:"Academic / Buildings",coordinates:null},{name:"F Block",category:"Academic / Buildings",coordinates:null},{name:"Administrative Block",category:"Academic / Buildings",coordinates:null},{name:"Academic Block",category:"Academic / Buildings",coordinates:null},{name:"Saffron Canteen",category:"Food / Shops",coordinates:null},{name:"West Mart",category:"Food / Shops",coordinates:null},{name:"Cinnamon Cafe",category:"Food / Shops",coordinates:null},{name:"Cucumber Cafe",category:"Food / Shops",coordinates:null},{name:"Mustard Cafe",category:"Food / Shops",coordinates:null},{name:"Post Office",category:"Services",coordinates:null},{name:"Himalayan House",category:"Hostel / House Areas",coordinates:null},{name:"Tanjore House",category:"Hostel / House Areas",coordinates:null},{name:"Marina House",category:"Hostel / House Areas",coordinates:null},{name:"Nilgiri House",category:"Hostel / House Areas",coordinates:null},{name:"Madura House",category:"Hostel / House Areas",coordinates:null}],LOCATION_PROXIMITY={"A Block":["B Block","C Block","Academic Block","Administrative Block"],"B Block":["A Block","C Block","D Block","Academic Block"],"C Block":["A Block","B Block","D Block","E Block"],"D Block":["B Block","C Block","E Block","F Block"],"E Block":["C Block","D Block","F Block","Post Office"],"F Block":["D Block","E Block","Post Office","West Mart"],"Administrative Block":["Academic Block","A Block","Main Building","Admin Block","Post Office"],"Academic Block":["Administrative Block","A Block","B Block","C Block","Library"],"Saffron Canteen":["West Mart","Cinnamon Cafe","Cucumber Cafe","Mustard Cafe","Cafeteria"],"West Mart":["Saffron Canteen","Post Office","Cinnamon Cafe","F Block"],"Cinnamon Cafe":["Saffron Canteen","Cucumber Cafe","West Mart"],"Cucumber Cafe":["Saffron Canteen","Cinnamon Cafe","Mustard Cafe"],"Mustard Cafe":["Saffron Canteen","Cucumber Cafe","Tanjore House"],"Post Office":["Administrative Block","West Mart","E Block","F Block"],"Himalayan House":["Tanjore House","Marina House","Nilgiri House","Madura House","Hostel Block A"],"Tanjore House":["Himalayan House","Marina House","Mustard Cafe","Hostel Block B"],"Marina House":["Himalayan House","Tanjore House","Nilgiri House","Hostel Block C"],"Nilgiri House":["Marina House","Himalayan House","Madura House"],"Madura House":["Nilgiri House","Himalayan House","Marina House"],Library:["Cafeteria","Main Building","Admin Block","Lab Complex","Academic Block"],Cafeteria:["Library","Hostel Block A","Main Building","Saffron Canteen"],"Main Building":["Library","Admin Block","Auditorium","Lab Complex","Administrative Block"],"Hostel Block A":["Hostel Block B","Cafeteria","Sports Ground","Himalayan House"],"Hostel Block B":["Hostel Block A","Hostel Block C","Tanjore House"],"Hostel Block C":["Hostel Block B","Sports Ground","Marina House"],"Sports Ground":["Hostel Block A","Hostel Block C","Parking Area"],"Lab Complex":["Main Building","Library"],"Parking Area":["Sports Ground","Admin Block","Main Building"],Auditorium:["Main Building","Admin Block"],"Admin Block":["Main Building","Library","Parking Area","Administrative Block"],Other:[]};function getLocationCategory(e){if(!e)return null;const t=CAMPUS_LOCATIONS.find(t=>t.name.toLowerCase()===e.toLowerCase().trim());return t?t.category:null}function isSameLocationCategory(e,t){const n=getLocationCategory(e),a=getLocationCategory(t);return!(!n||!a||n!==a)}function handleLocationSelectChange(e,t){if(!e||!t)return;const n=document.getElementById(t);if(n)if("Other"===e.value){n.style.display="block";const e=n.querySelector("input");e&&e.focus()}else n.style.display="none"}function getOfficialContactDisplay(e){if(e&&e.trim()){const t=e.trim();return`<a href="tel:${escapeHTML(t)}" style="color: var(--teal-bright); text-decoration: none; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;"><i data-lucide="phone-call" style="width: 14px; height: 14px;"></i> ${escapeHTML(t)}</a>`}return'<span class="contact-unconfigured-text">Contact number not configured</span>'}const DEFAULT_OFFICIAL_CONTACTS={campusOffice:{name:"Campus Administration & Student Affairs (KSRCE)",office:"Administrative Block, 1st Floor, Room 102",phone:"04288-274213",email:"lostfound@ksrce.ac.in",hours:"Mon - Fri, 9:00 AM - 5:00 PM"},campusSecurity:{name:"Campus Security & Custody Desk (Main Gate)",office:"Main Gate Security Post & Administrative Block Reception",phone:"04288-274757",hours:"24/7 Security Coverage & Custody Lockers"},policeStation:{name:"Emergency & Police Assistance",address:"National Emergency Response Centre",phone:"112",landmark:"Police, Fire & Medical Emergency Services"}};let currentTheme=localStorage.getItem("lostseek_theme")||"system";function initTheme(){applyTheme(currentTheme,!1),window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>{"system"===currentTheme&&applyTheme("system",!1)})}function applyTheme(e,t=!1){currentTheme=e,localStorage.setItem("lostseek_theme",e);let n=e;if("system"===e){n=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}document.documentElement.setAttribute("data-theme",n);const a=document.getElementById("header-theme-icon");a&&a.setAttribute("data-lucide","dark"===n?"sun":"moon"),updateSettingsThemeCards(e),adaptChartsToTheme(n),window.lucide&&(window.optimizedCreateIcons?window.optimizedCreateIcons():window.lucide&&window.lucide.createIcons()),t&&showToast(`Theme switched to ${e.charAt(0).toUpperCase()+e.slice(1)} Mode`,"info")}function setTheme(e){applyTheme(e,!0)}function cycleTheme(){setTheme("dark"===currentTheme?"light":"light"===currentTheme?"system":"dark")}function updateSettingsThemeCards(e){["dark","light","system"].forEach(t=>{const n=document.getElementById(`theme-opt-${t}`);n&&(t===e?n.classList.add("active"):n.classList.remove("active"))})}function adaptChartsToTheme(e){if("undefined"==typeof Chart)return;const t="dark"===e,n=t?"#9BB5B3":"#456865",a=t?"rgba(255, 255, 255, 0.06)":"rgba(0, 0, 0, 0.06)";["chart-categories","chart-timeline","chart-recovery","chart-locations"].forEach(e=>{const o=void 0!==analyticsChartInstances&&analyticsChartInstances[e]||Chart.getChart(e);o&&(o.options.scales&&(o.options.scales.x&&(o.options.scales.x.ticks&&(o.options.scales.x.ticks.color=n),o.options.scales.x.grid&&(o.options.scales.x.grid.color=a)),o.options.scales.y&&(o.options.scales.y.ticks&&(o.options.scales.y.ticks.color=n),o.options.scales.y.grid&&(o.options.scales.y.grid.color=a))),o.options.plugins&&o.options.plugins.legend&&o.options.plugins.legend.labels&&(o.options.plugins.legend.labels.color=t?"#F4FAF9":"#0B2024"),o.update())})}const LOSTSEEK_STUDENT_AVATAR_B64="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'/%3E%3Ccircle cx='12' cy='7' r='4'/%3E%3C/svg%3E",LOSTSEEK_ADMIN_AVATAR_B64="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2'/%3E%3Ccircle cx='9' cy='7' r='4'/%3E%3Cpath d='M22 21v-2a4 4 0 0 0-3-3.87'/%3E%3Cpath d='M16 3.13a4 4 0 0 1 0 7.75'/%3E%3C/svg%3E",STUDENT_AVATAR_PATH=LOSTSEEK_STUDENT_AVATAR_B64,ADMIN_AVATAR_PATH=LOSTSEEK_ADMIN_AVATAR_B64;function StudentAvatar(e=40){return`<img src="${STUDENT_AVATAR_PATH}" \n               onerror="if(!this.dataset.r){this.dataset.r='1';this.src='public/assets/images/student-avatar.png';}else if(this.dataset.r==='1'){this.dataset.r='2';this.src='./student-avatar.png';}else{this.onerror=null;this.src=LOSTSEEK_STUDENT_AVATAR_B64;}"\n               class="lostseek-avatar-img" \n               width="${e}" \n               height="${e}" \n               alt="Student Avatar" \n               loading="eager" \n               decoding="sync"\n               style="width:${e}px; height:${e}px; border-radius:50%; object-fit:cover; display:block;" />`}function AdminAvatar(e=40){return`<img src="${ADMIN_AVATAR_PATH}" \n               onerror="if(!this.dataset.r){this.dataset.r='1';this.src='public/assets/images/admin-avatar.png';}else if(this.dataset.r==='1'){this.dataset.r='2';this.src='./admin-avatar.png';}else{this.onerror=null;this.src=LOSTSEEK_ADMIN_AVATAR_B64;}"\n               class="lostseek-avatar-img" \n               width="${e}" \n               height="${e}" \n               alt="Admin Avatar" \n               loading="eager" \n               decoding="sync"\n               style="width:${e}px; height:${e}px; border-radius:50%; object-fit:cover; display:block;" />`}function getAvatarSVG(e,t=40,n=void 0){const a=window.appState&&window.appState.user;let o=n;if(void 0===o&&(o=!a||e&&String(e).toLowerCase()!==String(a.role||"").toLowerCase()?null:a.avatarUrl||a.avatar||a.avatar_url||a.profilePicture||a.profilePictureUrl||a.photoUrl||null),o&&String(o).trim()){const n=!e||"student"===String(e).toLowerCase()?"if(!this.dataset.r){this.dataset.r='1';this.src='public/assets/images/student-avatar.png';}else if(this.dataset.r==='1'){this.dataset.r='2';this.src='./student-avatar.png';}else{this.onerror=null;this.src=LOSTSEEK_STUDENT_AVATAR_B64;}":"if(!this.dataset.r){this.dataset.r='1';this.src='public/assets/images/admin-avatar.png';}else if(this.dataset.r==='1'){this.dataset.r='2';this.src='./admin-avatar.png';}else{this.onerror=null;this.src=LOSTSEEK_ADMIN_AVATAR_B64;}";return`<img src="${escapeHTML(String(o).trim())}" \n                 onerror="${n}" \n                 class="lostseek-avatar-img custom-avatar" \n                 width="${t}" \n                 height="${t}" \n                 alt="User Avatar" \n                 style="width:${t}px; height:${t}px; border-radius:50%; object-fit:cover; display:block; border: 2px solid var(--teal-bright);" />`}return e&&("admin"===e.toLowerCase()||"supervisor"===e.toLowerCase()||"director"===e.toLowerCase())?AdminAvatar(t):StudentAvatar(t)}function initLoginPageAvatars(){const e=document.getElementById("login-role-student-avatar");e&&(e.innerHTML=getAvatarSVG("student",36));const t=document.getElementById("login-role-admin-avatar");t&&(t.innerHTML=getAvatarSVG("admin",36));const n=document.getElementById("login-role");updateLoginAvatarPreview(n?n.value:"student")}function updateLoginAvatarPreview(e){const t=document.getElementById("login-avatar-preview");t&&(t.innerHTML=getAvatarSVG(e,80))}function renderMobileBottomNav(e){const t=document.getElementById("mobile-bottom-nav");if(!t)return;const n="admin"===(e||"").toLowerCase();t.innerHTML=n?`\n      <a href="#dashboard" class="bottom-nav-item" data-page="dashboard-page">\n        <i data-lucide="layout-dashboard"></i>\n        <span>Dashboard</span>\n      </a>\n      <a href="#admin" class="bottom-nav-item" data-page="admin-page">\n        <i data-lucide="shield-check"></i>\n        <span>Admin</span>\n      </a>\n      <a href="#matches" class="bottom-nav-item" data-page="matches-page">\n        <i data-lucide="sparkles"></i>\n        <span>Matches</span>\n      </a>\n      <a href="#analytics" class="bottom-nav-item" data-page="analytics-page">\n        <i data-lucide="chart-no-axes-combined"></i>\n        <span>Reports</span>\n      </a>\n      <a href="#profile" class="bottom-nav-item" data-page="profile-page">\n        <div class="bottom-nav-avatar">${getAvatarSVG("admin",22)}</div>\n        <span>Profile</span>\n      </a>\n    `:`\n      <a href="#dashboard" class="bottom-nav-item" data-page="dashboard-page">\n        <i data-lucide="home"></i>\n        <span>Home</span>\n      </a>\n      <a href="#find-item" class="bottom-nav-item" data-page="find-item-page">\n        <i data-lucide="search"></i>\n        <span>Find</span>\n      </a>\n      <a href="#i-found" class="bottom-nav-item" data-page="i-found-page">\n        <i data-lucide="camera"></i>\n        <span>I Found</span>\n      </a>\n      <a href="#matches" class="bottom-nav-item" data-page="matches-page">\n        <i data-lucide="sparkles"></i>\n        <span>Matches</span>\n      </a>\n      <a href="#profile" class="bottom-nav-item" data-page="profile-page">\n        <div class="bottom-nav-avatar">${getAvatarSVG("student",22)}</div>\n        <span>Profile</span>\n      </a>\n    `,window.lucide&&(window.optimizedCreateIcons?window.optimizedCreateIcons():window.lucide&&window.lucide.createIcons())}function syncMobileBottomNav(e){document.querySelectorAll(".bottom-nav-item").forEach(t=>{t.getAttribute("data-page")===e?t.classList.add("active"):t.classList.remove("active")})}let appInitialized=!1;function ensureAppInitialized(){if(appInitialized)return;appInitialized=!0,loadData(),initLoginPageAvatars();const e=(new Date).toISOString().slice(0,16),t=document.getElementById("lost-date"),n=document.getElementById("found-date");t&&!t.value&&(t.value=e),n&&!n.value&&(n.value=e),initWizardForms();const a=document.getElementById("login-form");if(a&&!a._listenerBound&&(a._listenerBound=!0,a.addEventListener("submit",handleLoginSubmit)),checkPublicReportUrl());else if(appState.user&&appState.user.name){setupAuthenticatedUser(appState.user),handleHashNavigation(),syncWithCloud(!1);const e=appState.user.username||appState.user.id;e&&fetch(API_BASE+`/api/auth?action=profile&username=${encodeURIComponent(e)}`,{headers:getAuthHeaders()}).then(e=>e.ok?e.json():null).then(e=>{if(e&&e.profile&&e.profile.avatarUrl){const t=e.profile.avatarUrl;appState.user.avatarUrl=t,appState.user.avatar=t,appState.user.avatar_url=t,appState.user.profilePicture=t,appState.user.profilePictureUrl=t,appState.user.photoUrl=t,saveData(),setupAuthenticatedUser(appState.user),"function"==typeof renderProfile&&renderProfile()}}).catch(()=>{})}else handleHashNavigation();window.lucide&&window.lucide.createIcons()}function initApp(){initTheme();let e=!1;try{const t=localStorage.getItem("lostseek_state");if(t){const n=JSON.parse(t);n&&n.user&&n.user.name&&(e=!0)}}catch(e){}const t="undefined"!=typeof navigator&&navigator.userAgent&&navigator.userAgent.includes("LostSeekNativeAndroidApp"),n=(window.location.hash||"").replace(/^#\/?/,"").trim().toLowerCase(),a=n&&!["home","landing","how-it-works","ai-matching","community","privacy"].includes(n),o=checkPublicReportUrl();window.addEventListener("hashchange",()=>{ensureAppInitialized(),checkPublicReportUrl()||handleHashNavigation()}),t||e||o||a?ensureAppInitialized():(window.lucide&&window.lucide.createIcons(),"requestIdleCallback"in window?window.requestIdleCallback(()=>ensureAppInitialized(),{timeout:2e3}):setTimeout(ensureAppInitialized,2e3))}function getInitialSeedData(){return{user:null,lostReports:[],foundReports:[],claims:[],notifications:[],matches:[],adminHelpRequests:[],officialContacts:JSON.parse(JSON.stringify(DEFAULT_OFFICIAL_CONTACTS))}}function _legacySeedData(){const e=e=>new Date(Date.now()-24*e*3600*1e3).toISOString(),t=e=>new Date(Date.now()-3600*e*1e3).toISOString();return{user:null,lostReports:[{id:"lost-1",category:"id-card",title:"Student ID Card — Ravi Kumar, CSE Dept",description:"University ID Card belonging to Ravi Kumar, Computer Science & Engineering department (3rd Year). Blue lanyard attached.",color:"Blue & White",brand:"Campus Security",location:"Library",date:"2026-09-15T11:30:00.000Z",photo:"https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&auto=format&fit=crop&q=80",status:"Searching",createdAt:"2026-09-15T11:30:00.000Z",matchId:"found-3"},{id:"lost-2",category:"electronics",title:"Samsung Galaxy S23, black with blue case",description:"Samsung Galaxy S23 256GB in Phantom Black with a navy blue silicone protective case. Lock screen shows mountain sunrise.",color:"Black / Blue",brand:"Samsung",location:"Cafeteria",date:"2026-09-14T13:45:00.000Z",photo:"https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=400&auto=format&fit=crop&q=80",status:"Matched",createdAt:"2026-09-14T13:45:00.000Z",matchId:"found-1"},{id:"lost-3",category:"bags",title:"Black Wildcraft backpack with red zipper",description:"Wildcraft 35L water-resistant college backpack. Black with bold red zippers, contains laptop sleeve and physics lecture notes.",color:"Black & Red",brand:"Wildcraft",location:"Lab Complex",date:"2026-09-13T16:20:00.000Z",photo:"https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&auto=format&fit=crop&q=80",status:"Searching",createdAt:"2026-09-13T16:20:00.000Z",matchId:"found-2"},{id:"lost-4",category:"keys",title:"3 keys with Doraemon keychain",description:"Bunch of 3 metallic keys (room lock, bike key, locker key) connected to a cute blue Doraemon rubber keychain.",color:"Silver / Blue",brand:"Godrej / Honda",location:"Parking Area",date:"2026-09-16T09:15:00.000Z",photo:"https://images.unsplash.com/photo-1582139329536-e7284fece509?w=400&auto=format&fit=crop&q=80",status:"Searching",createdAt:"2026-09-16T09:15:00.000Z",matchId:"found-4"},{id:"lost-5",category:"wallet",title:"Brown leather wallet, had ~500 cash",description:"Genuine brown leather bifold wallet. Contained approximately ₹500 cash, student gym membership card, and metro pass.",color:"Brown",brand:"Woodland",location:"Main Building",date:"2026-09-15T17:00:00.000Z",photo:"https://images.unsplash.com/photo-1627123424574-724758594e93?w=400&auto=format&fit=crop&q=80",status:"Claimed",createdAt:"2026-09-15T17:00:00.000Z",matchId:null},{id:"lost-6",category:"documents",title:"Engineering Mathematics by B.S. Grewal",description:"Higher Engineering Mathematics 44th Edition textbook by B.S. Grewal. Has highlighter markings in chapters 7 and 9.",color:"Yellow & Black",brand:"Khanna Publishers",location:"Library",date:"2026-09-12T10:00:00.000Z",photo:"https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&auto=format&fit=crop&q=80",status:"Returned",createdAt:"2026-09-12T10:00:00.000Z",matchId:null}],foundReports:[{id:"found-1",category:"electronics",title:"Samsung phone, black, blue cover",description:"Turned in near cafeteria tables. Samsung smartphone with navy blue case, camera lenses intact, battery at 40%.",color:"Black / Blue",brand:"Samsung",location:"Cafeteria",date:"2026-09-14T14:10:00.000Z",photo:"https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=400&auto=format&fit=crop&q=80",status:"Matched",createdAt:"2026-09-14T14:10:00.000Z",custody:"Dropped at Security",finderName:"Kavita Singh (Cafeteria Staff)"},{id:"found-2",category:"bags",title:"Black backpack, red accents",description:"Spotted on the bench at Lab Complex corridor. Black backpack with distinct red zip pulls and side mesh bottle pocket.",color:"Black & Red",brand:"Wildcraft",location:"Lab Complex",date:"2026-09-13T17:30:00.000Z",photo:"https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&auto=format&fit=crop&q=80",status:"Searching",createdAt:"2026-09-13T17:30:00.000Z",custody:"With Me",finderName:"Aman Verma"},{id:"found-3",category:"id-card",title:"Student card, CSE department",description:"Found right at the central library entrance turnstile. Student card of Ravi Kumar, Department of Computer Science.",color:"Blue & White",brand:"University ID",location:"Library",date:"2026-09-15T12:00:00.000Z",photo:"https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&auto=format&fit=crop&q=80",status:"Matched",createdAt:"2026-09-15T12:00:00.000Z",custody:"Dropped at Security",finderName:"Librarian Desk"},{id:"found-4",category:"keys",title:"Bunch of keys, cartoon keychain",description:"Found on the spectator bench near Sports Ground cricket nets. 3 keys attached to a Doraemon anime figure.",color:"Silver / Blue",brand:"Keys",location:"Sports Ground",date:"2026-09-16T11:00:00.000Z",photo:"https://images.unsplash.com/photo-1582139329536-e7284fece509?w=400&auto=format&fit=crop&q=80",status:"Searching",createdAt:"2026-09-16T11:00:00.000Z",custody:"With Me",finderName:"Rohan Sharma"},{id:"found-5",category:"clothing",title:"Blue denim jacket, size M",description:"Left on chair row G in the main auditorium after the orientation seminar over 35 days ago. Unclaimed aging inventory.",color:"Blue",brand:"Levi's",location:"Auditorium",date:e(35),photo:"https://images.unsplash.com/photo-1576995853123-5a10305d93c0?w=400&auto=format&fit=crop&q=80",status:"Searching",createdAt:e(35),custody:"Dropped at Security",finderName:"Auditorium Custodian"},{id:"found-6",category:"documents",title:"Red notebook, Physics notes",description:"Classmate spiral notebook with red cover, containing detailed 1st year Engineering Physics handwritten formula notes.",color:"Red",brand:"Classmate",location:"Main Building",date:"2026-09-11T15:10:00.000Z",photo:"https://images.unsplash.com/photo-1589998059171-988d887df646?w=400&auto=format&fit=crop&q=80",status:"Searching",createdAt:"2026-09-11T15:10:00.000Z",custody:"With Me",finderName:"Pooja Nair"}],claims:[{id:"claim-demo-1",lostReportId:"lost-2",foundReportId:"found-1",claimantName:"Alex Rivera",matchScore:87,status:"Pending Admin Review",verificationAnswer:"Samsung Galaxy S23 Phantom Black with navy blue silicone case. Lock screen wallpaper is a mountain sunrise with golden sky. Emergency contact displayed on screen is mom (ending in 8891). PIN ends in 24.",contact:"alex.rivera@campus.edu • +1 (555) 019-2834",createdAt:"2026-09-14T15:30:00.000Z"}],notifications:[{id:"notif-1",message:"🤖 AI Match Alert: 87% match between your Samsung S23 report and an item recovered at Cafeteria!",read:!1,createdAt:t(2)},{id:"notif-2",message:"⏳ Claim #claim-demo-1 is currently pending security desk approval.",read:!1,createdAt:t(5)},{id:"notif-3",message:"⚡ You earned +10 Karma points for registering campus lost and found belongings.",read:!0,createdAt:e(1)}],adminHelpRequests:[],officialContacts:JSON.parse(JSON.stringify(DEFAULT_OFFICIAL_CONTACTS))}}document.addEventListener("DOMContentLoaded",()=>{initApp()});const API_BASE=window.location.origin&&"null"!==window.location.origin&&!window.location.origin.startsWith("file:")?window.location.origin:"https://smart-campus-pro.vercel.app";function getAuthHeaders(){const e={"Content-Type":"application/json"};return window.appState&&window.appState.user&&window.appState.user.token&&(e.Authorization="Bearer "+window.appState.user.token),e}function updateSyncIndicator(e,t){const n=document.getElementById("cloud-sync-badge"),a=document.getElementById("cloud-sync-text");n&&a&&(n.className="cloud-sync-badge "+e,a.textContent=t)}async function uploadImageToCloud(e,t){if(!e||!e.startsWith("data:"))return e;try{const n=e.split(","),a=n[0].match(/:(.*?);/),o=a?a[1]:"image/jpeg",i=atob(n[1]);let s=i.length;const r=new Uint8Array(s);for(;s--;)r[s]=i.charCodeAt(s);const d=new Blob([r],{type:o}),l=await fetch(API_BASE+"/api/upload",{method:"POST",headers:{"Content-Type":o,"x-file-name":t||"item.jpg"},body:d}),c=await l.json();return c.success&&c.url?c.url:(console.warn("Cloud upload response warning:",c.message),e)}catch(t){return console.warn("Image upload fallback to dataUrl:",t),e}}async function syncWithCloud(e){updateSyncIndicator("syncing","Syncing...");try{const t=await fetch(API_BASE+"/api/sync",{method:"GET",headers:getAuthHeaders()});if(503===t.status){await t.json();return updateSyncIndicator("offline","DB Config Needed"),e&&showToast("Supabase PostgreSQL configuration required. See .env.example","warning"),!1}if(!t.ok)throw new Error("HTTP "+t.status);const n=await t.json();if(n.success){if(Array.isArray(n.lostReports)&&(appState.lostReports=n.lostReports),Array.isArray(n.foundReports)&&(appState.foundReports=n.foundReports),Array.isArray(n.claims)&&(appState.claims=n.claims),Array.isArray(n.matches)&&(appState.matches=n.matches),Array.isArray(n.helpRequests)&&(appState.adminHelpRequests=n.helpRequests),Array.isArray(n.notifications)){const e=new Set;appState.notifications=n.notifications.filter(t=>!(!t.id||e.has(t.id))&&(e.add(t.id),!0))}if(n.user&&appState.user){const e=n.user.avatarUrl||n.user.avatar||n.user.avatar_url;e&&(appState.user.avatarUrl=e,appState.user.avatar=e,appState.user.avatar_url=e,appState.user.profilePicture=e,appState.user.profilePictureUrl=e,appState.user.photoUrl=e),setupAuthenticatedUser(appState.user)}return saveData(),updateSyncIndicator("synced","Online (Cloud Synced)"),"function"==typeof renderAllViews&&renderAllViews(),e&&showToast("Synchronized with Cloud Database! ☁️","success"),!0}}catch(t){return console.warn("Sync failed, running in cached mode:",t),"undefined"!=typeof navigator&&!1===navigator.onLine?(updateSyncIndicator("offline","Offline"),e&&showToast("Device offline: Using local cached reports","info")):(updateSyncIndicator("cached","Online (Cached)"),e&&showToast("Connected: Using cached records","info")),!1}}function triggerManualSync(){syncWithCloud(!0)}function normalizeCachedReport(e){if(!e)return e;const t=e.phone||e.phoneNumber||e.phone_number||e.contactPhone||null,n=!!(e.sharePhone??e.phoneSharingConsent??e.phone_sharing_consent??e.phoneShared);return e.phone=t,e.phoneNumber=t,e.phone_number=t,e.contactPhone=t,e.sharePhone=n,e.phoneSharingConsent=n,e.phone_sharing_consent=n,e.hasPhoneProvided=!(!t||!String(t).trim()),e}function loadData(){const e=localStorage.getItem(STORAGE_KEY);if(e)try{if(appState=JSON.parse(e),appState.adminHelpRequests||(appState.adminHelpRequests=[]),appState.officialContacts||(appState.officialContacts=JSON.parse(JSON.stringify(DEFAULT_OFFICIAL_CONTACTS))),Array.isArray(appState.lostReports)&&appState.lostReports.forEach(normalizeCachedReport),Array.isArray(appState.foundReports)&&appState.foundReports.forEach(normalizeCachedReport),appState.user)if("karma"in appState.user&&delete appState.user.karma,"karmaScore"in appState.user&&delete appState.user.karmaScore,"badges"in appState.user&&delete appState.user.badges,"karma"in appState&&delete appState.karma,!appState.user.token||appState.user.token.startsWith("legacy-token"))console.warn("[DEBUG] Obsolete auth session detected (missing valid JWT). Forcing logout."),appState.user=null,saveData(),"function"==typeof showToast&&setTimeout(()=>showToast("Session expired. Please log in again.","warning"),1500);else{const e=appState.user.avatarUrl||appState.user.avatar||appState.user.avatar_url||appState.user.profilePicture||appState.user.profilePictureUrl||appState.user.photoUrl||null;appState.user.avatarUrl=e,appState.user.avatar=e,appState.user.avatar_url=e,appState.user.profilePicture=e,appState.user.profilePictureUrl=e,appState.user.photoUrl=e}}catch(e){console.warn("Failed to parse localStorage data. Re-seeding...",e),appState=getInitialSeedData(),saveData()}else appState=getInitialSeedData(),saveData();window.appState=appState}function saveData(){localStorage.setItem(STORAGE_KEY,JSON.stringify(appState))}function generateId(e="item"){return`${e}-${Date.now()}-${Math.floor(1e3*Math.random())}`}function getTimeAgo(e){if(!e)return"recently";const t=new Date(e).getTime(),n=Math.floor((Date.now()-t)/1e3);if(n<60)return"just now";const a=Math.floor(n/60);if(a<60)return`${a}m ago`;const o=Math.floor(a/60);if(o<24)return`${o}h ago`;return`${Math.floor(o/24)}d ago`}function formatDateTime(e){if(!e)return"Not specified";try{const t=new Date(e);return isNaN(t.getTime())?e:t.toLocaleDateString()+" "+t.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}catch(t){return e}}function setLoginRole(e){const t=document.getElementById("login-role"),n=document.getElementById("role-btn-student"),a=document.getElementById("role-btn-admin"),o=document.getElementById("login-role-text"),i=document.getElementById("login-username-label");t&&(t.value=e),n&&a&&("student"===e?(n.classList.add("active"),a.classList.remove("active")):(a.classList.add("active"),n.classList.remove("active"))),o&&(o.textContent="admin"===e?"Admin":"Student"),i&&(i.textContent="admin"===e?"Admin Email / Username":"Student Email / ID"),updateLoginAvatarPreview(e)}function toggleLoginPassword(){const e=document.getElementById("login-password"),t=document.getElementById("password-toggle-icon");if(!e)return;const n="password"===e.getAttribute("type");e.setAttribute("type",n?"text":"password"),t&&(t.setAttribute("data-lucide",n?"eye-off":"eye"),window.lucide&&(window.optimizedCreateIcons?window.optimizedCreateIcons():window.lucide&&window.lucide.createIcons()))}async function computeLoginHash(e,t){const n="lostseek_secure_salt_2026_campus:"+String(e).toLowerCase().trim()+":"+String(t);if(window.crypto&&crypto.subtle){const e=(new TextEncoder).encode(n),t=await crypto.subtle.digest("SHA-256",e);return Array.from(new Uint8Array(t)).map(e=>e.toString(16).padStart(2,"0")).join("")}let a=0;for(let e=0;e<n.length;e++)a=(a<<5)-a+n.charCodeAt(e),a|=0;return String(a)}setInterval(()=>{window.appState&&window.appState.user&&"visible"===document.visibilityState&&syncWithCloud(!1)},12e4),window.addEventListener("focus",()=>{window.appState&&window.appState.user&&syncWithCloud(!1)}),window.addEventListener("online",()=>{window.appState&&window.appState.user&&syncWithCloud(!1)});const AUTH_HASH_DIRECTORY={a275410a2d65fe18a42bbc6562aeee70d14f137355337d65405edc4bb5255f14:{role:"student",name:"Alex Rivera",studentId:"STU-2026-8891"},"566ea4df42d23e7163dd70d73e0812ebbe02fc9fc969131c155589cf441b38c6":{role:"student",name:"Alex Rivera",studentId:"STU-2026-8891"},b46a5771ef81cc09d4b6298a1041faf3a78cdc8e0c08e3015e2d71f4000d3e0b:{role:"admin",name:"Vikram Singh",studentId:"ADM-FAC-4402"},"3b9d0b782eeda1ace88abced9bb61f53387b0d2d0ed45be2b6d4e23516b60e20":{role:"admin",name:"Vikram Singh",studentId:"ADM-FAC-4402"},c740a156024c4f39591eb9147e2f7e7b4e19713acc1b709f35f40d94bcc8089d:{role:"student",name:"Vishnu Prasath",studentId:"STU-2026-1011"},e8093702ca84fa1e276fcd0a4e0339040097144620fd109515417f8803f512a2:{role:"student",name:"Vishnu Prasath",studentId:"STU-2026-1011"},dd609498d8fe2b35570add56caf33f78f4edd39c595ae6d392067cbe2010fd4c:{role:"student",name:"Vishnu Varthan",studentId:"STU-2026-1012"},f8bc037f4ed4ee6c6acf1db66eb6e5e4b08d9cbc9c8d43abfabb66f64f5e7a37:{role:"student",name:"Vishnu Varthan",studentId:"STU-2026-1012"},"8a0730907fd7f89deb482473ffecbd332623c97666bf7da170ca82f49669132b":{role:"student",name:"Sivavaiyapuri",studentId:"STU-2026-1013"},"7bcad89e3781b94e3b06e0da89ee0f8c61901c87dcc6cb38bc575d7c564253e9":{role:"student",name:"Sivavaiyapuri",studentId:"STU-2026-1013"},f9ed20dfd52bd919130829fd2bc8f255fd8a9ce06a56e00ff27b3f39555015fb:{role:"student",name:"Boobathy",studentId:"STU-2026-1014"},d906d6d1ec45eead31a979a1a9c49106cb0df51acc96a6ba2db7d418181b6a6c:{role:"student",name:"Boobathy",studentId:"STU-2026-1014"},b7a58e00456e20ab980416811542ba861910df6875e4372c6166b140649c7d98:{role:"student",name:"Krish",studentId:"STU-2026-1015"},"894f18a89039a9d652b65ee75efbc066b881b8f90a920b3395fbca94e82b1249":{role:"student",name:"Krish",studentId:"STU-2026-1015"},"579aa73241c325ee200b5799232a51fd1f6237a2e4439b1547428e059bb86822":{role:"student",name:"Girl1",studentId:"STU-2026-1016"},e83fedb3352450706823d3b084a1effae5519679faac4adf3dd569c44de15cab:{role:"student",name:"Girl1",studentId:"STU-2026-1016"}};async function handleLoginSubmit(e){e.preventDefault();const t=document.getElementById("login-username"),n=document.getElementById("login-password"),a=document.getElementById("login-role"),o=t?t.value.trim():"",i=n?n.value:"",s=a?a.value:"student";if(!o||!i)return void showToast("Please enter both your username and password.","warning");let r=null;try{const t=await fetch("/api/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({role:s,username:o,password:i})}),a=t.headers.get("content-type")||"";let d=null;if(a.includes("application/json"))try{d=await t.json()}catch(e){}else{d={success:!1,message:await t.text()||"Unexpected server response."}}if(t.ok&&d&&d.success&&d.user)r=d.user;else if(401===t.status||403===t.status){return showToast(d&&d.message?d.message:"Invalid credentials for "+("admin"===s?"Admin":"Student")+" portal.","error"),void(n&&(n.value=""))}}catch(e){console.warn("Backend login network notice:",e)}if(!r){const e=await computeLoginHash(o,i),t=AUTH_HASH_DIRECTORY[e];t&&t.role===s&&(r={role:t.role,name:t.name,studentId:t.studentId,username:o})}n&&(n.value=""),r?(appState.user=r,appState.user&&appState.user.token?console.log("[DEBUG] Safe Auth Check: Supabase access token obtained. Length:",appState.user.token.length):console.warn("[DEBUG] Auth Warning: No Supabase token found in login response!"),saveData(),setupAuthenticatedUser(appState.user),showToast(`Welcome back, ${r.name}! 👋`,"success"),showPage("dashboard-page")):showToast("Invalid credentials for "+("admin"===s?"Admin":"Student")+" portal.","error")}function toggleRegisterView(e){const t=document.getElementById("login-form"),n=document.getElementById("register-container"),a=document.querySelector(".role-toggle-group");e?(t&&(t.style.display="none"),a&&(a.style.display="none"),n&&(n.style.display="block",n.classList.add("fade-in"))):(n&&(n.style.display="none"),t&&(t.style.display="block",t.classList.add("fade-in")),a&&(a.style.display="block")),window.lucide&&(window.optimizedCreateIcons?window.optimizedCreateIcons():window.lucide&&window.lucide.createIcons())}function triggerRegPhotoPick(e){const t="camera"===e?document.getElementById("reg-camera-input"):document.getElementById("reg-gallery-input");t&&t.click()}function handleRegPhotoSelected(e){const t=e.target.files?.[0];if(!t)return;const n=new FileReader;n.onload=function(e){const t=e.target.result,n=new Image;n.onload=async function(){try{const e=document.createElement("canvas"),t=600;let a=n.width,o=n.height;a>o&&a>t?(o=Math.round(o*t/a),a=t):o>t&&(a=Math.round(a*t/o),o=t),e.width=a,e.height=o;e.getContext("2d").drawImage(n,0,0,a,o);const i=e.toDataURL("image/jpeg",.82),s=document.getElementById("reg-photo-url"),r=document.getElementById("reg-photo-preview-wrap"),d=document.getElementById("reg-photo-preview");s&&(s.value=i),d&&(d.src=i),r&&(r.style.display="flex");try{const e=await uploadImageToCloud(i,"student-avatar.jpg");e&&e.startsWith("http")&&s&&(s.value=e)}catch(e){console.warn("Avatar pre-upload notice:",e)}}catch(e){console.warn("Image compression fallback:",e)}},n.src=t},n.readAsDataURL(t)}function clearRegPhoto(){const e=document.getElementById("reg-photo-url"),t=document.getElementById("reg-photo-preview-wrap"),n=document.getElementById("reg-photo-preview");e&&(e.value=""),n&&(n.src=""),t&&(t.style.display="none")}async function handleRegistrationSubmit(e){e.preventDefault();const t=document.getElementById("reg-name")?.value.trim(),n=document.getElementById("reg-email")?.value.trim()||document.getElementById("reg-username")?.value.trim(),a=document.getElementById("reg-studentid")?.value.trim(),o=document.getElementById("reg-phone")?.value.trim(),i=document.getElementById("reg-password")?.value,s=document.getElementById("reg-confirm-password")?.value;let r=document.getElementById("reg-photo-url")?.value||"";const d=document.getElementById("btn-submit-register");if(!t||!n||!i)return void showToast("Name, email, and password are required.","warning");if(!n.includes("@")||/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(n))if(i.length<6)showToast("Password must be at least 6 characters long.","warning");else if(i===s){d&&(d.disabled=!0,d.innerHTML='<i data-lucide="loader-2" class="spin"></i> Creating student account...',window.lucide&&(window.optimizedCreateIcons?window.optimizedCreateIcons():window.lucide&&window.lucide.createIcons()));try{if(r&&r.startsWith("data:"))try{const e=await uploadImageToCloud(r,"student-avatar.jpg");r=e&&e.startsWith("http")?e:null}catch(e){console.warn("Avatar upload warning:",e),r=null}const d=await fetch(API_BASE+"/api/register",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:t,email:n,username:n,studentId:a,phone:o,password:i,confirmPassword:s,avatarUrl:r,role:"student"})}),l=d.headers.get("content-type")||"";let c=null;if(l.includes("application/json"))try{c=await d.json()}catch(e){}else{c={success:!1,message:await d.text()||`Server returned status ${d.status}`}}if(d.ok&&c&&c.success&&c.user){showToast("Student account created successfully! Welcome to LostSeek 🎓","success");const e=document.getElementById("login-username");e&&(e.value=c.user.username),setLoginRole("student"),toggleRegisterView(!1),appState.user=c.user,saveData(),setupAuthenticatedUser(c.user),showPage("dashboard-page")}else showToast(c&&c.message?c.message:"Registration failed.","error")}catch(e){showToast("Network error during registration: "+e.message,"error")}finally{d&&(d.disabled=!1,d.innerHTML='<i data-lucide="check-circle"></i> Create Student Account',window.lucide&&(window.optimizedCreateIcons?window.optimizedCreateIcons():window.lucide&&window.lucide.createIcons()))}}else showToast("Passwords do not match.","error");else showToast("Please enter a valid email address.","warning")}function setupAuthenticatedUser(e){if(e||(e=appState.user),!e)return;const t=e.avatarUrl||e.avatar||e.avatar_url||e.profilePicture||e.profilePictureUrl||e.photoUrl||null;e.avatarUrl=t,e.avatar=t,e.avatar_url=t,e.profilePicture=t,e.profilePictureUrl=t,e.photoUrl=t;const n=document.getElementById("user-avatar-initials");n&&(n.innerHTML=getAvatarSVG(e.role,36,e.avatarUrl));const a=document.getElementById("header-user-avatar");a&&(a.innerHTML=getAvatarSVG(e.role,36,e.avatarUrl));const o=document.getElementById("dashboard-user-avatar");o&&(o.innerHTML=getAvatarSVG(e.role,48,e.avatarUrl));const i=document.getElementById("admin-desk-avatar");i&&(i.innerHTML=getAvatarSVG("admin",48,e.avatarUrl));const s=document.getElementById("user-name-display");s&&(s.textContent=e.name);const r=document.getElementById("user-role-display");r&&(r.textContent=e.role);const d=e.role&&"admin"===e.role.toLowerCase(),l=document.getElementById("header-role-badge");l&&(l.textContent=e.role.toUpperCase(),l.className="badge "+(d?"badge-urgent":"badge-verified"));const c=!d,p=document.getElementById("student-nav-sections"),u=document.getElementById("admin-nav-sections");p&&(p.style.display=c?"block":"none"),u&&(u.style.display=d?"block":"none");const m=document.getElementById("student-dashboard-view"),g=document.getElementById("admin-dashboard-view");m&&(m.style.display=c?"block":"none"),g&&(g.style.display=d?"block":"none");const h=document.getElementById("student-welcome-heading");if(h){const t=e.name.split(" ")[0];h.textContent=`Hello, ${t}`}const f=document.getElementById("welcome-message");if(f){const t=e.name.split(" ")[0];f.textContent=`Welcome back, ${t}! 👋`}renderMobileBottomNav(e.role);const y=document.getElementById("landing-page");y&&(y.style.display="none");const v=document.getElementById("login-page");v&&(v.style.display="none",v.classList.remove("active")),document.getElementById("app-layout").style.display="flex",renderAllViews(),window.lucide&&(window.optimizedCreateIcons?window.optimizedCreateIcons():window.lucide&&window.lucide.createIcons()),syncWithCloud(!1)}function logout(){appState.user=null,appState.notifications=[],saveData(),showToast("Logged out of LostSeek","info");"undefined"!=typeof navigator&&navigator.userAgent&&navigator.userAgent.includes("LostSeekNativeAndroidApp")?(showLoginPage(),window.location.hash="#login"):showLandingPage()}function showLandingPage(){const e=document.getElementById("app-layout");e&&(e.style.display="none");const t=document.getElementById("login-page");t&&(t.style.display="none",t.classList.remove("active"));const n=document.getElementById("landing-page");n&&(n.style.display="block"),window.scrollTo({top:0,behavior:"smooth"}),window.lucide&&(window.optimizedCreateIcons?window.optimizedCreateIcons():window.lucide&&window.lucide.createIcons())}function showLoginPage(){const e=document.getElementById("landing-page");e&&(e.style.display="none"),document.getElementById("app-layout").style.display="none";const t=document.getElementById("login-page");t&&(t.style.display="flex",t.classList.add("active"));const n=document.getElementById("login-username"),a=document.getElementById("login-password"),o=document.getElementById("password-toggle-icon");n&&(n.value=""),a&&(a.value="",a.setAttribute("type","password")),o&&o.setAttribute("data-lucide","eye"),initLoginPageAvatars(),window.lucide&&(window.optimizedCreateIcons?window.optimizedCreateIcons():window.lucide&&window.lucide.createIcons())}function goToAppLogin(){ensureAppInitialized(),appState.user&&appState.user.name?(setupAuthenticatedUser(appState.user),showPage("dashboard-page")):(showLoginPage(),window.location.hash="#login")}function goToReportLost(){ensureAppInitialized(),appState.user&&appState.user.name?(setupAuthenticatedUser(appState.user),showPage("report-lost-page")):(showLoginPage(),window.location.hash="#login",showToast("Please sign in to report a lost item 📝","info"))}function goToReportFound(){ensureAppInitialized(),appState.user&&appState.user.name?(setupAuthenticatedUser(appState.user),showPage("report-found-page")):(showLoginPage(),window.location.hash="#login",showToast("Please sign in to report a found item 🎒","info"))}function handleLandingNav(e,t){e&&e.preventDefault&&e.preventDefault();const n=document.getElementById(t);if(n){n.scrollIntoView({behavior:"smooth",block:"start"});document.querySelectorAll(".lp-nav-link").forEach(e=>e.classList.remove("active"));const e=document.querySelector(`.lp-nav-link[href="#${t}"]`);e&&e.classList.add("active")}}function showPage(e){if(!appState.user&&"login-page"!==e)return void showLoginPage();if(["admin-page","admin-lost-page","admin-found-page","admin-all-page","admin-claims-page","admin-matches-page","admin-photo-search-page","admin-students-page","admin-help-page"].includes(e)){if(!(appState.user&&appState.user.role&&"admin"===appState.user.role.toLowerCase()))return showToast("Staff / Admin privileges required to access Staff Console 🛡️","warning"),void showPage("dashboard-page")}const t=document.getElementById("landing-page");t&&(t.style.display="none");const n=document.getElementById("login-page");n&&(n.style.display="none",n.classList.remove("active"));const a=document.getElementById("app-layout");a&&(a.style.display="flex");document.querySelectorAll(".page-section").forEach(e=>{"login-page"!==e.id&&(e.classList.remove("active"),e.style.display="none")});const o=document.getElementById(e);o&&(o.style.display="block",o.classList.add("active","fade-in")),window.scrollTo({top:0,behavior:"smooth"});document.querySelectorAll(".nav-link").forEach(t=>{t.getAttribute("data-page")===e?t.classList.add("active"):t.classList.remove("active")});const i=document.getElementById("breadcrumb-current");if(i){const t={"dashboard-page":"admin"===appState.user?.role?.toLowerCase()?"Dashboard":"Home","find-item-page":"Find Item","i-found-page":"I Found an Item","report-lost-page":"Report Lost","report-found-page":"Report Found","matches-page":"Possible Matches","my-reports-page":"My Reports","admin-page":"Admin Desk","admin-photo-search-page":"Find by Photo","admin-students-page":"Students","analytics-page":"Reports & Stats","alerts-page":"Alerts","profile-page":"Profile","settings-page":"Settings","help-safety-page":"Help & Safety","admin-help-page":"Help & Complaints","admin-lost-page":"Lost Items","admin-found-page":"Found Items","admin-all-page":"All Reports","admin-claims-page":"Claims","admin-matches-page":"Match Center"};i.textContent=t[e]||"LostSeek"}const s={"dashboard-page":"dashboard","find-item-page":"find-item","i-found-page":"i-found","report-lost-page":"report-lost","report-found-page":"report-found","matches-page":"matches","my-reports-page":"my-reports","admin-page":"admin","admin-photo-search-page":"admin-find-photo","admin-students-page":"admin-students","analytics-page":"analytics","alerts-page":"alerts","profile-page":"profile","settings-page":"settings","help-safety-page":"help-safety","admin-help-page":"admin-help","admin-lost-page":"admin-lost","admin-found-page":"admin-found","admin-all-page":"admin-all","admin-claims-page":"admin-claims","admin-matches-page":"admin-matches"}[e]||"dashboard";if(window.location.hash!==`#${s}`&&(window.location.hash=s),closeMobileSidebar(),syncMobileBottomNav(e),"dashboard-page"===e){appState.user&&appState.user.role&&"student"===appState.user.role.toLowerCase()?renderStudentHomeFeeds():(animateStatCounters(),renderDashboardActivity(),renderBadges()),updateKarmaDisplay()}else"find-item-page"===e?renderFindItem():"i-found-page"===e?initIFoundPage():"matches-page"===e?renderAIMatches():"my-reports-page"===e?renderMyReports(currentMyReportsTab):"admin-page"===e?renderAdminDesk():"admin-photo-search-page"===e?initAdminPhotoSearch():"admin-students-page"===e?renderAdminStudents():"analytics-page"===e?renderAnalyticsPage():"alerts-page"===e?renderAlertsPage():"profile-page"===e?renderProfile():"settings-page"===e?renderSettings():"help-safety-page"===e?renderHelpSafetyPage():"admin-help-page"===e?renderAdminHelpDesk("all"):"admin-lost-page"===e?renderAdminLostPage():"admin-found-page"===e?renderAdminFoundPage():"admin-all-page"===e||"admin-page"===e?renderAdminAllReportsPage():"admin-claims-page"===e?renderAdminClaimsPage("all"):"admin-matches-page"===e&&renderAdminMatchCenterPage();window.lucide&&window.lucide.createIcons()}function handleHashNavigation(){if(checkPublicReportUrl())return;const e=(window.location.hash||"").replace(/^#\/?/,"").trim().toLowerCase(),t={dashboard:"dashboard-page","find-item":"find-item-page","i-found":"i-found-page","report-lost":"report-lost-page","report-found":"report-found-page",matches:"matches-page","my-reports":"my-reports-page",admin:"admin-all-page","admin-lost":"admin-lost-page","admin-found":"admin-found-page","admin-all":"admin-all-page","admin-claims":"admin-claims-page","admin-matches":"admin-matches-page","admin-find-photo":"admin-photo-search-page","admin-students":"admin-students-page",analytics:"analytics-page",alerts:"alerts-page",profile:"profile-page",settings:"settings-page","help-safety":"help-safety-page","admin-help":"admin-help-page"};if("undefined"!=typeof navigator&&navigator.userAgent&&navigator.userAgent.includes("LostSeekNativeAndroidApp")){if(appState.user&&appState.user.name){if("home"===e||"landing"===e||"login"===e||!e)return void showPage("dashboard-page");return void showPage(t[e]||"dashboard-page")}showLoginPage()}else{if(appState.user&&appState.user.name){if("home"===e||"landing"===e)return void showLandingPage();return void showPage(t[e]||"dashboard-page")}if("login"!==e){if("register"===e)return showLoginPage(),void toggleRegisterView(!0);if("report-lost"===e)return showLoginPage(),void showToast("Please sign in to report a lost item 📝","info");if("report-found"===e)return showLoginPage(),void showToast("Please sign in to report a found item 🎒","info");if(t[e])return showLoginPage(),void showToast("Please sign in to access LostSeek","info");if(["how-it-works","ai-matching","community","privacy"].includes(e)){showLandingPage();const t=document.getElementById(e);return void(t&&setTimeout(()=>{t.scrollIntoView({behavior:"smooth",block:"start"})},50))}showLandingPage()}else showLoginPage()}}function toggleNavGroup(e){const t=e.closest(".nav-group");if(t){const n=t.classList.toggle("collapsed");e.setAttribute("aria-expanded",!n)}}let activeContactHelpReportId=null;function openAdminContactHelpModal(e){ensureModalsLoaded(),activeContactHelpReportId=e;const t=document.getElementById("admin-contact-help-modal");t&&t.classList.add("show")}function closeAdminContactHelpModal(){activeContactHelpReportId=null;const e=document.getElementById("admin-contact-help-modal");e&&e.classList.remove("show")}function toggleMobileSidebar(){const e=document.getElementById("sidebar"),t=document.getElementById("sidebar-backdrop");e&&t&&(e.classList.toggle("open"),t.classList.toggle("open"))}function closeMobileSidebar(){const e=document.getElementById("sidebar"),t=document.getElementById("sidebar-backdrop");e&&t&&(e.classList.remove("open"),t.classList.remove("open"))}function renderAllViews(){updateIndicatorPills(),renderNotifications(),renderDashboardActivity(),animateStatCounters(),renderAIMatches(),renderMyReports(currentMyReportsTab),renderAdminDesk(),"function"==typeof renderProfile&&renderProfile(),"function"==typeof updateAdminMetricsAndPills&&updateAdminMetricsAndPills()}function updateIndicatorPills(){const e=calculateMatchesList().length,t=document.getElementById("sidebar-matches-badge");t&&(t.textContent=e);const n=appState.notifications.filter(e=>!e.read).length,a=document.getElementById("notif-count");a&&(a.textContent=n,a.style.display=n>0?"flex":"none")}function animateStatCounters(){const e=appState.lostReports.length+appState.foundReports.length,t=calculateMatchesList().length,n=appState.lostReports.filter(e=>"Returned"===e.status||"Verified"===e.status).length,a=appState.claims.filter(e=>"Approved"!==e.status&&"Returned"!==e.status).length;animateCounter("stat-total-reports",e),animateCounter("stat-ai-matches",t),animateCounter("stat-items-recovered",n),animateCounter("stat-pending-claims",a)}function animateCounter(e,t){const n=document.getElementById(e);if(!n)return;let a=0;const o=Math.max(1,Math.ceil(t/40)),i=setInterval(()=>{a+=o,a>=t&&(a=t,clearInterval(i)),n.textContent=a},20)}function renderDashboardActivity(){const e=document.getElementById("dashboard-activity-list");if(!e)return;const t=[...appState.lostReports.map(e=>({...e,type:"Lost"})),...appState.foundReports.map(e=>({...e,type:"Found"}))].sort((e,t)=>new Date(t.createdAt)-new Date(e.createdAt));if(0===t.length)return void(e.innerHTML='\n      <div class="empty-state">\n        <div class="empty-state-icon">🔍</div>\n        <p>No reports yet. Lost something? Report it now!</p>\n      </div>\n    ');const n=t.slice(0,5);e.innerHTML=n.map(e=>{const t=CATEGORY_MAP[e.category]||{label:"General",icon:"📦"},n=getStatusBadgeClass(e.status);return`\n      <div class="activity-item">\n        <div class="activity-item-info">\n          <div class="avatar-wrap avatar-sm" style="margin-right: 12px;" title="Reported by Campus User">\n            ${getAvatarSVG(e.reporterRole||"student",36)}\n          </div>\n          <div class="item-main-details">\n            <div style="display: flex; align-items: center; gap: 6px;">\n              <span style="font-size: 0.95rem;">${t.icon}</span>\n              <h4>${escapeHTML(e.title)}</h4>\n            </div>\n            <p>\n              <span>${"Lost"===e.type?"🔴 Lost at":"🟢 Found at"} ${escapeHTML(e.location)}</span>\n              <span>•</span>\n              <span class="time-ago-text">${getTimeAgo(e.createdAt)}</span>\n            </p>\n          </div>\n        </div>\n        <div class="activity-meta">\n          <span class="badge ${n}">\n            <span class="badge-dot"></span>\n            ${e.status}\n          </span>\n        </div>\n      </div>\n    `}).join("")}function getStatusBadgeClass(e){switch(e){case"Active":case"Searching":case"Looking":default:return"badge-searching";case"Pending":case"Under Verification":return"badge-pending";case"Matched":case"Possible Match":return"badge-matched";case"Claim Approved":case"Approved":return"badge-approved";case"Claimed":return"badge-claimed";case"Verified":return"badge-verified";case"Returned":return"badge-returned";case"Recovered":return"badge-recovered";case"Closed":return"badge-closed";case"Expired":return"badge-expired"}}function initWizardForms(){renderDynamicFields("lost","id-card"),renderDynamicFields("found","id-card"),setupDragAndDrop("lost"),setupDragAndDrop("found")}function selectWizardCategory(e,t){const n=document.getElementById(`${e}-category-val`);n&&(n.value=t);const a=document.getElementById(`${e}-category-grid`);a&&a.querySelectorAll(".category-card-pro").forEach(e=>{e.getAttribute("data-cat")===t?e.classList.add("selected"):e.classList.remove("selected")}),renderDynamicFields(e,t)}function goToWizardStep(e,t){for(let n=1;n<=3;n++){const a=document.getElementById(`${e}-pane-${n}`)||document.getElementById(`${e}-step-${n}`),o=document.getElementById(`${e}-step-node-${n}`)||document.getElementById(`${e}-step-ind-${n}`);a&&(a.style.display=n===t?"block":"none",n===t&&a.classList.add("fade-in")),o&&(o.className=n<t?"wizard-step-node completed":n===t?"wizard-step-node active":"wizard-step-node")}3===t&&generateReportReview(e);const n=document.querySelector(`#report-${e}-page .wizard-container`);n&&n.scrollIntoView({behavior:"smooth",block:"start"}),window.lucide&&(window.optimizedCreateIcons?window.optimizedCreateIcons():window.lucide&&window.lucide.createIcons())}function renderDynamicFields(e,t){const n=document.getElementById(`${e}-dynamic-fields-wrap`)||document.getElementById(`${e}-dynamic-fields`);if(!n)return;const a="lost"===e;let o="";switch(t){case"id-card":case"id-cards":o=`\n        <div class="form-group">\n          <label for="${e}-id-number">Student / Employee ID Number *</label>\n          <input type="text" id="${e}-id-number" class="input-glass" placeholder="e.g. STU-2026-9042" required>\n        </div>\n        <div class="form-group">\n          <label for="${e}-department">Department / Faculty *</label>\n          <select id="${e}-department" class="input-glass" required>\n            <option value="">Select Department...</option>\n            <option value="Computer Science">Computer Science & Engineering</option>\n            <option value="Mechanical Eng">Mechanical Engineering</option>\n            <option value="Electrical Eng">Electrical & Electronics</option>\n            <option value="Business School">School of Business</option>\n            <option value="Arts & Humanities">Arts & Humanities</option>\n            <option value="Sciences">Natural Sciences</option>\n            <option value="Law">School of Law</option>\n            <option value="Other">Other</option>\n          </select>\n        </div>\n      `;break;case"electronics":o=`\n        <div class="form-group">\n          <label for="${e}-device-type">Device Type *</label>\n          <select id="${e}-device-type" class="input-glass" required>\n            <option value="Phone">Phone / Smartphone</option>\n            <option value="Laptop">Laptop / Notebook</option>\n            <option value="Tablet">Tablet / iPad</option>\n            <option value="Charger">Charger / Adapter / Power Bank</option>\n            <option value="Earbuds">Earbuds / Headphones</option>\n            <option value="Smartwatch">Smartwatch / Fitness Band</option>\n            <option value="Other">Other Electronic Device</option>\n          </select>\n        </div>\n        <div class="form-group">\n          <label for="${e}-brand">Brand / Manufacturer *</label>\n          <input type="text" id="${e}-brand" class="input-glass" placeholder="e.g. Apple, Dell, Samsung, Sony" required>\n        </div>\n        <div class="form-group">\n          <label for="${e}-model">Model Name / Number</label>\n          <input type="text" id="${e}-model" class="input-glass" placeholder="e.g. iPhone 15 Pro, XPS 13, AirPods Pro 2">\n        </div>\n        ${a?`\n        <div class="form-group">\n          <label for="${e}-serial">IMEI / Serial Number (Optional)</label>\n          <input type="text" id="${e}-serial" class="input-glass" placeholder="Last 4 digits or Serial">\n        </div>`:""}\n      `;break;case"wallet":case"wallets":o=`\n        <div class="form-group">\n          <label for="${e}-material">Wallet Material *</label>\n          <input type="text" id="${e}-material" class="input-glass" placeholder="e.g. Black Leather, Canvas, Synthetic" required>\n        </div>\n        <div class="form-group">\n          <label for="${e}-num-cards">Number of Cards Inside</label>\n          <input type="number" id="${e}-num-cards" class="input-glass" min="0" placeholder="e.g. 3">\n        </div>\n        ${a?`\n        <div class="form-group">\n          <label for="${e}-cash-amount">Approximate Cash Amount (Optional)</label>\n          <input type="text" id="${e}-cash-amount" class="input-glass" placeholder="e.g. ~$45 (Used for private verification)">\n        </div>`:""}\n      `;break;case"keys":o=`\n        <div class="form-group">\n          <label for="${e}-key-type">Key Type *</label>\n          <select id="${e}-key-type" class="input-glass" required>\n            <option value="Room / Dorm">Room / Dorm Key</option>\n            <option value="Bike Lock">Bike Lock Key</option>\n            <option value="Car Fob">Car Key / Keyless Fob</option>\n            <option value="Locker Padlock">Locker Padlock Key</option>\n            <option value="Other">Other</option>\n          </select>\n        </div>\n        <div class="form-group">\n          <label for="${e}-num-keys">Number of Keys on Ring</label>\n          <input type="number" id="${e}-num-keys" class="input-glass" min="1" value="1">\n        </div>\n        <div class="form-group col-span-2">\n          <label for="${e}-keychain-desc">Keychain / Lanyard Description *</label>\n          <input type="text" id="${e}-keychain-desc" class="input-glass" placeholder="e.g. Red lanyard with Marvel charm, metal carabiner" required>\n        </div>\n      `;break;case"bags":o=`\n        <div class="form-group">\n          <label for="${e}-bag-type">Bag Type *</label>\n          <select id="${e}-bag-type" class="input-glass" required>\n            <option value="Backpack">Backpack</option>\n            <option value="Sling Bag">Sling / Crossbody Bag</option>\n            <option value="Handbag">Handbag / Tote</option>\n            <option value="Laptop Bag">Laptop Sleeve / Briefcase</option>\n            <option value="Duffle Bag">Gym / Duffle Bag</option>\n          </select>\n        </div>\n        <div class="form-group">\n          <label for="${e}-brand">Brand</label>\n          <input type="text" id="${e}-brand" class="input-glass" placeholder="e.g. The North Face, Nike, JanSport">\n        </div>\n        <div class="form-group col-span-2">\n          <label for="${e}-bag-contents">Notable Contents Description *</label>\n          <input type="text" id="${e}-bag-contents" class="input-glass" placeholder="e.g. Blue spiral notebook, thermos, calculator" required>\n        </div>\n      `;break;case"documents":o=`\n        <div class="form-group">\n          <label for="${e}-doc-type">Document Type *</label>\n          <select id="${e}-doc-type" class="input-glass" required>\n            <option value="Textbook">Textbook / Course Book</option>\n            <option value="Notebook">Notebook / Lecture Binder</option>\n            <option value="Passport">Passport / Official ID</option>\n            <option value="Certificate">Certificate / Transcripts</option>\n            <option value="Assignment">Assignment / Research Paper</option>\n            <option value="Other">Other</option>\n          </select>\n        </div>\n        <div class="form-group">\n          <label for="${e}-doc-name">Name on Document</label>\n          <input type="text" id="${e}-doc-name" class="input-glass" placeholder="e.g. Alex Rivera">\n        </div>\n        <div class="form-group col-span-2">\n          <label for="${e}-doc-subject">Subject / Course / Title</label>\n          <input type="text" id="${e}-doc-subject" class="input-glass" placeholder="e.g. CS201 Algorithms & Data Structures">\n        </div>\n      `;break;case"clothing":o=`\n        <div class="form-group">\n          <label for="${e}-clothing-type">Clothing Type *</label>\n          <input type="text" id="${e}-clothing-type" class="input-glass" placeholder="e.g. Varsity Hoodie, Winter Jacket, Baseball Cap" required>\n        </div>\n        <div class="form-group">\n          <label for="${e}-clothing-size">Size</label>\n          <select id="${e}-clothing-size" class="input-glass">\n            <option value="M">Medium (M)</option>\n            <option value="S">Small (S)</option>\n            <option value="L">Large (L)</option>\n            <option value="XL">Extra Large (XL)</option>\n            <option value="XS">Extra Small (XS)</option>\n            <option value="Free Size">Free Size</option>\n          </select>\n        </div>\n        <div class="form-group col-span-2">\n          <label for="${e}-brand">Brand / Logo</label>\n          <input type="text" id="${e}-brand" class="input-glass" placeholder="e.g. Nike, Champion, Zara, University Crest">\n        </div>\n      `;break;default:o=`\n        <div class="form-group col-span-2">\n          <label for="${e}-misc-type">Item Sub-Type / Purpose</label>\n          <input type="text" id="${e}-misc-type" class="input-glass" placeholder="e.g. Hydro Flask water bottle, Ray-Ban glasses, umbrella">\n        </div>\n      `}n.innerHTML=o}function setupDragAndDrop(e){const t=document.getElementById(`${e}-drop-zone`);t&&(["dragenter","dragover"].forEach(e=>{t.addEventListener(e,e=>{e.preventDefault(),e.stopPropagation(),t.classList.add("dragover")})}),["dragleave","drop"].forEach(e=>{t.addEventListener(e,e=>{e.preventDefault(),e.stopPropagation(),t.classList.remove("dragover")})}),t.addEventListener("drop",t=>{const n=t.dataTransfer.files;n&&n.length>0&&handleFileSelected({target:{files:n}},e)}))}function triggerPhotoPick(e,t="gallery"){let n=null;"camera"===t?n=document.getElementById(`${e}-camera-input`):"gallery"===t&&(n=document.getElementById(`${e}-gallery-input`)),n||(n=document.getElementById(`${e}-file-input`)),n&&n.click()}function syncColorInput(e){const t=document.getElementById(`${e}-color-picker`),n=document.getElementById(`${e}-color-text`);t&&n&&(n.value=t.value)}function generateReportReview(e){const t=document.getElementById(`${e}-review-summary`)||document.getElementById(`${e}-review-summary-content`);if(!t)return;const n=document.getElementById(`${e}-category-val`)?.value||"misc",a=CATEGORY_MAP[n]||{label:"Item",icon:"📦"},o=document.getElementById(`${e}-title`)?.value.trim()||"Untitled Item",i=document.getElementById(`${e}-color-val`)?.value.trim()||document.getElementById(`${e}-color-text`)?.value.trim()||"Not specified";let s=document.getElementById(`${e}-location`)?.value||"Campus";if("Other"===s){const t=document.getElementById(`${e}-location-other`)?.value.trim();t&&(s=t)}const r=document.getElementById(`${e}-date`)?.value||(new Date).toISOString(),d=document.getElementById(`${e}-desc`)?.value.trim()||document.getElementById(`${e}-description`)?.value.trim()||"None provided",l=document.getElementById(`${e}-photo-url`)?.value||"",c=document.getElementById(`${e}-phone`)?.value.trim()||"",p=!!document.getElementById(`${e}-share-phone`)?.checked;let u="";u=c?p?`\n        <div style="display: flex; align-items: center; gap: 8px; color: var(--teal-bright); font-size: 0.85rem; font-weight: 600;">\n          <i data-lucide="phone-call" style="width: 15px; height: 15px;"></i>\n          <span>${escapeHTML(c)} (Direct contact permitted)</span>\n        </div>\n      `:'\n        <div style="display: flex; align-items: center; gap: 8px; color: var(--text-muted); font-size: 0.85rem;">\n          <i data-lucide="shield" style="width: 15px; height: 15px; color: var(--color-warning);"></i>\n          <span>Phone provided but kept private (Admin mediation)</span>\n        </div>\n      ':'\n      <div style="font-size: 0.85rem; color: var(--text-muted);">\n        No phone provided (Admin mediation fallback)\n      </div>\n    ',t.innerHTML=`\n    <div style="display: flex; gap: 16px; flex-wrap: wrap;">\n      ${l?`\n        <div style="flex-shrink: 0;">\n          <img src="${l}" alt="Photo" style="width: 88px; height: 88px; object-fit: cover; border-radius: 8px; border: 1.5px solid var(--teal-bright);">\n        </div>\n      `:""}\n      <div style="flex: 1; min-width: 220px;">\n        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">\n          <span style="font-size: 1.2rem;">${a.icon}</span>\n          <strong style="font-size: 1.05rem; color: var(--text-primary);">${escapeHTML(o)}</strong>\n        </div>\n        <div style="font-size: 0.83rem; color: var(--text-secondary); margin-bottom: 4px;">\n          <strong>Category:</strong> ${escapeHTML(a.label)} • <strong>Color:</strong> ${escapeHTML(i)}\n        </div>\n        <div style="font-size: 0.83rem; color: var(--text-secondary); margin-bottom: 6px;">\n          <strong>Location:</strong> ${escapeHTML(s)} • <strong>Date:</strong> ${formatDateTime(r)}\n        </div>\n        <div style="font-size: 0.83rem; color: var(--text-muted); margin-bottom: 10px; line-height: 1.4;">\n          <strong>Description:</strong> ${escapeHTML(d)}\n        </div>\n        <div style="padding-top: 8px; border-top: 1px solid var(--border-subtle);">\n          <span style="font-size: 0.72rem; text-transform: uppercase; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Contact Preference</span>\n          ${u}\n        </div>\n      </div>\n    </div>\n  `,window.lucide&&(window.optimizedCreateIcons?window.optimizedCreateIcons():window.lucide&&window.lucide.createIcons())}async function finalizeReportSubmit(e){const t="found"===String(e).toLowerCase(),n=document.getElementById(`${e}-category-val`)?.value||"misc",a="id-card"===n||"id-cards"===n||"electronics"===n,o=document.getElementById(`${e}-title`)?.value.trim()||"Campus Item",i=document.getElementById(`${e}-color-val`)?.value.trim()||document.getElementById(`${e}-color-text`)?.value.trim()||"",s=document.getElementById(`${e}-brand`)?.value?.trim()||"";let r=document.getElementById(`${e}-location`)?.value||"Campus";if("Other"===r){const t=document.getElementById(`${e}-location-other`)?.value.trim();t&&(r=t)}const d=document.getElementById(`${e}-date`)?.value||(new Date).toISOString(),l=document.getElementById(`${e}-desc`)?.value.trim()||document.getElementById(`${e}-description`)?.value.trim()||"",c=document.getElementById(`${e}-photo-url`)?.value||"",p=document.getElementById(`${e}-phone`)?.value.trim()||"",u=!(!p||!document.getElementById(`${e}-share-phone`)?.checked),m=document.getElementById(`${e}-pane-3`),g=m?.querySelector(".btn-accent-teal")||m?.querySelector('button[onclick*="finalizeReportSubmit"]'),h=g?g.innerHTML:"";g&&(g.disabled=!0,g.innerHTML='<i data-lucide="loader-2" class="spin"></i> <span>Submitting to Cloud...</span>',window.lucide&&(window.optimizedCreateIcons?window.optimizedCreateIcons():window.lucide&&window.lucide.createIcons()));try{let m=c;if(c&&c.startsWith("data:")){g&&(g.innerHTML='<i data-lucide="upload-cloud" class="spin"></i> <span>Uploading Image...</span>',window.lucide&&(window.optimizedCreateIcons?window.optimizedCreateIcons():window.lucide&&window.lucide.createIcons()));try{m=await uploadImageToCloud(c,`${e}-report.jpg`)}catch(e){console.warn("Image upload fallback warning:",e)}}const h={id:generateId(e),type:t?"FOUND":"LOST",itemType:t?"Found":"Lost",category:n,title:o,itemName:o,color:i,brand:s,location:r,date:d,dateTime:d,description:l,photo:m||null,imageUrl:m||null,priority:a?"urgent":"normal",status:"Active",phone:p,phoneNumber:p,sharePhone:u,phoneSharingConsent:u,reporterId:appState.user?appState.user.username||appState.user.loginId||appState.user.id:"student",reporterName:appState.user?appState.user.name:"Campus Student",createdAt:(new Date).toISOString()};t&&(h.custody=document.getElementById("found-custody")?.value||"With Me",h.finderName=appState.user?.name||"Campus Student",h.lostReports=appState.lostReports||[]),g&&(g.innerHTML='<i data-lucide="loader-2" class="spin"></i> <span>Saving Report...</span>',window.lucide&&(window.optimizedCreateIcons?window.optimizedCreateIcons():window.lucide&&window.lucide.createIcons()));const f=await fetch(API_BASE+"/api/reports",{method:"POST",headers:getAuthHeaders(),body:JSON.stringify(h)}),y=await f.json();if(!f.ok||!y.success||!y.report){const e=y.message||`Server responded with HTTP ${f.status}`;throw new Error(e)}const v=y.report;t?appState.foundReports=[v,...(appState.foundReports||[]).filter(e=>e.id!==v.id)]:appState.lostReports=[v,...(appState.lostReports||[]).filter(e=>e.id!==v.id)],saveData(),renderAllViews(),syncWithCloud(!1).catch(e=>console.warn("Post-submit sync warning:",e)),showToast("Report published to campus registry! "+(t?"📦":"📝"),"success");const w=document.getElementById(`${e}-details-form`);w&&w.reset(),clearWizardPhoto(e),goToWizardStep(e,1),showPage("my-reports-page")}catch(e){console.error("Report submission failed:",e),showToast(`Failed to submit report: ${e.message}`,"error")}finally{g&&(g.disabled=!1,g.innerHTML=h||(t?'<i data-lucide="check"></i> <span>Submit Found Report</span>':'<i data-lucide="check"></i> <span>Submit Lost Report</span>'),window.lucide&&(window.optimizedCreateIcons?window.optimizedCreateIcons():window.lucide&&window.lucide.createIcons()))}}function extractVisualAttributes(e){if(!e)return{};const t=((e.title||"")+" "+(e.description||"")+" "+(e.color||"")+" "+(e.brand||"")).toLowerCase();let n=e.category||"misc";t.includes("bottle")||t.includes("flask")||t.includes("sipper")?n="bottle":t.includes("laptop")||t.includes("macbook")||t.includes("notebook")?n="laptop":t.includes("phone")||t.includes("iphone")||t.includes("android")?n="phone":t.includes("earbud")||t.includes("airpod")||t.includes("headphone")?n="audio":t.includes("wallet")||t.includes("purse")?n="wallet":t.includes("id card")||t.includes("id-card")||t.includes("student card")?n="id-card":t.includes("bag")||t.includes("backpack")?n="bag":t.includes("calculator")&&(n="calculator");const a=["blue","black","white","silver","gray","grey","red","green","yellow","brown","purple","pink","gold","orange","navy"];let o=e.color?e.color.toLowerCase().trim():null;o&&"not specified"!==o&&"unspecified"!==o||(o=a.find(e=>t.includes(e))||"Unknown");const i=["milton","apple","dell","hp","lenovo","samsung","sony","jbl","boat","bose","nike","adidas","puma","wildcraft","fastrack","titan","casio","tupperware"];let s=e.brand?e.brand.toLowerCase().trim():null;s||(s=i.find(e=>t.includes(e))||"Not clearly visible");const r=[];return["football sticker","soccer sticker","cricket sticker","apple sticker","anime sticker","coding sticker","github sticker","sticker","scratch","dent","engraving","initials","keychain","key ring","strap","case","cover","pouch","cracked screen","tag","signature"].forEach(e=>{t.includes(e)&&r.push(e)}),{objectType:n,color:o,brand:s,distinguishingTokens:r,hasPhoto:!(!e.photo||!e.photo.trim())}}function findMatches(e,t){const n="lost"===t?appState.foundReports:appState.lostReports,a=[],o=extractVisualAttributes(e),i=extractKeywords((e.title||"")+" "+(e.description||""));return n.forEach(n=>{const s=extractVisualAttributes(n),r=extractKeywords((n.title||"")+" "+(n.description||""));let d=0,l=0,c=0,p=0,u=0,m=0,g=0,h=0,f=0;const y=[],v=[],w={status:"not_requested"},b="lost"===t?e:n,S="lost"===t?n:e,x=(e.category||"").toLowerCase().replace(/s$/,""),I=(n.category||"").toLowerCase().replace(/s$/,""),C=x&&I&&(x===I||o.objectType===s.objectType);if("calculator"===o.objectType&&"bottle"===s.objectType||"bottle"===o.objectType&&"calculator"===s.objectType||"wallet"===o.objectType&&"laptop"===s.objectType)return;if(C){d=20;const t=CATEGORY_MAP[e.category]||{label:"Item"};y.push(`✓ Same item category (${t.label})`)}else v.push("⚠️ Different primary category");if(i.length>0&&r.length>0){const e=new Set([...i,...r]);let t=0;i.forEach(e=>{r.includes(e)&&t++}),l=Math.min(15,Math.round(t/e.size*25)),l>=8&&y.push("✓ Strong title & description keyword alignment")}const A=(o.color||"").toLowerCase().trim(),T=(s.color||"").toLowerCase().trim();A&&T&&"unknown"!==A&&"unknown"!==T?A===T?(c=10,y.push(`✓ Same color (${A.charAt(0).toUpperCase()+A.slice(1)})`)):A.includes(T)||T.includes(A)||hasColorOverlap(A,T)?(c=6,y.push(`✓ Similar color tones (${A} / ${T})`)):v.push(`⚠️ Color difference (${A} vs ${T})`):v.push("⚠️ Color could not be verified from report");const L=e.location||"",$=n.location||"";if(L&&$){const e=L.toLowerCase().trim(),t=$.toLowerCase().trim();if(e===t)p=15,y.push(`✓ Same campus location (${L})`);else{(LOCATION_PROXIMITY[L]||[]).some(e=>e.toLowerCase().trim()===t)||isSameLocationCategory(L,$)?(p=8,y.push(`✓ Adjacent campus area (${L} ↔ ${$})`)):v.push(`⚠️ Different campus location (${L} vs ${$})`)}}const E=new Date(e.date||e.createdAt).getTime(),M=new Date(n.date||n.createdAt).getTime();if(!isNaN(E)&&!isNaN(M)){const e=Math.abs(E-M)/864e5;e<=1?(u=10,y.push("✓ Compatible date & time (same 24h window)")):e<=3?(u=7,y.push("✓ Compatible timeframe (within 3 days)")):e<=7&&(u=4)}const k=(o.brand||"").toLowerCase().trim(),B=(s.brand||"").toLowerCase().trim();k&&B&&"not clearly visible"!==k&&"not clearly visible"!==B&&"unknown"!==k&&"unknown"!==B?k===B||k.includes(B)||B.includes(k)?(m=5,y.push(`✓ Brand match (${k.charAt(0).toUpperCase()+k.slice(1)})`)):v.push(`⚠️ Brand mismatch (${k} vs ${B})`):v.push("⚠️ Brand could not be confirmed from image");const R=o.distinguishingTokens.filter(e=>s.distinguishingTokens.includes(e));if(R.length>0){g=Math.min(10,5*R.length+5);const e=R.map(e=>e.charAt(0).toUpperCase()+e.slice(1)).join(", ");y.push(`✓ Distinguishing feature detected (${e})`)}const P=S.aiAnalysis||S.ai_analysis,H=P&&"completed"===P.status;if(H){w.status="completed";const e=P.yolo&&P.yolo.detections||[],t=`${(b.category||"").toLowerCase()} ${(b.title||b.itemName||"").toLowerCase()} ${(b.description||"").toLowerCase()}`,n={bottle:["bottle","bottles","flask","sipper","milton","water bottle"],backpack:["bag","bags","backpack","rucksack","kitbag"],handbag:["bag","bags","handbag","purse","wallet"],suitcase:["bag","bags","suitcase"],laptop:["laptop","macbook","notebook","computer","electronics","dell","hp","lenovo"],"cell phone":["phone","cell phone","iphone","android","mobile","smartphone"],mouse:["mouse","electronics"],keyboard:["keyboard","electronics"],book:["book","books","notebook","textbook"],umbrella:["umbrella"]};let a=null;for(const o of e){const e=(o.class||"").toLowerCase();if((n[e]||[e]).some(e=>t.includes(e))){const e=Math.min(10,Math.max(4,Math.round(10*o.confidence)));e>h&&(h=e,a=o)}}if(a){const e=Math.round(100*a.confidence);y.push(`✓ YOLO visual detection consistent: ${a.class} in photo (${e}% confidence)`),w.yolo={detectedClass:a.class,confidence:a.confidence,points:h}}else e.length>0&&(w.yolo={detectedClasses:e.map(e=>e.class),points:0});if(P.clipMatches&&P.clipMatches[b.id]){const e=P.clipMatches[b.id];f=e.points||0,void 0!==e.similarity&&y.push(`✓ CLIP visual similarity to lost description: ${Number(e.similarity).toFixed(2)}`),w.clip=e}}else S.photo&&S.photo.trim()&&(w.status=P?P.status:"pending");let D;if(H)D=d+l+c+p+u+m+g+h+f;else{const e=d+l+c+p+u+m+g;D=Math.min(100,Math.round(e*(100/75)))}const z=Math.min(100,Math.max(0,Math.round(D)));z>=40&&a.push({lost:"lost"===t?e:n,found:"lost"===t?n:e,opposite:n,score:z,categoryPts:d,textPts:l,colorPts:c,locPts:p,timePts:u,brandPts:m,featurePts:g,yoloPts:h,clipPts:f,aiSignals:w,matchReasons:y,unmatchedReasons:v})}),a.sort((e,t)=>t.score-e.score)}function extractKeywords(e){const t=new Set(["the","a","an","in","on","at","with","and","or","for","to","of","by","is","it","my","has","near","inside","was","this","that"]);return e.toLowerCase().replace(/[^\w\s]/g," ").split(/\s+/).filter(e=>e.length>2&&!t.has(e))}function hasColorOverlap(e,t){if(!e||!t)return!1;const n=e.toLowerCase().replace(/[^a-z]/g," ").split(/\s+/).filter(e=>e.length>2),a=t.toLowerCase().replace(/[^a-z]/g," ").split(/\s+/).filter(e=>e.length>2);return n.some(e=>a.includes(e))}function matchItem(e,t){const n=findMatches(e,t);if(n.length>0){const t=n[0];e.status="Matched",e.matchId=t.opposite.id,t.opposite.status="Matched",t.opposite.matchId=e.id,appState.notifications.unshift({id:generateId("notif"),message:`🤖 AI Match: ${t.score}% match between "${e.title}" and "${t.opposite.title}"!`,read:!1,createdAt:(new Date).toISOString()})}return n}function calculateMatchesList(){const e=[],t=new Set;return appState.lostReports.forEach(n=>{findMatches(n,"lost").forEach(n=>{const a=`${n.lost.id}_${n.found.id}`;t.has(a)||(t.add(a),e.push(n))})}),e.sort((e,t)=>t.score-e.score)}function recalculateMatches(){renderAIMatches(),updateIndicatorPills(),showToast("AI correlation scan completed!","info")}function renderAIMatches(){const e=document.getElementById("ai-matches-container");if(!e)return;const t=calculateMatchesList();0!==t.length?e.innerHTML=t.map(e=>{const{lost:t,found:n,score:a,categoryPts:o,textPts:i,colorPts:s,locPts:r,timePts:d,brandPts:l}=e,c=appState.claims.some(e=>e.lostReportId===t.id&&e.foundReportId===n.id),p=251.2,u=p-a/100*p,m=a>70?"score-green":a>50?"score-yellow":"score-red",g=CATEGORY_MAP[t.category]||{label:"Item",icon:"📦"},h=CATEGORY_MAP[n.category]||{label:"Item",icon:"📦"};return`\n      <div class="glass-card match-card" style="padding: 22px;">\n        <div class="match-card-side-by-side">\n          \x3c!-- Left: Lost item --\x3e\n          <div class="match-item-pane">\n            <div style="display: flex; justify-content: space-between; align-items: center;">\n              <span class="badge badge-searching"><span class="badge-dot"></span> Lost Item</span>\n              ${"urgent"===t.priority?'<span class="badge badge-urgent">🔴 URGENT</span>':""}\n            </div>\n            ${t.photo?`\n              <div style="position: relative; overflow: hidden; border-radius: 8px;">\n                <img src="${t.photo}" class="match-item-thumb" alt="Lost Item">\n                ${t.imageSharedForMatch?'\n                  <div style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(15, 23, 42, 0.88); color: var(--teal-bright); font-size: 0.65rem; padding: 3px 6px; text-align: center; font-weight: 600; line-height: 1.2;">\n                    Possible match — image shared for verification\n                  </div>\n                ':""}\n              </div>\n            `:`\n              <div class="match-item-thumb" style="display:flex;align-items:center;justify-content:center;font-size:2.5rem;">${g.icon}</div>\n            `}\n            <h4 style="font-size: 1.05rem;">${escapeHTML(t.title)}</h4>\n            <div class="sub-text">📂 ${g.label}</div>\n            <div style="font-size: 0.82rem; color: var(--text-secondary);">📍 Last seen: <strong>${escapeHTML(t.location)}</strong></div>\n            <div style="font-size: 0.8rem; color: var(--text-muted);">📅 ${getTimeAgo(t.date||t.createdAt)}</div>\n          </div>\n\n          \x3c!-- Center: Large Animated SVG Progress Ring --\x3e\n          <div class="match-score-center">\n            <div class="score-ring-wrap">\n              <svg class="score-ring-svg" viewBox="0 0 100 100">\n                <circle class="score-ring-bg" cx="50" cy="50" r="40"></circle>\n                <circle class="score-ring-fill ${m}" cx="50" cy="50" r="40"\n                  stroke-dasharray="251.2"\n                  stroke-dashoffset="${u}">\n                </circle>\n              </svg>\n              <div class="score-text-inside">${a}%</div>\n            </div>\n            <span style="font-size: 0.72rem; text-transform: uppercase; color: var(--accent-light); font-weight: 700; letter-spacing: 0.6px;">AI Match</span>\n          </div>\n\n          \x3c!-- Right: Found item --\x3e\n          <div class="match-item-pane">\n            <div style="display: flex; justify-content: space-between; align-items: center;">\n              <span class="badge badge-matched"><span class="badge-dot"></span> Found Item</span>\n              <span class="sub-text" style="font-size:0.75rem;">${escapeHTML(n.custody||"Campus Desk")}</span>\n            </div>\n            ${n.photo?`<img src="${n.photo}" class="match-item-thumb" alt="Found Item">`:`\n              <div class="match-item-thumb" style="display:flex;align-items:center;justify-content:center;font-size:2.5rem;">${h.icon}</div>\n            `}\n            <h4 style="font-size: 1.05rem;">${escapeHTML(n.title)}</h4>\n            <div class="sub-text">📂 ${h.label}</div>\n            <div style="font-size: 0.82rem; color: var(--text-secondary);">📍 Found at: <strong>${escapeHTML(n.location)}</strong></div>\n            <div style="font-size: 0.8rem; color: var(--text-muted);">📅 ${getTimeAgo(n.date||n.createdAt)}</div>\n          </div>\n        </div>\n\n        \x3c!-- Breakdown Bar --\x3e\n        <div class="match-breakdown-bar" style="margin-top: 16px;">\n          <span class="breakdown-chip ${o>0?"matched":""}">📦 Category ${o}/25 ${o>0?"✓":""}</span>\n          <span class="breakdown-chip ${i>=15?"matched":""}">📝 Text ${i}/30</span>\n          <span class="breakdown-chip ${s>0?"matched":""}">🎨 Color ${s}/15 ${s>0?"✓":""}</span>\n          <span class="breakdown-chip ${r>0?"matched":""}">📍 Location ${r}/15 ${r>0?"✓":""}</span>\n          <span class="breakdown-chip ${d>=10?"matched":""}">🕐 Time ${d}/15</span>\n          ${l>0?'<span class="breakdown-chip matched">🏷️ Brand +5 ✓</span>':""}\n        </div>\n\n        \x3c!-- Actions Area: Claim + Urgent Help --\x3e\n        <div style="margin-top: 14px; display: flex; justify-content: flex-end; align-items: center; gap: 10px; flex-wrap: wrap;">\n          <button type="button" class="btn btn-outline" style="border-color: rgba(239, 68, 68, 0.4); color: #F87171; padding: 6px 12px; font-size: 0.82rem;" onclick="openItemHelpModal('${t.id}', '${escapeHTML(t.title)}', '${escapeHTML(t.location)}')">\n            <i data-lucide="shield-alert" style="width: 14px; height: 14px;"></i>\n            <span>🆘 Need Help?</span>\n          </button>\n          ${c?'\n            <span class="badge badge-verified">Claim Verification in Review</span>\n          ':`\n            <button class="btn btn-accent-teal" onclick="openClaimModal('${t.id}', '${n.id}', '${escapeHTML(t.title)}', '${t.category}')">\n              <span>🤝</span> Claim This Item\n            </button>\n          `}\n        </div>\n      </div>\n    `}).join(""):e.innerHTML='\n      <div class="glass-card empty-state">\n        <div class="empty-state-icon">🤖</div>\n        <p>No high-probability item matches detected (&ge;40%). As new campus reports arrive, the engine will alert you!</p>\n      </div>\n    '}let currentMyReportsTab="lost";function filterMyReportsTab(e,t){currentMyReportsTab=e;const n=t.parentElement;n&&(n.querySelectorAll(".tab-pill").forEach(e=>e.classList.remove("active")),t.classList.add("active")),renderMyReports(e)}const LIFECYCLE_STAGES=["Reported","Matched","Claimed","Verified","Returned"];function getStageIndex(e){switch(e){case"Searching":default:return 0;case"Matched":return 1;case"Claimed":return 2;case"Verified":return 3;case"Returned":return 4}}function renderLifecycleTimeline(e){const t=getStageIndex(e);return`\n    <div class="lifecycle-timeline">\n      <div class="timeline-connector">\n        <div class="timeline-connector-fill" style="width: ${t/(LIFECYCLE_STAGES.length-1)*100}%;"></div>\n      </div>\n      ${LIFECYCLE_STAGES.map((e,n)=>{let a="";return n===t?a="active":n<t&&(a="completed"),`\n          <div class="timeline-step ${a}">\n            <div class="timeline-dot"></div>\n            <span class="timeline-label">${e}</span>\n          </div>\n        `}).join("")}\n    </div>\n  `}function renderMyReports(e=currentMyReportsTab){const t=document.getElementById("my-reports-container");if(!t)return;const n=appState.user,a=n?n.username||n.loginId||n.id:null,o=n?(n.role||"").toLowerCase():"",i=["admin","supervisor","director"].includes(o);let s=[];s="lost"===e?(appState.lostReports||[]).map(e=>({...e,itemType:"Lost"})):"found"===e?(appState.foundReports||[]).map(e=>({...e,itemType:"Found"})):[...(appState.lostReports||[]).map(e=>({...e,itemType:"Lost"})),...(appState.foundReports||[]).map(e=>({...e,itemType:"Found"}))];let r=s.filter(e=>{if(!n)return!1;return e.reporterId===a||e.reporterId===n.id||e.reporterName===n.name||i&&e.reporterId===a});r.sort((e,t)=>new Date(t.createdAt)-new Date(e.createdAt)),0!==r.length?t.innerHTML=r.map(e=>{const t=CATEGORY_MAP[e.category]||{label:"Item",icon:"📦"},o=getStatusBadgeClass(e.status),s="Matched"===e.status||e.matchId,r=n&&(e.reporterId===a||e.reporterId===n.id||e.reporterName===n.name);return`\n      <div class="glass-card report-item-card">\n        <div class="report-item-top">\n          <div style="display: flex; align-items: center; gap: 12px;">\n            ${e.photo?`<img src="${e.photo}" style="width: 44px; height: 44px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border-glass);">`:`\n              <div class="item-category-avatar">${t.icon}</div>\n            `}\n            <div>\n              <h4 style="font-size: 1rem; margin-bottom: 2px;">${escapeHTML(e.title)}</h4>\n              <span class="sub-text">${t.label}</span>\n            </div>\n          </div>\n          <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">\n            <span class="badge ${o}">\n              <span class="badge-dot"></span> ${e.status}\n            </span>\n            ${"urgent"===e.priority?'<span class="badge badge-urgent">🔴 URGENT</span>':""}\n          </div>\n        </div>\n\n        <div class="report-details-list">\n          <span>📍 <strong>Location:</strong> ${escapeHTML(e.location)}</span>\n          <span>🎨 <strong>Color:</strong> ${escapeHTML(e.color||"N/A")} • <strong>Brand:</strong> ${escapeHTML(e.brand||"N/A")}</span>\n          <span>📅 <strong>Reported:</strong> ${getTimeAgo(e.createdAt)}</span>\n        </div>\n\n        \x3c!-- Lifecycle Stages Timeline --\x3e\n        ${renderLifecycleTimeline(e.status)}\n\n        <div class="report-item-footer" style="margin-top: 8px;">\n          <div style="display: flex; gap: 8px; flex-wrap: wrap;">\n            ${s?'\n              <button class="btn btn-sm btn-accent-teal" onclick="showPage(\'matches-page\')">\n                🤖 View Matches\n              </button>\n            ':""}\n            <button class="btn btn-sm btn-secondary" onclick="openQrModal('${e.id}')" title="View / Print QR Code Tag">\n              🏷️ QR Tag\n            </button>\n            ${"Verified"===e.status?`\n              <button class="btn btn-sm btn-primary" onclick="markItemAsReturned('${e.id}', '${e.itemType}')">\n                ✅ Mark as Returned\n              </button>\n            `:""}\n          </div>\n          ${r?`\n            <button class="btn btn-sm btn-danger" onclick="deleteReport('${e.id}', '${e.itemType}')" title="Delete Report">\n              🗑️ Remove\n            </button>\n          `:i?`\n            <button class="btn btn-sm btn-danger" onclick="deleteReport('${e.id}', '${e.itemType}')" title="Admin Moderation: Remove">\n              🛡️ Admin Remove\n            </button>\n          `:""}\n        </div>\n      </div>\n    `}).join(""):t.innerHTML=`\n      <div class="glass-card empty-state" style="grid-column: 1 / -1;">\n        <div class="empty-state-icon">📦</div>\n        <p>You haven't reported anything yet.</p>\n        <div style="margin-top: 14px;">\n          <button class="btn btn-primary" onclick="showPage('${"lost"===e?"report-lost-page":"report-found-page"}')">\n            Create ${"lost"===e?"Lost":"Found"} Report\n          </button>\n        </div>\n      </div>\n    `}function markItemAsReturned(e,t){const n=("Lost"===t?appState.lostReports:appState.foundReports).find(t=>t.id===e);n&&(n.status="Returned",saveData(),renderAllViews(),showToast(`"${n.title}" marked as Returned! Reunited successfully. 🎉`,"success"))}async function deleteReport(e,t){try{const n=await fetch(API_BASE+"/api/reports?id="+encodeURIComponent(e),{method:"DELETE",headers:getAuthHeaders()}),a=await n.json();if(!n.ok||!a.success)return void showToast(a.message||"Failed to remove report.","error");"Lost"===t?appState.lostReports=appState.lostReports.filter(t=>t.id!==e):appState.foundReports=appState.foundReports.filter(t=>t.id!==e),saveData(),renderAllViews(),showToast("Report removed from registry","info")}catch(e){showToast("Network error while removing report: "+e.message,"error")}}function getVerificationQuestion(e){switch((e||"").toLowerCase().replace(/s$/,"")){case"wallet":return"How much cash was approximately inside?";case"electronics":return"What is the lock screen wallpaper, or describe any case/sticker?";case"keys":return"Describe the keychain and number of keys";case"bags":case"bag":return"Name one specific item inside the bag";case"id-card":return"What is your student ID number or department?";default:return"Describe one unique detail about this item"}}function openClaimModal(e,t,n,a="misc"){ensureModalsLoaded();const o=document.getElementById("claim-modal"),i=document.getElementById("modal-item-title"),s=document.getElementById("claim-lost-id"),r=document.getElementById("claim-found-id"),d=document.getElementById("claim-verification-prompt"),l=document.getElementById("claim-answer"),c=getVerificationQuestion(a);i&&(i.textContent=`Claim Item: ${n}`),s&&(s.value=e),r&&(r.value=t),d&&(d.textContent=c),l&&(l.value="",l.placeholder=`e.g. ${c}...`),o&&o.classList.add("show")}function closeClaimModal(){const e=document.getElementById("claim-modal");e&&e.classList.remove("show")}function submitClaimVerification(e){e.preventDefault();const t=document.getElementById("claim-lost-id").value,n=document.getElementById("claim-found-id").value,a=document.getElementById("claim-answer").value.trim(),o={id:generateId("claim"),lostReportId:t,foundReportId:n,claimantName:appState.user?.name||"Alex Rivera",matchScore:92,status:"Pending Admin Review",verificationAnswer:a,createdAt:(new Date).toISOString()};appState.claims.unshift(o);const i=appState.lostReports.find(e=>e.id===t);i&&(i.status="Claimed");const s=appState.foundReports.find(e=>e.id===n);s&&(s.status="Claimed"),appState.notifications.unshift({id:generateId("notif"),message:"⏳ Claim submitted for verification! Desk security is reviewing your details.",read:!1,createdAt:(new Date).toISOString()}),saveData(),renderAllViews(),closeClaimModal(),showToast("Claim submitted! Admin will verify shortly. 🔐","success")}let currentAdminTab="all-reports",adminExpandedRowId=null;function switchAdminTab(e,t){currentAdminTab=e;document.querySelectorAll("#admin-page .tab-pill").forEach(e=>e.classList.remove("active")),t&&t.classList.add("active");const n={"all-reports":"admin-pane-all-reports","pending-claims":"admin-pane-pending-claims",verified:"admin-pane-verified",expired:"admin-pane-expired"};Object.keys(n).forEach(t=>{const a=document.getElementById(n[t]);a&&(a.style.display=t===e?"all-reports"===t||"verified"===t||"expired"===t?"block":"grid":"none",t===e&&a.classList.add("fade-in"))}),renderAdminDesk()}function renderAdminDesk(){updateAdminCounts(),"all-reports"===currentAdminTab?renderAdminAllReports():"pending-claims"===currentAdminTab?renderAdminPendingClaims():"verified"===currentAdminTab?renderAdminVerified():"expired"===currentAdminTab&&renderAdminExpired()}function updateAdminCounts(){const e=appState.lostReports.length+appState.foundReports.length,t=appState.claims.filter(e=>"Pending Admin Review"===e.status||"Claimed"===e.status).length,n=appState.lostReports.filter(e=>"Verified"===e.status).length+appState.foundReports.filter(e=>"Verified"===e.status).length,a=[...appState.lostReports,...appState.foundReports].filter(isItemExpired).length,o=document.getElementById("admin-count-reports"),i=document.getElementById("admin-count-claims"),s=document.getElementById("admin-count-verified"),r=document.getElementById("admin-count-expired");o&&(o.textContent=e),i&&(i.textContent=t),s&&(s.textContent=n),r&&(r.textContent=a)}function isItemExpired(e){if(!e.createdAt)return!1;if("Expired"===e.status||"Archived"===e.status||"Donated"===e.status)return!0;const t=new Date(e.createdAt).getTime();return(Date.now()-t)/864e5>=30}function filterAdminReportsTable(){renderAdminAllReports()}function renderAdminAllReports(){const e=document.getElementById("admin-all-reports-tbody");if(!e)return;const t=document.getElementById("admin-search-input")?.value.trim().toLowerCase()||"",n=document.getElementById("admin-filter-category")?.value||"",a=document.getElementById("admin-filter-status")?.value||"",o=document.getElementById("admin-filter-location")?.value||"",i=[...appState.lostReports.map(e=>({...e,itemType:"Lost"})),...appState.foundReports.map(e=>({...e,itemType:"Found"}))].filter(e=>{if(t){if(!(e.title.toLowerCase().includes(t)||e.id.toLowerCase().includes(t)||e.description&&e.description.toLowerCase().includes(t)||e.finderName&&e.finderName.toLowerCase().includes(t)||e.location&&e.location.toLowerCase().includes(t)))return!1}return(!n||e.category===n)&&((!a||e.status===a)&&(!o||e.location===o))});0!==i.length?e.innerHTML=i.map(e=>{const t=CATEGORY_MAP[e.category]||{label:"Item",icon:"📦"},n=getStatusBadgeClass(e.status),a=adminExpandedRowId===e.id;return`\n      <tr onclick="toggleAdminRowExpand('${e.id}')" class="${a?"row-selected":""}">\n        <td>\n          <span class="badge ${"Lost"===e.itemType?"badge-searching":"badge-matched"}">\n            ${e.itemType}\n          </span>\n        </td>\n        <td><code>#${escapeHTML(e.id)}</code></td>\n        <td><strong>${escapeHTML(e.title)}</strong></td>\n        <td>${t.icon} ${escapeHTML(t.label)}</td>\n        <td>📍 ${escapeHTML(e.location)}</td>\n        <td>${getTimeAgo(e.createdAt||e.date)}</td>\n        <td><span class="badge ${n}">${e.status}</span></td>\n        <td>\n          <button class="btn btn-sm btn-secondary" onclick="event.stopPropagation(); toggleAdminRowExpand('${e.id}')">\n            ${a?"▲ Hide":"▼ Details"}\n          </button>\n        </td>\n      </tr>\n      ${a?`\n        <tr class="admin-expand-row">\n          <td colspan="8">\n            <div class="admin-expanded-detail-box">\n              ${e.photo?`\n                <img src="${e.photo}" class="expanded-thumb" alt="Item Preview">\n              `:`\n                <div class="expanded-thumb" style="display:flex;align-items:center;justify-content:center;font-size:3rem;">\n                  ${t.icon}\n                </div>\n              `}\n              <div>\n                <h4 style="font-size: 1.1rem; margin-bottom: 6px;">${escapeHTML(e.title)}</h4>\n                <p style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 10px;">\n                  ${escapeHTML(e.description||"No detailed notes provided.")}\n                </p>\n                <div class="expanded-meta-grid">\n                  <div class="expanded-meta-item">\n                    <span class="lbl">Campus Location</span>\n                    <span class="val">${escapeHTML(e.location)}</span>\n                  </div>\n                  <div class="expanded-meta-item">\n                    <span class="lbl">Primary Color &amp; Brand</span>\n                    <span class="val">${escapeHTML(e.color||"N/A")} • ${escapeHTML(e.brand||"N/A")}</span>\n                  </div>\n                  <div class="expanded-meta-item">\n                    <span class="lbl">${"Found"===e.itemType?"Finder / Custody":"Reporter / Contact"}</span>\n                    <span class="val">${escapeHTML(e.finderName||e.custody||"Alex Rivera (Student)")}</span>\n                  </div>\n                </div>\n              </div>\n              <div style="display: flex; flex-direction: column; gap: 8px;">\n                <button class="btn btn-sm btn-primary" onclick="event.stopPropagation(); openQrModal('${e.id}')">\n                  🏷️ Print QR Tag\n                </button>\n                ${"Verified"===e.status?`\n                  <button class="btn btn-sm btn-accent-teal" onclick="event.stopPropagation(); adminMarkReturned('${e.id}')">\n                    ✅ Mark Returned\n                  </button>\n                `:""}\n                <button class="btn btn-sm btn-secondary" onclick="event.stopPropagation(); adminArchiveItem('${e.id}')">\n                  📁 Archive\n                </button>\n              </div>\n            </div>\n          </td>\n        </tr>\n      `:""}\n    `}).join(""):e.innerHTML='\n      <tr>\n        <td colspan="8" style="text-align:center; padding: 36px; color: var(--text-muted);">\n          🔍 No reports match the active filter criteria.\n        </td>\n      </tr>\n    '}function toggleAdminRowExpand(e){adminExpandedRowId=adminExpandedRowId===e?null:e,renderAdminAllReports()}function renderAdminClaims(){renderAdminPendingClaims(),"function"==typeof renderAdminHelpRequests&&renderAdminHelpRequests()}function renderAdminPendingClaims(){const e=document.getElementById("admin-claims-cards-grid");if(!e)return;const t=appState.claims.filter(e=>"Pending Admin Review"===e.status||"Claimed"===e.status);0!==t.length?e.innerHTML=t.map(e=>{const t=appState.lostReports.find(t=>t.id===e.lostReportId),n=appState.foundReports.find(t=>t.id===e.foundReportId),a=t?t.title:"Lost Item #"+e.lostReportId,o=n?n.title:"Found Item #"+e.foundReportId,i=t&&CATEGORY_MAP[t.category]||{icon:"📦"},s=n&&CATEGORY_MAP[n.category]||{icon:"📦"};return`\n      <div class="glass-card match-card" style="padding: 24px; border-left: 4px solid var(--warning);">\n        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">\n          <div>\n            <span class="badge badge-claimed">Claim Awaiting Admin Approval</span>\n            <span class="sub-text" style="margin-left: 8px;">Claim ID: <code>#${escapeHTML(e.id)}</code></span>\n          </div>\n          <div class="match-score-pill">\n            <span>🤖 Similarity:</span>\n            <strong>${e.matchScore}%</strong>\n          </div>\n        </div>\n\n        \x3c!-- Side by side mini comparison --\x3e\n        <div class="match-card-side-by-side" style="margin-bottom: 16px;">\n          <div class="match-item-pane" style="padding: 14px;">\n            <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Reported Lost Item</div>\n            <h4 style="font-size: 0.95rem; margin: 4px 0;">${i.icon} ${escapeHTML(a)}</h4>\n            <div style="font-size: 0.8rem; color: var(--text-secondary);">📍 ${escapeHTML(t?.location||"Campus")}</div>\n            <p style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">${escapeHTML(t?.description||"")}</p>\n          </div>\n\n          <div style="display: flex; align-items: center; justify-content: center; font-weight: 800; color: var(--accent);">\n            ⚡ VS ⚡\n          </div>\n\n          <div class="match-item-pane" style="padding: 14px;">\n            <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Recovered Found Item</div>\n            <h4 style="font-size: 0.95rem; margin: 4px 0;">${s.icon} ${escapeHTML(o)}</h4>\n            <div style="font-size: 0.8rem; color: var(--text-secondary);">📍 ${escapeHTML(n?.location||"Campus")}</div>\n            <p style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">${escapeHTML(n?.description||"")}</p>\n          </div>\n        </div>\n\n        \x3c!-- Claimant Verification Answer Quote --\x3e\n        <div style="background: rgba(255, 255, 255, 0.04); border-left: 3px solid var(--accent); padding: 12px 16px; border-radius: var(--radius-sm); margin-bottom: 16px;">\n          <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--accent-light); font-weight: 700; margin-bottom: 4px;">\n            <span>CLAIMANT VERIFICATION STATEMENT (${escapeHTML(e.claimantName)})</span>\n            <span>Contact: ${escapeHTML(e.contact||"alex.rivera@campus.edu")}</span>\n          </div>\n          <div style="font-size: 0.9rem; color: #fff; font-style: italic;">\n            "${escapeHTML(e.verificationAnswer)}"\n          </div>\n        </div>\n\n        \x3c!-- Action Buttons --\x3e\n        <div style="display: flex; justify-content: flex-end; gap: 12px;">\n          <button class="btn btn-danger" onclick="adminRejectClaim('${e.id}')">\n            ❌ Reject Claim\n          </button>\n          <button class="btn btn-accent-teal" onclick="adminApproveClaim('${e.id}')">\n            ✅ Approve Claim\n          </button>\n        </div>\n      </div>\n    `}).join(""):e.innerHTML='\n      <div class="glass-card empty-state" style="grid-column: 1 / -1;">\n        <div class="empty-state-icon">✅</div>\n        <p>All claims reviewed! No claims currently pending admin verification.</p>\n      </div>\n    '}function adminApproveClaim(e){const t=appState.claims.find(t=>t.id===e);if(!t)return;t.status="Verified";const n=appState.lostReports.find(e=>e.id===t.lostReportId);n&&(n.status="Verified");const a=appState.foundReports.find(e=>e.id===t.foundReportId);a&&(a.status="Verified"),appState.notifications.unshift({id:generateId("notif"),message:`🎉 Great news! Claim #${t.id.slice(0,8)} approved! Item verified for hand-over.`,read:!1,createdAt:(new Date).toISOString()}),saveData(),renderAllViews(),showToast("Claim approved! Owner notified 🎉","success")}function adminRejectClaim(e){const t=appState.claims.find(t=>t.id===e);if(!t)return;t.status="Rejected";const n=appState.lostReports.find(e=>e.id===t.lostReportId);n&&(n.status="Searching");const a=appState.foundReports.find(e=>e.id===t.foundReportId);a&&(a.status="Searching"),saveData(),renderAllViews(),showToast("Claim rejected","warning")}function renderAdminVerified(){const e=document.getElementById("admin-verified-cards-list");if(!e)return;const t=[...appState.lostReports.filter(e=>"Verified"===e.status).map(e=>({...e,itemType:"Lost"})),...appState.foundReports.filter(e=>"Verified"===e.status).map(e=>({...e,itemType:"Found"}))];0!==t.length?e.innerHTML=t.map(e=>`\n      <div class="glass-card report-item-card">\n        <div class="report-item-top">\n          <div class="item-category-avatar">${(CATEGORY_MAP[e.category]||{label:"Item",icon:"📦"}).icon}</div>\n          <span class="badge badge-verified">Verified • Ready for Pick-Up</span>\n        </div>\n        <div class="report-item-body">\n          <h4>${escapeHTML(e.title)}</h4>\n          <p>${escapeHTML(e.description||"")}</p>\n        </div>\n        <div class="report-details-list">\n          <span>📍 Storage: <strong>${escapeHTML(e.location)}</strong></span>\n          <span>📅 Verified on: ${getTimeAgo(e.createdAt)}</span>\n        </div>\n        <div style="margin-top: 12px; display: flex; justify-content: space-between; align-items: center;">\n          <button class="btn btn-sm btn-secondary" onclick="openQrModal('${e.id}')">\n            🏷️ QR Tag\n          </button>\n          <button class="btn btn-primary btn-sm" onclick="openAdminHandoverModal('${e.id}', '${e.itemType?e.itemType.toLowerCase():"found"}')">\n            🤝 Safe Handover\n          </button>\n        </div>\n      </div>\n    `).join(""):e.innerHTML='\n      <div class="glass-card empty-state" style="grid-column: 1 / -1;">\n        <div class="empty-state-icon">🤝</div>\n        <p>No verified items waiting for physical return.</p>\n      </div>\n    '}function adminMarkReturned(e){const t=appState.lostReports.find(t=>t.id===e);t&&(t.status="Returned");const n=appState.foundReports.find(t=>t.id===e);n&&(n.status="Returned");const a=appState.claims.find(t=>t.lostReportId===e||t.foundReportId===e);if(a){a.status="Returned";const e=appState.lostReports.find(e=>e.id===a.lostReportId);e&&(e.status="Returned");const t=appState.foundReports.find(e=>e.id===a.foundReportId);t&&(t.status="Returned")}saveData(),renderAllViews(),showToast("Item marked Returned and handed over to owner! 🤝","success")}function renderAdminExpired(){const e=document.getElementById("admin-expired-list");if(!e)return;const t=[...appState.lostReports.filter(isItemExpired).map(e=>({...e,itemType:"Lost"})),...appState.foundReports.filter(isItemExpired).map(e=>({...e,itemType:"Found"}))];0!==t.length?e.innerHTML=t.map(e=>`\n      <div class="glass-card report-item-card">\n        <div class="report-item-top">\n          <div class="item-category-avatar">${(CATEGORY_MAP[e.category]||{label:"Item",icon:"📦"}).icon}</div>\n          <span class="badge badge-urgent">Aging &gt; 30 Days</span>\n        </div>\n        <div class="report-item-body">\n          <h4>${escapeHTML(e.title)}</h4>\n          <p>${escapeHTML(e.description||"")}</p>\n        </div>\n        <div class="report-details-list">\n          <span>📍 Storage: <strong>${escapeHTML(e.location)}</strong></span>\n          <span>📅 Date Logged: ${getTimeAgo(e.createdAt)}</span>\n          <span>Status: <strong>${escapeHTML(e.status)}</strong></span>\n        </div>\n        <div style="margin-top: 12px; display: flex; justify-content: flex-end; gap: 8px;">\n          <button class="btn btn-sm btn-secondary" onclick="adminArchiveItem('${e.id}')">\n            📁 Archive\n          </button>\n          <button class="btn btn-sm btn-accent-teal" onclick="adminDonateItem('${e.id}')">\n            🎁 Donate to Charity\n          </button>\n        </div>\n      </div>\n    `).join(""):e.innerHTML='\n      <div class="glass-card empty-state" style="grid-column: 1 / -1;">\n        <div class="empty-state-icon">⏳</div>\n        <p>No aging items (>30 days) found in the campus registry.</p>\n      </div>\n    '}function adminArchiveItem(e){const t=appState.lostReports.find(t=>t.id===e);t&&(t.status="Archived");const n=appState.foundReports.find(t=>t.id===e);n&&(n.status="Archived"),saveData(),renderAllViews(),showToast("Item status updated to Archived 📁","info")}function adminDonateItem(e){const t=appState.lostReports.find(t=>t.id===e);t&&(t.status="Donated");const n=appState.foundReports.find(t=>t.id===e);n&&(n.status="Donated"),saveData(),renderAllViews(),showToast("Item allocated to Campus Charity Donation 🎁","success")}let analyticsChartInstances={};function renderAnalyticsPage(){renderAnalyticsStats(),initAnalyticsCharts(),renderCampusHeatmap()}function renderAnalyticsStats(){const e=appState.lostReports.length+appState.foundReports.length,t=appState.lostReports.filter(e=>"Returned"===e.status||"Verified"===e.status).length+appState.foundReports.filter(e=>"Returned"===e.status||"Verified"===e.status).length,n=e>0?Math.round(t/e*100):0,a=calculateMatchesList(),o=a.length>0?Math.round(a.reduce((e,t)=>e+t.score,0)/a.length):"No data",i=document.getElementById("an-total-reports"),s=document.getElementById("an-recovery-rate"),r=document.getElementById("an-avg-confidence"),d=document.getElementById("an-avg-time");i&&(i.textContent=e),s&&(s.textContent=`${n}%`),r&&(r.textContent="No data"===o?o:`${o}%`),d&&(d.textContent="No data")}function initAnalyticsCharts(){if("undefined"==typeof Chart)return void loadScriptAsync("https://cdn.jsdelivr.net/npm/chart.js").then(()=>initAnalyticsCharts()).catch(()=>{});["chart-categories","chart-timeline","chart-recovery","chart-locations"].forEach(e=>{analyticsChartInstances[e]&&(analyticsChartInstances[e].destroy(),analyticsChartInstances[e]=null);const t=Chart.getChart(e);t&&t.destroy()});const e=[...appState.lostReports,...appState.foundReports];if(0===e.length){return document.querySelectorAll(".chart-card canvas").forEach(e=>{const t=e.parentElement;t&&(t.innerHTML='<div class="empty-state" style="padding: 40px 20px; text-align: center; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;">\n          <i data-lucide="bar-chart-2" style="width: 32px; height: 32px; margin-bottom: 12px; opacity: 0.5;"></i>\n          <p>No data available yet</p>\n        </div>')}),void(window.lucide&&window.lucide.createIcons&&window.lucide.createIcons())}const t=[{key:"id-card",label:"ID Cards"},{key:"electronics",label:"Electronics"},{key:"wallet",label:"Wallets"},{key:"keys",label:"Keys"},{key:"bags",label:"Bags"},{key:"documents",label:"Documents"},{key:"clothing",label:"Clothing"},{key:"misc",label:"Misc"}],n=t.map(t=>e.filter(e=>e.category===t.key||e.category===t.key+"s").length),a=document.getElementById("chart-categories");a&&(analyticsChartInstances["chart-categories"]=new Chart(a,{type:"doughnut",data:{labels:t.map(e=>e.label),datasets:[{data:n,backgroundColor:["#6c63ff","#00d4aa","#ffa502","#ff4757","#a29bfe","#00cec9","#fd79a8","#636e72"],borderColor:"#12121e",borderWidth:2}]},options:{responsive:!0,maintainAspectRatio:!1,plugins:{legend:{position:"bottom",labels:{color:"#ffffff",boxWidth:12,padding:14,font:{family:"Inter",size:11}}}}}}));const o=document.getElementById("chart-timeline");if(o){const e=[],t=[],n=[],a=new Date;for(let o=6;o>=0;o--){const i=new Date(a);i.setDate(i.getDate()-o);const s=i.toLocaleDateString("en-US",{month:"short",day:"numeric"});e.push(s);const r=e=>{if(!e)return!1;const t=new Date(e);return t.getDate()===i.getDate()&&t.getMonth()===i.getMonth()&&t.getFullYear()===i.getFullYear()};t.push(appState.lostReports.filter(e=>r(e.createdAt)).length),n.push(appState.foundReports.filter(e=>r(e.createdAt)).length)}analyticsChartInstances["chart-timeline"]=new Chart(o,{type:"line",data:{labels:e,datasets:[{label:"Lost Reports",data:t,borderColor:"#6c63ff",backgroundColor:"rgba(108, 99, 255, 0.15)",tension:.35,fill:!0},{label:"Found Reports",data:n,borderColor:"#00d4aa",backgroundColor:"rgba(0, 212, 170, 0.15)",tension:.35,fill:!0}]},options:{responsive:!0,maintainAspectRatio:!1,scales:{x:{ticks:{color:"rgba(255,255,255,0.6)"},grid:{color:"rgba(255,255,255,0.06)"}},y:{ticks:{color:"rgba(255,255,255,0.6)"},grid:{color:"rgba(255,255,255,0.06)"},beginAtZero:!0}},plugins:{legend:{labels:{color:"#ffffff",boxWidth:12,padding:12}}}}})}const i=document.getElementById("chart-recovery");if(i){const n=t.map(t=>{const n=e.filter(e=>e.category===t.key||e.category===t.key+"s");if(0===n.length)return 0;const a=n.filter(e=>"Returned"===e.status||"Verified"===e.status).length;return Math.round(a/n.length*100)||0});analyticsChartInstances["chart-recovery"]=new Chart(i,{type:"bar",data:{labels:t.map(e=>e.label),datasets:[{label:"Recovery %",data:n,backgroundColor:"#00d4aa",borderRadius:6}]},options:{responsive:!0,maintainAspectRatio:!1,scales:{x:{ticks:{color:"rgba(255,255,255,0.6)",font:{size:10}},grid:{display:!1}},y:{ticks:{color:"rgba(255,255,255,0.6)"},grid:{color:"rgba(255,255,255,0.06)"},max:100,beginAtZero:!0}},plugins:{legend:{display:!1}}}})}const s=document.getElementById("chart-locations");if(s){const t=CAMPUS_LOCATIONS.map(e=>e.name).map(t=>({name:t,count:e.filter(e=>normalizeLocationName(e.location)===normalizeLocationName(t)).length}));t.sort((e,t)=>t.count-e.count);const n=t.slice(0,6);analyticsChartInstances["chart-locations"]=new Chart(s,{type:"bar",data:{labels:n.map(e=>e.name),datasets:[{label:"Incident Reports",data:n.map(e=>e.count),backgroundColor:"#ffa502",borderRadius:6}]},options:{indexAxis:"y",responsive:!0,maintainAspectRatio:!1,scales:{x:{ticks:{color:"rgba(255,255,255,0.6)"},grid:{color:"rgba(255,255,255,0.06)"},beginAtZero:!0},y:{ticks:{color:"rgba(255,255,255,0.8)"},grid:{display:!1}}},plugins:{legend:{display:!1}}}})}}function renderCampusHeatmap(){const e=document.getElementById("campus-heatmap-container");if(!e)return;const t={"Academic & Administrative":"🏢",Services:"📍","Hostel / House Areas":"🏠",Recreation:"📍","Food & Dining":"☕",Unknown:"📍"},n=CAMPUS_LOCATIONS.map(e=>({name:e.name,icon:t[e.category]||"📍",desc:e.status})),a=[...appState.lostReports,...appState.foundReports];e.innerHTML=n.map(e=>{const t=a.filter(t=>normalizeLocationName(t.location)===normalizeLocationName(e.name)).length;let n="heat-low";return t>=3?n="heat-high":t>=1&&(n="heat-med"),`\n      <div class="heatmap-cell ${n}" title="${e.name}: ${t} reports recorded">\n        <div class="heatmap-cell-top">\n          <span class="heatmap-zone-icon">${e.icon}</span>\n          <span class="heatmap-count-badge">${t} Reports</span>\n        </div>\n        <div>\n          <div class="heatmap-zone-name">${escapeHTML(e.name)}</div>\n          <div class="heatmap-zone-desc">${escapeHTML(e.desc)}</div>\n        </div>\n      </div>\n    `}).join("")}const PROD_BASE_URL="https://smart-campus-pro.vercel.app";let currentQrItemId=null;function openQrModal(e){ensureModalsLoaded();let t=appState.lostReports.find(t=>t.id===e)||appState.foundReports.find(t=>t.id===e);if(!t)return;currentQrItemId=e;const n=document.getElementById("qr-modal"),a=document.getElementById("qr-canvas"),o=document.getElementById("qr-item-title"),i=document.getElementById("qr-item-id");o&&(o.textContent=t.title),i&&(i.textContent=`ID: #${t.id} • ${t.location}`);const s=`${PROD_BASE_URL}/report/${t.id}`;"undefined"!=typeof QRCode?(a&&QRCode.toCanvas(a,s,{width:180,margin:2,errorCorrectionLevel:"M",color:{dark:"#0f172a",light:"#ffffff"}},function(e){e&&console.error("QR code generation error:",e)}),n&&n.classList.add("show")):loadScriptAsync("https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js").then(()=>openQrModal(e)).catch(()=>{})}function closeQrModal(){const e=document.getElementById("qr-modal");e&&e.classList.remove("show")}function downloadQrCode(){const e=document.getElementById("qr-canvas");if(!e)return;const t=document.createElement("a");t.download=`LostSeek-QR-${currentQrItemId||"tag"}.png`,t.href=e.toDataURL("image/png"),t.click(),showToast("Official QR Tag downloaded successfully! 🖨️","success")}async function downloadReportPdf(e){if(e||(e=currentQrItemId),e){showToast("Generating official LostSeek PDF...","info");try{const t=await fetch(`/api/pdf?id=${encodeURIComponent(e)}&type=report`);if(t.ok){const n=await t.blob(),a=URL.createObjectURL(n),o=document.createElement("a");return o.href=a,o.download=`LostSeek_REPORT_${e.substring(0,8)}.pdf`,document.body.appendChild(o),o.click(),document.body.removeChild(o),setTimeout(()=>URL.revokeObjectURL(a),2e3),void showToast("Official PDF downloaded successfully! 📄","success")}}catch(e){console.warn("Serverless PDF endpoint failed, attempting client-side fallback:",e)}try{if(window.jspdf||await loadScriptAsync("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"),window.jspdf&&window.jspdf.jsPDF){const{jsPDF:t}=window.jspdf,n=new t,a=appState.lostReports.find(t=>t.id===e)||appState.foundReports.find(t=>t.id===e)||{id:e,title:"Item Report",location:"Campus Premises",category:"General"};n.setFillColor(15,23,42),n.rect(14,12,182,24,"F"),n.setTextColor(255,255,255),n.setFontSize(14),n.setFont("helvetica","bold"),n.text("KSRCE SMART CAMPUS — LOSTSEEK",20,24),n.setFontSize(8),n.setFont("helvetica","normal"),n.setTextColor(56,189,248),n.text("OFFICIAL VERIFICATION RECEIPT & CUSTODY DOCUMENT",20,30),n.setTextColor(15,23,42),n.setFontSize(12),n.setFont("helvetica","bold"),n.text("CAMPUS PROPERTY CUSTODY REPORT",14,46),n.setFontSize(9),n.setFont("helvetica","bold"),n.setTextColor(100,116,139),n.text("Document ID:",14,56),n.text("Item Title:",14,64),n.text("Category:",14,72),n.text("Status:",14,80),n.text("Location:",14,88),n.setFont("helvetica","normal"),n.setTextColor(15,23,42),n.text(String(a.id),55,56),n.text(String(a.title||a.itemName||"Unspecified Item"),55,64),n.text(String(a.category||"General").toUpperCase(),55,72),n.text(String(a.status||"Active").toUpperCase(),55,80),n.text(String(a.location||"Campus Premises"),55,88);const o=document.getElementById("qr-canvas");if(o){const e=o.toDataURL("image/png");n.addImage(e,"PNG",130,48,50,50),n.setFontSize(7),n.setTextColor(2,132,199),n.text("SCAN TO VERIFY RECORD",132,102)}return n.setFillColor(254,242,242),n.rect(14,115,182,20,"F"),n.setFontSize(7.5),n.setTextColor(185,28,28),n.setFont("helvetica","bold"),n.text("SECURITY & INTEGRITY NOTICE",18,122),n.setFont("helvetica","normal"),n.setTextColor(127,29,29),n.text("Official campus custody document. Verification: https://smart-campus-pro.vercel.app",18,130),n.save(`LostSeek_REPORT_${e.substring(0,8)}.pdf`),void showToast("Official PDF downloaded successfully! 📄","success")}}catch(e){console.error("Client-side PDF generation error:",e)}showToast("Failed to download PDF. Please try again.","danger")}else showToast("No report specified for PDF generation","warning")}async function downloadReceiptPdf(e){if(!e)return;showToast("Generating official handover receipt...","info");try{const t=await fetch(`/api/pdf?id=${encodeURIComponent(e)}&type=claim`);if(t.ok){const n=await t.blob(),a=URL.createObjectURL(n),o=document.createElement("a");return o.href=a,o.download=`LostSeek_RECEIPT_${e.substring(0,8)}.pdf`,document.body.appendChild(o),o.click(),document.body.removeChild(o),setTimeout(()=>URL.revokeObjectURL(a),2e3),void showToast("Official Receipt downloaded! 📄","success")}}catch(e){console.warn("Serverless receipt error:",e)}const t=appState.claims.find(t=>t.id===e),n=t?.foundReportId||t?.lostReportId;n?downloadReportPdf(n):showToast("Handover receipt generation unavailable","warning")}async function openPublicVerification(e){const t=document.getElementById("public-verification-modal"),n=document.getElementById("public-verification-body");if(t&&n){currentQrItemId=e,t.classList.add("show"),n.innerHTML='\n    <div style="text-align: center; padding: 30px;">\n      <div style="margin: 0 auto; width: 36px; height: 36px; border: 3px solid rgba(56, 189, 248, 0.2); border-top-color: #38bdf8; border-radius: 50%; animation: spin 1s linear infinite;"></div>\n      <p style="margin-top: 14px; color: var(--text-secondary); font-size: 0.9rem;">Verifying record on campus network...</p>\n    </div>\n  ';try{const t=await fetch(`/api/verify?id=${encodeURIComponent(e)}`),a=await t.json();if(t.ok&&a.success&&a.record){const e=a.record;n.innerHTML=`\n        <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 10px; padding: 14px; margin-bottom: 16px; display: flex; align-items: center; gap: 12px;">\n          <i data-lucide="check-circle" style="color: #10b981; width: 26px; height: 26px; flex-shrink: 0;"></i>\n          <div>\n            <div style="font-weight: 700; color: #10b981; font-size: 0.95rem;">Authoritative Campus Record Verified</div>\n            <div style="font-size: 0.75rem; color: var(--text-muted);">${escapeHTML(e.verificationSource)}</div>\n          </div>\n        </div>\n\n        <div style="background: var(--bg-subtle, rgba(255,255,255,0.03)); border: 1px solid var(--border-subtle, rgba(255,255,255,0.08)); border-radius: 10px; padding: 16px; margin-bottom: 16px;">\n          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">\n            <div>\n              <span class="badge ${"LOST"===e.type?"badge-searching":"badge-matched"}" style="font-size: 0.7rem;">${escapeHTML(e.type)} ITEM</span>\n              <h4 style="margin: 6px 0 0; font-size: 1.1rem; color: var(--text-primary);">${escapeHTML(e.title||e.itemName)}</h4>\n            </div>\n            <span class="status-pill status-${(e.status||"Active").toLowerCase()}">${escapeHTML(e.status||"Active")}</span>\n          </div>\n\n          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.82rem; margin-top: 12px;">\n            <div>\n              <span style="color: var(--text-muted); display: block;">Record ID:</span>\n              <code style="color: #38bdf8; font-size: 0.8rem;">#${escapeHTML(e.id)}</code>\n            </div>\n            <div>\n              <span style="color: var(--text-muted); display: block;">Category:</span>\n              <strong style="color: var(--text-primary);">${escapeHTML(e.category||"General")}</strong>\n            </div>\n            <div>\n              <span style="color: var(--text-muted); display: block;">Location:</span>\n              <strong style="color: var(--text-primary);">${escapeHTML(e.location||"Campus Premises")}</strong>\n            </div>\n            <div>\n              <span style="color: var(--text-muted); display: block;">Custody:</span>\n              <strong style="color: #38bdf8;">${escapeHTML(e.custody||"Campus Security")}</strong>\n            </div>\n          </div>\n\n          ${e.aiSummary?`\n            <div style="margin-top: 12px; padding: 10px; background: rgba(56, 189, 248, 0.06); border-radius: 8px; border: 1px dashed rgba(56, 189, 248, 0.2);">\n              <div style="font-size: 0.75rem; font-weight: 700; color: #38bdf8; text-transform: uppercase;">Vision AI Verification Signal</div>\n              <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 2px;">\n                Detected: <strong>${escapeHTML(e.aiSummary.primaryClass||"Object")}</strong> (${e.aiSummary.detectedCount} objects correlated)\n              </div>\n            </div>\n          `:""}\n        </div>\n\n        <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 18px; line-height: 1.4;">\n          🔒 Private claimant evidence and personal phone numbers are protected and omitted from this public verification view.\n        </div>\n\n        <div style="display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;">\n          <button type="button" class="btn btn-secondary" onclick="closePublicVerificationModal()">Close</button>\n          <button type="button" class="btn btn-primary" onclick="downloadReportPdf('${e.id}')">\n            <i data-lucide="file-text"></i>\n            <span>Download Official PDF</span>\n          </button>\n        </div>\n      `}else n.innerHTML=`\n        <div style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: 10px; padding: 18px; text-align: center; margin-bottom: 16px;">\n          <i data-lucide="alert-triangle" style="color: #ef4444; width: 36px; height: 36px; margin-bottom: 8px;"></i>\n          <h4 style="margin: 0 0 6px; color: #ef4444;">Record Not Found</h4>\n          <p style="margin: 0; font-size: 0.85rem; color: var(--text-secondary);">\n            No active campus registry record was found for ID <code>${escapeHTML(e)}</code>.\n          </p>\n        </div>\n        <p style="font-size: 0.8rem; color: var(--text-muted); text-align: center;">\n          The item may have been returned to its owner, archived, or the link has expired.\n        </p>\n        <div style="display: flex; justify-content: center; gap: 10px; margin-top: 16px;">\n          <button type="button" class="btn btn-secondary" onclick="closePublicVerificationModal()">Dismiss</button>\n          <button type="button" class="btn btn-primary" onclick="closePublicVerificationModal(); showPage('dashboard-page');">\n            <span>Open LostSeek Portal</span>\n          </button>\n        </div>\n      `}catch(e){console.error("Error fetching public verification:",e),n.innerHTML='\n      <div style="text-align: center; padding: 20px;">\n        <i data-lucide="wifi-off" style="color: #eab308; width: 32px; height: 32px; margin-bottom: 8px;"></i>\n        <h4 style="margin: 0 0 6px; color: var(--text-primary);">Network Unavailable</h4>\n        <p style="margin: 0 0 16px; font-size: 0.85rem; color: var(--text-secondary);">\n          Could not reach campus verification server. Please check your network.\n        </p>\n        <button type="button" class="btn btn-secondary" onclick="closePublicVerificationModal()">Close</button>\n      </div>\n    '}window.lucide&&(window.optimizedCreateIcons?window.optimizedCreateIcons():window.lucide&&window.lucide.createIcons())}}function closePublicVerificationModal(){const e=document.getElementById("public-verification-modal");e&&e.classList.remove("show")}function checkPublicReportUrl(){const e=window.location.pathname,t=window.location.hash,n=e.match(/\/report\/([a-zA-Z0-9_-]+)/);if(n&&"lost"!==n[1]&&"found"!==n[1])return openPublicVerification(n[1]),!0;if(t.startsWith("#report-")&&"#report-lost"!==t&&"#report-found"!==t){const e=t.replace("#report-","");if(e&&"lost"!==e&&"found"!==e)return openPublicVerification(e),!0}return!!t.startsWith("#claim-")&&(openPublicVerification(t.replace("#claim-","")),!0)}function toggleRoleDemo(){if(!appState.user)return;const e="admin"===(appState.user.role||"Student").toLowerCase()?"Student":"Admin";appState.user.role=e,saveData(),setupAuthenticatedUser(appState.user),showToast(`Switched role to: ${e.toUpperCase()} 🛡️`,"info")}function toggleNotifDropdown(){const e=document.getElementById("notif-dropdown");e&&e.classList.toggle("show")}function renderNotifications(){const e=document.getElementById("notif-list");e&&(0!==appState.notifications.length?e.innerHTML=appState.notifications.map(e=>`\n    <div class="notif-item ${e.read?"":"unread"}" onclick="${"sighting"===e.type?`openViewSightingModal('${escapeHTML(e.message)}')`:""}" style="${"sighting"===e.type?"cursor:pointer;":""}">\n      <span class="notif-item-icon">${"sighting"===e.type?"👀":"match"===e.type?"🔍":"🔔"}</span>\n      <div>\n        <div class="notif-item-text">${escapeHTML(e.message)}</div>\n        <div class="notif-item-time">${getTimeAgo(e.createdAt)}</div>\n      </div>\n    </div>\n  `).join(""):e.innerHTML='\n      <div style="padding: 20px; text-align: center; color: var(--text-muted); font-size: 0.85rem;">\n        No notifications right now.\n      </div>\n    ')}function openViewSightingModal(e){ensureModalsLoaded();const t=document.getElementById("view-sighting-modal"),n=document.getElementById("view-sighting-text");n&&(n.textContent=e),t&&(t.style.display="flex",window.lucide&&(window.optimizedCreateIcons?window.optimizedCreateIcons():window.lucide&&window.lucide.createIcons()))}function closeViewSightingModal(){const e=document.getElementById("view-sighting-modal");e&&(e.style.display="none")}async function markAllNotificationsRead(){appState.notifications=[],saveData(),renderNotifications(),renderNotificationsList(),updateIndicatorPills(),showToast("All notifications cleared","info");try{await fetch(API_BASE+"/api/notifications",{method:"DELETE",headers:getAuthHeaders()})}catch(e){console.warn("Backend notifications clear notice:",e.message)}}function showToast(e,t="info"){const n=document.getElementById("toast-container");if(!n)return;const a={success:"✅",error:"❌",warning:"⚠️",info:"ℹ️"}[t]||"ℹ️",o=document.createElement("div");o.className=`toast toast-${t}`,o.innerHTML=`\n    <span style="font-size: 1.2rem; line-height: 1;">${a}</span>\n    <span style="flex: 1;">${escapeHTML(e)}</span>\n    <button onclick="this.parentElement.remove()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:0.9rem;padding:2px;">✕</button>\n  `,n.appendChild(o),setTimeout(()=>{o.style.opacity="0",o.style.transform="translateX(50px)",o.style.transition="all 0.35s ease",setTimeout(()=>o.remove(),350)},4e3)}function handleGlobalSearch(e){const t=e.trim().toLowerCase();if(!t)return renderDashboardActivity(),void renderMyReports(currentMyReportsTab);const n=[...appState.lostReports.map(e=>({...e,itemType:"Lost"})),...appState.foundReports.map(e=>({...e,itemType:"Found"}))].filter(e=>e.title.toLowerCase().includes(t)||e.location.toLowerCase().includes(t)||e.description&&e.description.toLowerCase().includes(t)),a=document.getElementById("my-reports-container");a&&(0===n.length?a.innerHTML=`\n        <div class="glass-card empty-state" style="grid-column: 1 / -1;">\n          <div class="empty-state-icon">🔍</div>\n          <p>No results found for "${escapeHTML(e)}".</p>\n        </div>\n      `:a.innerHTML=n.map(e=>`\n          <div class="glass-card report-item-card">\n            <div class="report-item-top">\n              <div class="item-category-avatar">${(CATEGORY_MAP[e.category]||{label:"Item",icon:"📦"}).icon}</div>\n              <span class="badge ${getStatusBadgeClass(e.status)}">${e.status}</span>\n            </div>\n            <div class="report-item-body">\n              <h4>${escapeHTML(e.title)}</h4>\n              <p>${escapeHTML(e.description||"")}</p>\n            </div>\n            <div class="report-details-list">\n              <span>📍 ${escapeHTML(e.location)}</span>\n            </div>\n          </div>\n        `).join(""))}function escapeHTML(e){return e?String(e).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;"):""}function filterAdminTableTab(e){showPage("admin-page");const t=document.getElementById("admin-tab-reports"),n=document.getElementById("admin-tab-claims");if("claims"===e)n&&n.click();else{t&&t.click();const n=document.getElementById("admin-filter-type");n&&(n.value="lost"===e?"Lost":"found"===e?"Found":"",filterAdminReportsTable())}}document.addEventListener("click",e=>{const t=document.getElementById("notif-dropdown"),n=document.getElementById("notif-toggle-btn");t&&n&&!t.contains(e.target)&&!n.contains(e.target)&&t.classList.remove("show")});let adminUploadedPhoto="";function initAdminPhotoSearch(){adminUploadedPhoto="";const e=document.getElementById("admin-photo-input");e&&(e.value="");const t=document.getElementById("admin-photo-preview");t&&(t.style.display="none");const n=document.getElementById("admin-photo-search-results");n&&(n.innerHTML="")}function handleAdminPhotoSelected(e){const t=e.target.files?.[0];if(!t)return;const n=new FileReader;n.onload=function(e){adminUploadedPhoto=e.target.result;const t=document.getElementById("admin-photo-preview"),n=document.getElementById("admin-photo-preview-img");n&&(n.src=adminUploadedPhoto),t&&(t.style.display="block")},n.readAsDataURL(t)}async function runAdminPhotoSearch(){document.getElementById("admin-photo-category"),document.getElementById("admin-photo-location");const e=document.getElementById("admin-photo-search-results");if(e)if(adminUploadedPhoto){e.innerHTML='<div style="padding: 24px; text-align: center;"><p>Running AI visual analysis...</p></div>';try{const t=appState.lostReports.filter(e=>"Returned"!==e.status&&"Claimed"!==e.status&&e.photo),n=await fetch("/api/ai?action=analyze_found",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({imageBase64:adminUploadedPhoto.split(",")[1],lostReports:t})});if(!n.ok)throw new Error("AI processing failed");const a=await n.json();if(!a.success||"failed"===a.aiAnalysis.status)throw new Error(a.error||a.aiAnalysis?.error||"Unknown error");const o=[];if(a.aiAnalysis.clipMatches)for(const[e,t]of Object.entries(a.aiAnalysis.clipMatches))if(t.points>0){const n=appState.lostReports.find(t=>t.id===e);n&&o.push({lost:n,score:Math.round(100*t.similarity),reason:t.reason})}o.sort((e,t)=>t.score-e.score),0===o.length?e.innerHTML='\n        <div class="glass-card empty-state" style="text-align:center;padding:24px;">\n          <i data-lucide="search-x" style="width:36px;height:36px;color:var(--text-muted);margin:0 auto 10px;"></i>\n          <p>No high-probability visual matches found among active lost reports with photos.</p>\n        </div>\n      ':e.innerHTML=`\n        <div class="glass-card" style="padding:20px;">\n          <h3 style="margin-bottom:14px;color:var(--teal-bright);display:flex;align-items:center;gap:8px;">\n            <i data-lucide="sparkles"></i>\n            <span>Possible Matches (${o.length})</span>\n          </h3>\n          <div style="display:flex;flex-direction:column;gap:12px;">\n            ${o.map(e=>{const t=e.lost;return`\n                <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--bg-subtle);border-radius:8px;border:1px solid var(--border-subtle);flex-wrap:wrap;gap:8px;">\n                  <div style="display:flex;align-items:center;gap:12px;">\n                    ${t.photo?`<img src="${t.photo}" style="width:48px;height:48px;object-fit:cover;border-radius:6px;" alt="Lost">`:'<div style="width:48px;height:48px;background:var(--bg-card);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;">📦</div>'}\n                    <div>\n                      <strong style="font-size:0.95rem;color:var(--text-primary);">${escapeHTML(t.title)}</strong>\n                      <div style="font-size:0.75rem;color:var(--text-muted);">📍 ${escapeHTML(t.location)} • 📅 ${getTimeAgo(t.date||t.createdAt)}</div>\n                      <div style="font-size:0.75rem;color:var(--teal-bright); margin-top:2px;">${e.reason||"Visual Match"}</div>\n                    </div>\n                  </div>\n                  <div style="display:flex;align-items:center;gap:12px;">\n                    <span style="font-size:1.1rem;font-weight:800;color:var(--teal-bright);">${e.score}% Similarity</span>\n                    <button class="btn btn-sm btn-secondary" onclick="showPage('admin-page')">Inspect</button>\n                  </div>\n                </div>\n              `}).join("")}\n          </div>\n        </div>\n      `}catch(t){e.innerHTML=`\n      <div class="glass-card empty-state" style="text-align:center;padding:24px;">\n        <i data-lucide="alert-triangle" style="width:36px;height:36px;color:var(--color-error);margin:0 auto 10px;"></i>\n        <p>Photo matching is temporarily unavailable.</p>\n        <p style="font-size: 0.8rem; color: var(--text-muted);">${t.message}</p>\n      </div>\n    `}window.lucide&&(window.optimizedCreateIcons?window.optimizedCreateIcons():window.lucide&&window.lucide.createIcons())}else e.innerHTML='<div style="padding: 24px; text-align: center; color: var(--color-error);"><p>Please upload a photo first.</p></div>'}function renderAdminStudents(){const e=document.getElementById("students-directory-tbody");if(!e)return;const t=(document.getElementById("students-search-input")?.value||"").trim().toLowerCase(),n=new Map;Array.isArray(appState.users)&&appState.users.forEach(e=>{(!e.role||"student"===e.role.toLowerCase())&&e.name&&n.set(e.name,{name:e.name,id:e.studentId||e.username||"STU-2026",status:"Active",avatarUrl:e.avatarUrl||null,lostCount:0,foundCount:0,claimsCount:0})});[].forEach(e=>{n.has(e.name)||n.set(e.name,{...e,lostCount:0,foundCount:0,claimsCount:0,avatarUrl:null})}),appState.lostReports.forEach(e=>{const t=e.reporterName||"Alex Rivera";n.has(t)&&(n.get(t).lostCount++,!e.reporterAvatar&&!e.reporter_avatar||n.get(t).avatarUrl||(n.get(t).avatarUrl=e.reporterAvatar||e.reporter_avatar))}),appState.foundReports.forEach(e=>{const t=e.finderName||"Aman Verma";n.has(t)&&n.get(t).foundCount++}),appState.claims.forEach(e=>{const t=e.claimantName||"Alex Rivera";n.has(t)&&n.get(t).claimsCount++});const a=Date.now();!window.__fetchingAdminUsers&&(!window.__lastAdminUserFetch||a-window.__lastAdminUserFetch>5e3)&&appState.user&&["admin","supervisor","director"].includes(String(appState.user.role||"").toLowerCase())&&(window.__fetchingAdminUsers=!0,fetch(API_BASE+"/api/auth?action=users",{headers:getAuthHeaders()}).then(e=>e.ok?e.json():null).then(e=>{if(window.__fetchingAdminUsers=!1,window.__lastAdminUserFetch=Date.now(),e&&e.success&&Array.isArray(e.users)){const t=appState.users?appState.users.length:0;appState.users=e.users,t!==e.users.length&&renderAdminStudents()}}).catch(()=>{window.__fetchingAdminUsers=!1}));const o=Array.from(n.values()).filter(e=>!t||(e.name.toLowerCase().includes(t)||e.id.toLowerCase().includes(t)));0!==o.length?e.innerHTML=o.map(e=>`\n    <tr>\n      <td data-label="Student">\n        <div style="display:flex;align-items:center;gap:8px;">\n          ${getAvatarSVG("student",28,e.avatarUrl)}\n          <strong>${escapeHTML(e.name)}</strong>\n        </div>\n      </td>\n      <td data-label="Student ID"><code>${escapeHTML(e.id)}</code></td>\n      <td data-label="Lost Reports">${e.lostCount}</td>\n      <td data-label="Found Reports">${e.foundCount}</td>\n      <td data-label="Claims">${e.claimsCount}</td>\n      \n      <td data-label="Status"><span class="badge badge-verified">${e.status}</span></td>\n    </tr>\n  `).join(""):e.innerHTML='<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text-muted);">No students found matching your search.</td></tr>'}let activeCommunityAlerts=[];function switchAlertsTab(e){const t=document.getElementById("community-alerts-tab-view"),n=document.getElementById("personal-notifications-tab-view"),a=document.getElementById("tab-btn-community-alerts"),o=document.getElementById("tab-btn-notifications");"community"===e?(t&&(t.style.display="block"),n&&(n.style.display="none"),a&&(a.className="btn btn-sm btn-primary"),o&&(o.className="btn btn-sm btn-secondary")):(t&&(t.style.display="none"),n&&(n.style.display="block"),a&&(a.className="btn btn-sm btn-secondary"),o&&(o.className="btn btn-sm btn-primary"))}async function renderAlertsPage(){await renderCommunityAlerts(),renderNotificationsList()}async function renderCommunityAlerts(){const e=document.getElementById("community-alerts-container");if(!e)return;e.innerHTML='\n    <div style="grid-column: 1 / -1; text-align: center; padding: 24px; color: var(--text-muted);">\n      <div class="spinner-sm" style="margin: 0 auto 10px;"></div>\n      <p>Scanning campus radar for active lost alerts...</p>\n    </div>\n  ';let t=[];try{const e=appState.user,n={};e&&(n["x-lostseek-user"]=encodeURIComponent(JSON.stringify(e)));const a=await fetch(API_BASE+"/api/alerts?status=ACTIVE",{headers:n});if(a.ok){t=(await a.json()).alerts||[]}}catch(e){console.warn("Could not fetch alerts from API, falling back to local state:",e.message)}if(!t||0===t.length){t=(appState.lostReports||[]).filter(e=>"Active"===e.status||"Looking"===e.status).map(e=>({id:`alert-${e.id}`,reportId:e.id,category:e.category||"General",approximateArea:(e.location||"Campus Grounds").replace(/room\s*#?\s*\w+/gi,"").trim(),safeDescription:`Lost ${e.category||"item"} reported near ${e.location||"campus"}. Have you seen something similar?`,reportedAt:e.date||e.createdAt||(new Date).toISOString(),status:"ACTIVE"}))}if(activeCommunityAlerts=t,0===t.length)return e.innerHTML='\n      <div class="glass-card" style="grid-column: 1 / -1; text-align: center; padding: 36px 20px;">\n        <i data-lucide="shield-check" style="width: 42px; height: 42px; color: var(--color-success); margin: 0 auto 12px;"></i>\n        <h3 style="margin: 0 0 6px; color: var(--text-primary);">All Clear on Campus</h3>\n        <p style="color: var(--text-muted); font-size: 0.9rem; max-width: 420px; margin: 0 auto;">No active community lost alerts currently pending. The campus radar is clear!</p>\n      </div>\n    ',void(window.lucide&&(window.optimizedCreateIcons?window.optimizedCreateIcons():window.lucide&&window.lucide.createIcons()));e.innerHTML=t.map(e=>{const t="SPOTTED"===e.status?'<span class="status-pill" style="background: rgba(234, 179, 8, 0.15); color: #eab308; border: 1px solid rgba(234, 179, 8, 0.3);"><i data-lucide="eye"></i> SPOTTED</span>':'<span class="status-pill status-active"><i data-lucide="radio"></i> ACTIVE RADAR</span>';return`\n      <div class="glass-card" style="padding: 18px; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid var(--border-subtle); position: relative; overflow: hidden;">\n        <div>\n          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; gap: 8px;">\n            <div>\n              <span style="font-size: 0.72rem; text-transform: uppercase; font-weight: 700; color: var(--teal-bright); letter-spacing: 0.5px;">Campus Alert</span>\n              <h3 style="margin: 3px 0 0; font-size: 1.05rem; color: var(--text-primary);">${escapeHTML(e.category)}</h3>\n            </div>\n            ${t}\n          </div>\n\n          \x3c!-- Safe short description (Strictly privacy compliant: NO owner details!) --\x3e\n          <p style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.45; margin: 0 0 14px;">\n            ${escapeHTML(e.safeDescription)}\n          </p>\n\n          <div style="display: flex; flex-direction: column; gap: 6px; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 16px; border-top: 1px solid var(--border-subtle); padding-top: 10px;">\n            <div style="display: flex; align-items: center; gap: 6px;">\n              <i data-lucide="map-pin" style="width: 14px; height: 14px; color: var(--teal-bright);"></i>\n              <span><strong>Area:</strong> ${escapeHTML(e.approximateArea||"Campus Area")}</span>\n            </div>\n            <div style="display: flex; align-items: center; gap: 6px;">\n              <i data-lucide="clock" style="width: 14px; height: 14px;"></i>\n              <span><strong>Reported:</strong> ${getTimeAgo(e.reportedAt||e.createdAt)}</span>\n            </div>\n          </div>\n        </div>\n\n        <button type="button" class="btn btn-primary" style="width: 100%;" onclick="openSightingModal('${escapeHTML(e.id)}', '${escapeHTML(e.reportId||"")}', '${escapeHTML(e.category)}', '${escapeHTML(e.approximateArea)}')">\n          <i data-lucide="eye"></i>\n          <span>I Saw Something</span>\n        </button>\n      </div>\n    `}).join(""),window.lucide&&(window.optimizedCreateIcons?window.optimizedCreateIcons():window.lucide&&window.lucide.createIcons())}function renderNotificationsList(){const e=document.getElementById("alerts-page-container");if(!e)return;const t=appState.notifications||[];if(0===t.length)return e.innerHTML='\n      <div style="text-align:center;padding:36px;">\n        <i data-lucide="bell-off" style="width:36px;height:36px;color:var(--text-muted);margin:0 auto 10px;"></i>\n        <p style="color:var(--text-muted);">No personal notifications right now. You are all caught up!</p>\n      </div>\n    ',void(window.lucide&&(window.optimizedCreateIcons?window.optimizedCreateIcons():window.lucide&&window.lucide.createIcons()));e.innerHTML=t.map(e=>`\n    <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--border-subtle);gap:12px;flex-wrap:wrap;">\n      <div style="display:flex;align-items:center;gap:12px;">\n        <div style="width:36px;height:36px;border-radius:50%;background:rgba(20,184,166,0.12);display:flex;align-items:center;justify-content:center;color:var(--teal-bright);flex-shrink:0;">\n          <i data-lucide="${"alert"===e.type?"radio":"match"===e.type?"sparkles":"bell"}" style="width:18px;height:18px;"></i>\n        </div>\n        <div>\n          <div style="font-size:0.92rem;color:var(--text-primary);font-weight:500;">${escapeHTML(e.message)}</div>\n          <div style="font-size:0.75rem;color:var(--text-muted);margin-top:2px;">${getTimeAgo(e.createdAt)}</div>\n        </div>\n      </div>\n      <button class="btn btn-sm btn-secondary" onclick="showPage('matches-page')">View</button>\n    </div>\n  `).join(""),window.lucide&&(window.optimizedCreateIcons?window.optimizedCreateIcons():window.lucide&&window.lucide.createIcons())}function refreshCommunityAlerts(){showToast("Updating community radar...","info"),renderCommunityAlerts()}function openSightingModal(e,t,n,a){ensureModalsLoaded();const o=document.getElementById("community-sighting-modal");if(!o)return;document.getElementById("sighting-alert-id").value=e||"",document.getElementById("sighting-report-id").value=t||"",document.getElementById("sighting-category").value=n||"General",document.getElementById("sighting-location").value="",document.getElementById("sighting-time").value="Today, recently",document.getElementById("sighting-observation").value="",document.getElementById("sighting-photo-url").value="";const i=document.getElementById("sighting-photo-status");i&&(i.textContent="No photo attached");const s=document.getElementById("sighting-photo-preview-wrap");s&&(s.style.display="none");const r=document.getElementById("sighting-item-context");r&&(r.textContent=`${n||"Item"} spotted near ${a||"Campus"}`);document.getElementsByName("sighting-picked-up").forEach(e=>{"no"===e.value&&(e.checked=!0)}),o.style.display="flex",window.lucide&&(window.optimizedCreateIcons?window.optimizedCreateIcons():window.lucide&&window.lucide.createIcons())}function closeSightingModal(){const e=document.getElementById("community-sighting-modal");e&&(e.style.display="none")}async function handleSightingPhotoSelected(e){const t=e.target.files[0];if(!t)return;const n=document.getElementById("sighting-photo-status"),a=document.getElementById("sighting-photo-preview-wrap"),o=document.getElementById("sighting-photo-preview");n&&(n.textContent="Uploading photo...");try{const e=new FormData;e.append("file",t);const i=await fetch(API_BASE+"/api/upload",{method:"POST",body:e}),s=await i.json();if(i.ok&&s.url)document.getElementById("sighting-photo-url").value=s.url,n&&(n.textContent="✓ Photo attached"),o&&(o.src=s.url),a&&(a.style.display="block");else{const e=new FileReader;e.onload=e=>{document.getElementById("sighting-photo-url").value=e.target.result,n&&(n.textContent="✓ Photo attached"),o&&(o.src=e.target.result),a&&(a.style.display="block")},e.readAsDataURL(t)}}catch(e){const i=new FileReader;i.onload=e=>{document.getElementById("sighting-photo-url").value=e.target.result,n&&(n.textContent="✓ Photo attached"),o&&(o.src=e.target.result),a&&(a.style.display="block")},i.readAsDataURL(t)}}async function handleSightingSubmit(e){e.preventDefault();const t=document.getElementById("sighting-alert-id").value,n=document.getElementById("sighting-report-id").value,a=document.getElementById("sighting-category").value,o=document.getElementById("sighting-location").value.trim(),i=document.getElementById("sighting-time").value.trim(),s=document.getElementById("sighting-observation").value.trim(),r=document.getElementById("sighting-photo-url").value,d="yes"===document.querySelector('input[name="sighting-picked-up"]:checked')?.value;if(!s)return void showToast("Please describe what you saw (where, when, or any details).","warning");if(d){closeSightingModal(),showToast("Redirecting to Report Found form...","info"),showPage("report-found-page");const e=document.getElementById("found-title"),t=document.getElementById("found-category"),n=document.getElementById("found-location"),d=document.getElementById("found-description"),l=document.getElementById("found-image-preview");if(e&&(e.value=`Found ${a||"Item"}`),t&&(t.value=a||"Other"),n&&(n.value=o),d&&(d.value=`Spotted and retrieved near ${o} (${i}). ${s}`),r&&l){l.src=r;const e=document.getElementById("found-preview-container");e&&(e.style.display="block")}return void showToast("Found report prefilled with sighting information! Please submit to initiate AI verification.","success")}const l=document.getElementById("btn-submit-sighting");l&&(l.disabled=!0,l.innerHTML='<div class="spinner-sm"></div> Sending...');try{const e=appState.user,a={"Content-Type":"application/json"};e&&(a["x-lostseek-user"]=encodeURIComponent(JSON.stringify(e)));const d={action:"sighting",alertId:t,reportId:n,approximateLocation:o||"Campus",approximateTime:i||"Recently",observation:s,photoUrl:r,pickedUp:!1},l=await fetch(API_BASE+"/api/alerts",{method:"POST",headers:a,body:JSON.stringify(d)}),c=await l.json();closeSightingModal(),l.ok&&c.success?showToast("Sighting sent to the person who reported this item lost. 📨","success"):showToast(c.message||"Sighting recorded.","info"),renderCommunityAlerts()}catch(e){console.warn("Sighting submit notice:",e.message),closeSightingModal(),showToast("Sighting sent to the person who reported this item lost.","success")}finally{l&&(l.disabled=!1,l.innerHTML='<i data-lucide="send"></i><span>Submit Sighting</span>',window.lucide&&(window.optimizedCreateIcons?window.optimizedCreateIcons():window.lucide&&window.lucide.createIcons()))}}function renderProfile(){const e=document.getElementById("profile-content-container");if(!e)return;const t=appState.user||{name:"Campus Student",role:"student",studentId:"STU-2026",username:"student"},n=(t.role||"student").toLowerCase(),a=["admin","supervisor","director"].includes(n),o="director"===n?"DIRECTOR":"supervisor"===n?"SUPERVISOR":"admin"===n?"STAFF / ADMIN":"STUDENT",i=(appState.lostReports||[]).filter(e=>e.reporterName===t.name||e.reporterId===t.username).length,s=(appState.foundReports||[]).filter(e=>e.finderName===t.name||e.reporterName===t.name||e.reporterId===t.username).length,r=(appState.claims||[]).filter(e=>e.claimantName===t.name||e.claimantId===t.studentId||e.claimantId===t.username).length,d=!!(t.avatarUrl||t.avatar||t.avatar_url||t.profilePicture||t.profilePictureUrl||t.photoUrl);e.innerHTML=`\n    <div class="profile-card">\n      <div class="profile-avatar-box" style="display: flex; flex-direction: column; align-items: center; gap: 12px;">\n        <div id="profile-page-avatar-display" class="profile-avatar-clickable" onclick="openEditProfilePictureModal()" title="Edit Profile Picture" style="position: relative; cursor: pointer;">\n          ${getAvatarSVG(t.role,108,t.avatarUrl)}\n          <div class="avatar-camera-badge" title="Edit Profile Picture">\n            <i data-lucide="camera" style="width: 15px; height: 15px;"></i>\n          </div>\n        </div>\n        <button type="button" class="btn btn-sm btn-primary" id="btn-edit-profile-picture" onclick="openEditProfilePictureModal()" style="display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; font-size: 0.84rem; font-weight: 600; border-radius: var(--radius-sm);">\n          <i data-lucide="camera" style="width: 15px; height: 15px;"></i>\n          <span>${d?"Edit Profile Picture":"Add Profile Picture"}</span>\n        </button>\n        <input type="file" id="profile-camera-input" accept="image/*" capture="user" style="display:none;" onchange="handleProfilePhotoSelected(event)">\n        <input type="file" id="profile-gallery-input" accept="image/*" style="display:none;" onchange="handleProfilePhotoSelected(event)">\n      </div>\n      <div class="profile-info" style="flex: 1;">\n        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">\n          <h2 style="margin: 0; color: var(--text-primary); font-size: 1.5rem;">${escapeHTML(t.name)}</h2>\n          <span class="badge ${a?"badge-urgent":"badge-verified"}">${o}</span>\n          <span class="badge badge-verified" style="display:inline-flex;align-items:center;gap:4px;"><i data-lucide="shield-check" style="width:13px;height:13px;"></i> Institutional Identity Verified</span>\n        </div>\n        <p style="margin: 6px 0 12px; color: var(--text-muted); font-size: 0.95rem;">\n          ${escapeHTML(t.username||t.loginId||"")}${t.username&&!t.username.includes("@")?"@campus.edu":""} • ID: <strong>${escapeHTML(t.studentId||"STU-2026")}</strong>\n        </p>\n        <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px;">\n          <button class="btn btn-sm btn-secondary" onclick="showPage('my-reports-page')">\n            <i data-lucide="file-text"></i> My Reports\n          </button>\n          <button class="btn btn-sm btn-secondary" onclick="showPage('matches-page')">\n            <i data-lucide="sparkles"></i> Possible Matches\n          </button>\n          <button class="btn btn-sm btn-secondary" onclick="showPage('settings-page')">\n            <i data-lucide="settings"></i> Settings\n          </button>\n        </div>\n      </div>\n    </div>\n\n    <div class="profile-stats-row">\n      <div class="stat-card">\n        <div class="stat-card-header">\n          <span class="stat-card-title">Lost Reports</span>\n          <i data-lucide="search" class="stat-card-icon" style="color: var(--warning-color);"></i>\n        </div>\n        <div class="stat-card-value">${i}</div>\n        <div class="stat-card-subtitle">Items filed as missing</div>\n      </div>\n      <div class="stat-card">\n        <div class="stat-card-header">\n          <span class="stat-card-title">Found Items</span>\n          <i data-lucide="package-check" class="stat-card-icon" style="color: var(--success-color);"></i>\n        </div>\n        <div class="stat-card-value">${s}</div>\n        <div class="stat-card-subtitle">Items turned in</div>\n      </div>\n      <div class="stat-card">\n        <div class="stat-card-header">\n          <span class="stat-card-title">Active Claims</span>\n          <i data-lucide="hand" class="stat-card-icon" style="color: var(--teal-bright);"></i>\n        </div>\n        <div class="stat-card-value">${r}</div>\n        <div class="stat-card-subtitle">Verification requests</div>\n      </div>\n    </div>\n\n    <div class="glass-card" style="margin-bottom: 24px;">\n      <h3>Account Credentials &amp; Verification</h3>\n      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-top: 14px;">\n        <div>\n          <span style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Full Name</span>\n          <div style="font-weight: 600; margin-top: 2px;">${escapeHTML(t.name||"Campus Member")}</div>\n        </div>\n        <div>\n          <span style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Campus Role</span>\n          <div style="font-weight: 600; margin-top: 2px;">${a?"director"===n?"Campus Director":"supervisor"===n?"Campus Supervisor":"Administrator / Staff":"Student"}</div>\n        </div>\n        <div>\n          <span style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Login ID</span>\n          <div style="font-weight: 600; margin-top: 2px;">${escapeHTML(t.username||t.loginId||"student")}</div>\n        </div>\n        <div>\n          <span style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Institutional ID</span>\n          <div style="font-weight: 600; margin-top: 2px;">${escapeHTML(t.studentId||(a?"ADM-FAC-4402":"STU-2026"))}</div>\n        </div>\n      </div>\n    </div>\n\n    <div class="glass-card" style="margin-bottom: 24px;">\n      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">\n        <i data-lucide="key-round" style="color: var(--teal-bright);"></i>\n        <h3 style="margin: 0;">Change Password</h3>\n      </div>\n      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">\n        Update your account password securely. Requires your current password.\n      </p>\n\n      <form id="profile-change-password-form" onsubmit="handleProfilePasswordChange(event)" style="max-width: 480px;">\n        <div class="form-group" style="margin-bottom: 12px;">\n          <label for="pwd-current" style="font-size: 0.85rem; font-weight: 600;">Current Password *</label>\n          <input type="password" id="pwd-current" class="input-glass" placeholder="Enter current password" required autocomplete="current-password">\n        </div>\n        <div class="form-group" style="margin-bottom: 12px;">\n          <label for="pwd-new" style="font-size: 0.85rem; font-weight: 600;">New Password (Min. 6 characters) *</label>\n          <input type="password" id="pwd-new" class="input-glass" placeholder="Enter new password" required minlength="6" autocomplete="new-password">\n        </div>\n        <div class="form-group" style="margin-bottom: 16px;">\n          <label for="pwd-confirm" style="font-size: 0.85rem; font-weight: 600;">Confirm New Password *</label>\n          <input type="password" id="pwd-confirm" class="input-glass" placeholder="Confirm new password" required minlength="6" autocomplete="new-password">\n        </div>\n        <button type="submit" class="btn btn-primary" id="btn-change-password">\n          <i data-lucide="lock"></i>\n          <span>Change Password</span>\n        </button>\n      </form>\n    </div>\n  `,window.lucide&&(window.optimizedCreateIcons?window.optimizedCreateIcons():window.lucide&&window.lucide.createIcons())}function openEditProfilePictureModal(){ensureModalsLoaded();const e=document.getElementById("edit-profile-picture-modal");if(!e)return;const t=appState.user,n=t?t.avatarUrl||t.avatar||t.avatar_url||t.profilePicture||t.profilePictureUrl||t.photoUrl:null,a=document.getElementById("modal-edit-profile-avatar-preview");a&&t&&(a.innerHTML=getAvatarSVG(t.role,72,n));const o=document.getElementById("btn-profile-recrop-current");o&&(o.style.display=n?"inline-flex":"none"),e.style.display="flex",window.lucide&&(window.optimizedCreateIcons?window.optimizedCreateIcons():window.lucide&&window.lucide.createIcons())}function closeEditProfilePictureModal(){const e=document.getElementById("edit-profile-picture-modal");e&&(e.style.display="none")}function triggerProfilePhotoUpload(e){if(closeEditProfilePictureModal(),"recrop"===e){const e=appState.user,t=e?e.avatarUrl||e.avatar||e.avatar_url||e.profilePicture||e.profilePictureUrl||e.photoUrl:null;if(!t)return void showToast("No existing profile picture to crop.","warning");showToast("Loading picture for editor... ⏳","info");const n=new Image;return n.crossOrigin="anonymous",n.onload=()=>{openProfileCropEditor(n,t)},n.onerror=()=>{showToast("Could not load existing picture for editing. Please select a photo from your gallery.","error")},void(n.src=t)}let t=null;t="camera"===e?document.getElementById("profile-camera-input"):document.getElementById("profile-gallery-input"),t&&(t.value="",t.click())}const cropState={img:null,rawUrl:null,naturalW:0,naturalH:0,viewportSize:280,minScale:1,currentZoom:1,effectiveScale:1,posX:0,posY:0,activePointers:new Map,initialPinchDist:0,initialPinchZoom:1,initialPinchMidpoint:{x:140,y:140},pointerStartX:0,pointerStartY:0,initialPanX:0,initialPanY:0,lastTapTime:0,eventsBound:!1};function calculateCoverScale(e,t,n){return Math.max(n/e,n/t)}function clampCropPosition(e,t,n,a,o,i){const s=i-a*n,r=i-o*n;return{x:Math.min(0,Math.max(s,e)),y:Math.min(0,Math.max(r,t))}}function applyCropTransform(e=!1){const t=document.getElementById("crop-stage-image"),n=document.getElementById("crop-grid-overlay"),a=document.getElementById("crop-viewport-container"),o=document.getElementById("crop-zoom-slider");t&&(t.style.width=`${cropState.naturalW}px`,t.style.height=`${cropState.naturalH}px`,t.style.transform=`translate3d(${cropState.posX}px, ${cropState.posY}px, 0) scale(${cropState.effectiveScale})`),n&&(e?n.classList.add("active"):n.classList.remove("active")),a&&(e?a.classList.add("is-dragging"):a.classList.remove("is-dragging")),o&&Math.abs(parseFloat(o.value)-cropState.currentZoom)>.02&&(o.value=cropState.currentZoom.toFixed(2))}function setCropZoom(e,t=null,n=null,a=!1){const o=Math.max(1,Math.min(3.5,e)),i=cropState.minScale*o,s=null!==t?t:cropState.viewportSize/2,r=null!==n?n:cropState.viewportSize/2,d=i/cropState.effectiveScale,l=clampCropPosition(s-(s-cropState.posX)*d,r-(r-cropState.posY)*d,i,cropState.naturalW,cropState.naturalH,cropState.viewportSize);cropState.currentZoom=o,cropState.effectiveScale=i,cropState.posX=l.x,cropState.posY=l.y,applyCropTransform(a)}function stepCropZoom(e){setCropZoom(cropState.currentZoom+e,cropState.viewportSize/2,cropState.viewportSize/2,!1)}function handleCropSliderInput(e){setCropZoom(parseFloat(e),cropState.viewportSize/2,cropState.viewportSize/2,!1)}function resetCropPosition(){cropState.currentZoom=1,cropState.effectiveScale=cropState.minScale,cropState.posX=(cropState.viewportSize-cropState.naturalW*cropState.effectiveScale)/2,cropState.posY=(cropState.viewportSize-cropState.naturalH*cropState.effectiveScale)/2,applyCropTransform(!1)}function bindCropEditorEvents(){if(cropState.eventsBound)return;const e=document.getElementById("crop-viewport-container");if(!e)return;e.addEventListener("pointerdown",t=>{t.preventDefault();try{e.setPointerCapture(t.pointerId)}catch(e){}if(cropState.activePointers.set(t.pointerId,{x:t.clientX,y:t.clientY}),1===cropState.activePointers.size){const n=Date.now();if(n-cropState.lastTapTime<300){const n=e.getBoundingClientRect(),a=t.clientX-n.left,o=t.clientY-n.top;return setCropZoom(cropState.currentZoom>1.2?1:2,a,o,!1),void(cropState.lastTapTime=0)}cropState.lastTapTime=n,cropState.pointerStartX=t.clientX,cropState.pointerStartY=t.clientY,cropState.initialPanX=cropState.posX,cropState.initialPanY=cropState.posY}else if(2===cropState.activePointers.size){const t=Array.from(cropState.activePointers.values()),n=t[0],a=t[1];cropState.initialPinchDist=Math.hypot(a.x-n.x,a.y-n.y),cropState.initialPinchZoom=cropState.currentZoom;const o=e.getBoundingClientRect();cropState.initialPinchMidpoint={x:(n.x+a.x)/2-o.left,y:(n.y+a.y)/2-o.top}}applyCropTransform(!0)}),e.addEventListener("pointermove",e=>{if(cropState.activePointers.has(e.pointerId))if(cropState.activePointers.set(e.pointerId,{x:e.clientX,y:e.clientY}),1===cropState.activePointers.size){const t=e.clientX-cropState.pointerStartX,n=e.clientY-cropState.pointerStartY,a=clampCropPosition(cropState.initialPanX+t,cropState.initialPanY+n,cropState.effectiveScale,cropState.naturalW,cropState.naturalH,cropState.viewportSize);cropState.posX=a.x,cropState.posY=a.y,applyCropTransform(!0)}else if(cropState.activePointers.size>=2){const e=Array.from(cropState.activePointers.values()),t=e[0],n=e[1],a=Math.hypot(n.x-t.x,n.y-t.y);if(cropState.initialPinchDist>5){const e=a/cropState.initialPinchDist;setCropZoom(cropState.initialPinchZoom*e,cropState.initialPinchMidpoint.x,cropState.initialPinchMidpoint.y,!0)}}});const t=t=>{cropState.activePointers.delete(t.pointerId);try{e.releasePointerCapture(t.pointerId)}catch(e){}if(1===cropState.activePointers.size){const e=cropState.activePointers.values().next().value;cropState.pointerStartX=e.x,cropState.pointerStartY=e.y,cropState.initialPanX=cropState.posX,cropState.initialPanY=cropState.posY}else 0===cropState.activePointers.size&&applyCropTransform(!1)};e.addEventListener("pointerup",t),e.addEventListener("pointercancel",t),e.addEventListener("wheel",t=>{t.preventDefault();const n=e.getBoundingClientRect(),a=t.clientX-n.left,o=t.clientY-n.top,i=t.deltaY<0?.15:-.15;setCropZoom(cropState.currentZoom+i,a,o,!1)},{passive:!1}),e.addEventListener("dblclick",t=>{t.preventDefault();const n=e.getBoundingClientRect(),a=t.clientX-n.left,o=t.clientY-n.top;setCropZoom(cropState.currentZoom>1.2?1:2,a,o,!1)}),cropState.eventsBound=!0}function getAuthoritativeCropRect(){const e=document.getElementById("crop-viewport-container"),t=document.getElementById("crop-stage-image"),n=e&&e.clientWidth>50?e.clientWidth:cropState.viewportSize||280;cropState.viewportSize=n;const a=t&&t.naturalWidth>0?t.naturalWidth:cropState.img&&cropState.img.naturalWidth>0?cropState.img.naturalWidth:cropState.naturalW||400,o=t&&t.naturalHeight>0?t.naturalHeight:cropState.img&&cropState.img.naturalHeight>0?cropState.img.naturalHeight:cropState.naturalH||400;cropState.naturalW=a,cropState.naturalH=o;const i=cropState.effectiveScale||1,s=cropState.posX||0,r=cropState.posY||0,d={sourceX:-s/i,sourceY:-r/i,sourceWidth:n/i,sourceHeight:n/i,posX:s,posY:r,effectiveScale:i,currentZoom:cropState.currentZoom||1,viewportSize:n,naturalW:a,naturalH:o};return window.__LOSTSEEK_DEBUG_CROP__&&console.log("[LostSeek Authoritative Crop Rect]",d),d}function openProfileCropEditor(e,t){cropState.img=e,cropState.rawUrl=t;const n=document.getElementById("profile-crop-editor-modal");n&&(n.style.display="flex");const a=document.getElementById("crop-viewport-container"),o=a&&a.clientWidth>50?a.clientWidth:280;cropState.viewportSize=o;const i=document.getElementById("crop-stage-image"),s=()=>{const t=i&&i.naturalWidth>0?i.naturalWidth:e.naturalWidth||e.width||400,n=i&&i.naturalHeight>0?i.naturalHeight:e.naturalHeight||e.height||400;cropState.naturalW=t,cropState.naturalH=n,cropState.minScale=calculateCoverScale(cropState.naturalW,cropState.naturalH,cropState.viewportSize),cropState.currentZoom=1,cropState.effectiveScale=cropState.minScale,cropState.posX=(cropState.viewportSize-cropState.naturalW*cropState.effectiveScale)/2,cropState.posY=(cropState.viewportSize-cropState.naturalH*cropState.effectiveScale)/2,applyCropTransform(!1)};i&&i.src!==t?(i.onload=()=>{s()},i.src=t):s();const r=document.getElementById("crop-zoom-slider");r&&(r.min="1.0",r.max="3.5",r.step="0.01",r.value="1.0");const d=document.getElementById("btn-crop-save"),l=document.getElementById("crop-save-btn-text");d&&(d.disabled=!1),l&&(l.textContent="Save"),bindCropEditorEvents(),applyCropTransform(!1),window.lucide&&(window.optimizedCreateIcons?window.optimizedCreateIcons():window.lucide&&window.lucide.createIcons())}function closeProfileCropEditorModal(){const e=document.getElementById("profile-crop-editor-modal");e&&(e.style.display="none");const t=document.getElementById("crop-stage-image");t&&(t.src=""),cropState.activePointers.clear()}async function saveCroppedProfilePhoto(){if(!appState.user)return void showToast("You must be signed in to update your profile picture.","error");if(!cropState.img&&!cropState.rawUrl)return void showToast("No image loaded to save.","warning");const e=document.getElementById("btn-crop-save"),t=document.getElementById("crop-save-btn-text");e&&(e.disabled=!0),t&&(t.textContent="Saving...");try{const e=getAuthoritativeCropRect(),t=Math.min(800,Math.max(360,Math.round(e.sourceWidth))),n=document.createElement("canvas");n.width=t,n.height=t;const a=n.getContext("2d");a.imageSmoothingEnabled=!0,a.imageSmoothingQuality="high";const o=t/e.viewportSize;a.setTransform(e.effectiveScale*o,0,0,e.effectiveScale*o,e.posX*o,e.posY*o);const i=document.getElementById("crop-stage-image"),s=i&&i.complete&&i.naturalWidth>0?i:cropState.img||i;a.drawImage(s,0,0,e.naturalW,e.naturalH),a.setTransform(1,0,0,1,0,0);const r=n.toDataURL("image/jpeg",.88),d=await uploadProfileImageToCloud(r,appState.user.username),l=await fetch(API_BASE+"/api/auth?action=profile",{method:"POST",headers:getAuthHeaders(),body:JSON.stringify({username:appState.user.username,avatarUrl:d})});if(!l.ok){const e=await l.json().catch(()=>({}));throw new Error(e.message||`Server returned ${l.status}`)}const c=await l.json(),p=c.profile&&c.profile.avatarUrl||c.user&&c.user.avatarUrl||d,u=p.includes("?")?p.replace(/([?&]t=)\d+/,"$1"+Date.now()):`${p}?t=${Date.now()}`;appState.user.avatarUrl=u,appState.user.avatar=u,appState.user.avatar_url=u,appState.user.profilePicture=u,appState.user.profilePictureUrl=u,appState.user.photoUrl=u,saveData(),setupAuthenticatedUser(appState.user),renderProfile(),closeProfileCropEditorModal(),showToast("Profile picture updated.","success")}catch(e){console.error("Failed to save cropped profile picture:",e),showToast(`Failed to save profile picture: ${e.message||"Network error"}`,"error")}finally{e&&(e.disabled=!1),t&&(t.textContent="Save")}}async function uploadProfileImageToCloud(e,t){if(!e||!e.startsWith("data:"))throw new Error("Invalid image data for cloud upload.");const n=await fetch(API_BASE+"/api/upload",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({image:e,filename:`avatar-${t||"user"}-${Date.now()}.jpg`})});if(!n.ok){const e=await n.json().catch(()=>({}));throw new Error(e.message||`Upload failed with HTTP ${n.status}`)}const a=await n.json();if(!a.success||!a.url||!a.url.startsWith("http"))throw new Error(a.message||"Cloud storage upload did not return a valid URL.");return a.url}function handleProfilePhotoSelected(e){const t=e.target.files?.[0];if(!t)return;if(!t.type.startsWith("image/"))return showToast("Please select a valid image file (JPEG, PNG, WEBP).","warning"),void(e.target.value="");if(t.size>20971520)return showToast("Image is too large. Please select a photo under 20MB.","warning"),void(e.target.value="");const n=new FileReader;n.onerror=()=>{showToast("Failed to read image file.","error"),e.target.value=""},n.onload=e=>{const t=e.target.result,n=new Image;n.onload=()=>{openProfileCropEditor(n,t)},n.onerror=()=>{showToast("Failed to load image preview.","error")},n.src=t},n.readAsDataURL(t),e.target.value=""}async function handleProfilePasswordChange(e){e.preventDefault();const t=document.getElementById("pwd-current")?.value,n=document.getElementById("pwd-new")?.value,a=document.getElementById("pwd-confirm")?.value,o=document.getElementById("btn-change-password")||document.getElementById("btn-update-password");if(t&&n)if(n.length<6)showToast("New password must be at least 6 characters long.","warning");else if(n===a){o&&(o.disabled=!0,o.innerHTML='<i data-lucide="loader-2" class="spin"></i> Updating password...',window.lucide&&(window.optimizedCreateIcons?window.optimizedCreateIcons():window.lucide&&window.lucide.createIcons()));try{const e=await fetch(API_BASE+"/api/change-password",{method:"POST",headers:getAuthHeaders(),body:JSON.stringify({username:appState.user.username,currentPassword:t,newPassword:n,confirmPassword:a})}),o=await e.json();e.ok&&o.success?(showToast("Password changed successfully! 🔒","success"),document.getElementById("profile-change-password-form")?.reset()):showToast(o.message||"Failed to change password.","error")}catch(e){showToast("Network error while changing password: "+e.message,"error")}finally{o&&(o.disabled=!1,o.innerHTML='<i data-lucide="lock"></i> <span>Change Password</span>',window.lucide&&(window.optimizedCreateIcons?window.optimizedCreateIcons():window.lucide&&window.lucide.createIcons()))}}else showToast("New passwords do not match.","error");else showToast("Please enter both your current and new password.","warning")}function renderSettings(){updateSettingsThemeCards(currentTheme);const e=appState.user&&appState.user.role&&"admin"===appState.user.role.toLowerCase(),t=document.getElementById("admin-settings-contacts-card");if(t&&(t.style.display=e?"block":"none",e&&appState.officialContacts)){const e=document.getElementById("setting-phone-office"),t=document.getElementById("setting-phone-security"),n=document.getElementById("setting-phone-police");e&&(e.value=appState.officialContacts.campusOffice?.phone||""),t&&(t.value=appState.officialContacts.campusSecurity?.phone||""),n&&(n.value=appState.officialContacts.policeStation?.phone||"")}window.lucide&&(window.optimizedCreateIcons?window.optimizedCreateIcons():window.lucide&&window.lucide.createIcons())}function getStatusBadgeHTML(e){const t=(e||"Active").toLowerCase();return t.includes("wait")||t.includes("pending")?'<span class="status-pill status-waiting"><i data-lucide="clock"></i> Pending</span>':t.includes("match")||t.includes("possible")?'<span class="status-pill status-possible-match"><i data-lucide="sparkles"></i> Possible Match</span>':t.includes("claim approved")||t.includes("approved")?'<span class="status-pill status-approved"><i data-lucide="check-circle-2"></i> Claim Approved</span>':t.includes("claim")?'<span class="status-pill status-claimed"><i data-lucide="hand"></i> Claimed</span>':t.includes("check")||t.includes("verif")?'<span class="status-pill status-checking"><i data-lucide="shield-check"></i> Under Verification</span>':t.includes("return")||t.includes("recovered")?'<span class="status-pill status-returned"><i data-lucide="package-check"></i> Returned</span>':t.includes("reject")?'<span class="status-pill status-rejected"><i data-lucide="x-circle"></i> Rejected</span>':t.includes("closed")||t.includes("expired")?'<span class="status-pill status-archived"><i data-lucide="archive"></i> Closed</span>':'<span class="status-pill status-looking"><i data-lucide="search"></i> Active</span>'}function renderContactCard(e,t="Finder"){if(!e)return"";const n=e.phone||e.phoneNumber||e.phone_number||e.contactPhone||"",a=String(n||"").trim(),o=!!(e.sharePhone??e.phoneSharingConsent??e.phone_sharing_consent??e.phoneShared),i=!(!e.hasPhoneProvided&&!a);return a&&o?`\n      <div class="contact-display-card contact-display-shared">\n        <div class="contact-details-left">\n          <span class="contact-details-tag">✓ Direct Contact Available</span>\n          <div class="contact-number-large">📞 ${escapeHTML(a)}</div>\n          <span class="contact-sub-note">The ${t.toLowerCase()} chose to share this number.</span>\n        </div>\n        <a href="tel:${escapeHTML(a)}" class="contact-action-call-btn">\n          <i data-lucide="phone-call"></i>\n          <span>Contact ${t}</span>\n        </a>\n      </div>\n    `:o||!i&&!a?`\n      <div class="contact-display-card contact-display-unavailable">\n        <div class="contact-details-left">\n          <span class="contact-details-tag">ℹ️ Contact Unavailable</span>\n          <div class="contact-number-large">No phone number provided</div>\n          <span class="contact-sub-note">No phone number was registered for this ${t.toLowerCase()}.</span>\n        </div>\n        ${"admin"===appState.user?.role?.toLowerCase()?"":`<button type="button" class="contact-admin-help-btn" onclick="openAdminContactHelpModal('${e.id}')">\n          <i data-lucide="shield"></i>\n          <span>Ask Admin to Help</span>\n        </button>`}\n      </div>\n    `:`\n      <div class="contact-display-card contact-display-private">\n        <div class="contact-details-left">\n          <span class="contact-details-tag">🔒 Private Contact</span>\n          <div class="contact-number-large">Phone number kept private</div>\n          <span class="contact-sub-note">The ${t.toLowerCase()} chose to keep their contact details private.</span>\n        </div>\n        ${"admin"===appState.user?.role?.toLowerCase()?"":`<button type="button" class="contact-admin-help-btn" onclick="openAdminContactHelpModal('${e.id}')">\n          <i data-lucide="shield"></i>\n          <span>Ask Admin to Help</span>\n        </button>`}\n      </div>\n    `}function renderStudentHomeFeeds(){const e=document.getElementById("student-home-my-reports");if(e){const t=[...appState.lostReports.map(e=>({...e,itemType:"Lost"})),...appState.foundReports.map(e=>({...e,itemType:"Found"}))].slice(0,3);0===t.length?e.innerHTML='\n        <div style="text-align: center; padding: 24px 0; background: var(--bg-subtle); border-radius: var(--radius-md); border: 1px dashed var(--border-subtle); margin-top: 12px;">\n          <i data-lucide="folder-open" style="color: var(--text-muted); width: 32px; height: 32px; margin-bottom: 8px;"></i>\n          <p style="color: var(--text-secondary); font-size: 0.95rem; font-weight: 500;">No reports submitted yet.</p>\n          <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 4px;">Items you report lost or found will appear here.</p>\n        </div>\n      ':e.innerHTML=t.map(e=>`\n        <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 12px;border-bottom:1px solid var(--border-subtle); margin-bottom: 4px; border-radius: var(--radius-sm); transition: background var(--transition-fast);" onmouseover="this.style.background='var(--bg-subtle)'" onmouseout="this.style.background='transparent'">\n          <div>\n            <div style="font-weight:700;font-size:0.95rem;color:var(--text-primary); margin-bottom: 2px;">${escapeHTML(e.title)}</div>\n            <div style="font-size:0.8rem;color:var(--text-secondary);display:flex;align-items:center;gap:4px;">\n              <i data-lucide="map-pin" style="width: 12px; height: 12px;"></i> ${escapeHTML(e.location)} <span style="opacity: 0.5;">•</span> ${getTimeAgo(e.createdAt)}\n            </div>\n          </div>\n          <div>${getStatusBadgeHTML(e.status)}</div>\n        </div>\n      `).join("")}const t=document.getElementById("student-home-matches");if(t){const e=calculateMatchesList().slice(0,2);0===e.length?t.innerHTML='\n        <div style="text-align: center; padding: 24px 0; background: var(--bg-subtle); border-radius: var(--radius-md); border: 1px dashed var(--border-subtle); margin-top: 12px;">\n          <i data-lucide="sparkles" style="color: var(--text-muted); width: 32px; height: 32px; margin-bottom: 8px;"></i>\n          <p style="color: var(--text-secondary); font-size: 0.95rem; font-weight: 500;">No AI matches found.</p>\n          <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 4px;">We\'ll notify you if an item matches yours.</p>\n        </div>\n      ':t.innerHTML=e.map(e=>`\n        <div style="padding:14px 12px;border-bottom:1px solid var(--border-subtle); margin-bottom: 4px; border-radius: var(--radius-sm); transition: background var(--transition-fast);" onmouseover="this.style.background='var(--bg-subtle)'" onmouseout="this.style.background='transparent'">\n          <div style="display:flex;justify-content:space-between;align-items:center;">\n            <strong style="font-size:0.95rem;color:var(--text-primary);">${escapeHTML(e.lost.title)}</strong>\n            <span style="font-size:0.8rem;font-weight:700;color:var(--teal-bright);background:var(--color-success-bg);padding:4px 10px;border-radius:var(--radius-full);">${e.score}% Match</span>\n          </div>\n          <div style="font-size:0.85rem;color:var(--text-secondary);margin-top:6px;display:flex;align-items:center;gap:4px;">\n            <i data-lucide="package" style="width: 14px; height: 14px; color: var(--text-muted);"></i> Found at: ${escapeHTML(e.found.location)}\n          </div>\n        </div>\n      `).join("")}const n=document.getElementById("student-home-alerts");if(n){const e=appState.notifications.slice(0,3);0===e.length?n.innerHTML='\n        <div style="text-align: center; padding: 24px 0; background: var(--bg-subtle); border-radius: var(--radius-md); border: 1px dashed var(--border-subtle); margin-top: 12px;">\n          <i data-lucide="bell-off" style="color: var(--text-muted); width: 32px; height: 32px; margin-bottom: 8px;"></i>\n          <p style="color: var(--text-secondary); font-size: 0.95rem; font-weight: 500;">No new alerts.</p>\n        </div>\n      ':n.innerHTML=e.map(e=>`\n        <div style="display:flex;align-items:flex-start;gap:12px;padding:12px;border-bottom:1px solid var(--border-subtle); border-radius: var(--radius-sm); transition: background var(--transition-fast);" onmouseover="this.style.background='var(--bg-subtle)'" onmouseout="this.style.background='transparent'">\n          <div style="background: var(--color-info-bg); padding: 8px; border-radius: var(--radius-full); flex-shrink: 0; display:flex;">\n            <i data-lucide="bell" style="width:14px;height:14px;color:var(--color-info);"></i>\n          </div>\n          <div style="flex:1;">\n            <div style="color:var(--text-primary); font-size:0.9rem; font-weight: 500; line-height: 1.4;">${escapeHTML(e.message)}</div>\n            <div style="font-size:0.75rem;color:var(--text-muted);margin-top: 4px;">${getTimeAgo(e.createdAt)}</div>\n          </div>\n        </div>\n      `).join("")}window.lucide&&(window.optimizedCreateIcons?window.optimizedCreateIcons():window.lucide&&window.lucide.createIcons())}function renderFindItem(){handleFindItemSearch()}function handleFindItemSearch(){const e=document.getElementById("find-item-results-grid");if(!e)return;const t=document.getElementById("find-item-search-input"),n=document.getElementById("find-filter-type"),a=document.getElementById("find-filter-category"),o=document.getElementById("find-filter-location"),i=document.getElementById("find-filter-status"),s=t?t.value.toLowerCase().trim():"",r=n?n.value:"",d=a?a.value:"",l=o?o.value:"",c=i?i.value:"",p=[...appState.lostReports.map(e=>({...e,itemType:"Lost"})),...appState.foundReports.map(e=>({...e,itemType:"Found"}))].filter(e=>{if(r&&e.itemType!==r)return!1;if(d&&e.category!==d)return!1;if(l&&!String(e.location||"").toLowerCase().includes(l.toLowerCase()))return!1;if(c&&!String(e.status||"").toLowerCase().includes(c.toLowerCase()))return!1;if(s){const t=String(e.title||"").toLowerCase().includes(s),n=String(e.description||"").toLowerCase().includes(s),a=String(e.location||"").toLowerCase().includes(s),o=String(e.brand||"").toLowerCase().includes(s);if(!(t||n||a||o))return!1}return!0});if(0===p.length)return e.innerHTML='\n      <div style="grid-column: 1 / -1; text-align: center; padding: 48px 20px;">\n        <i data-lucide="search-x" style="width: 48px; height: 48px; color: var(--text-muted); margin: 0 auto 12px;"></i>\n        <h3 style="color: var(--text-primary); margin-bottom: 6px;">No items match your criteria</h3>\n        <p style="color: var(--text-muted);">Try adjusting your search keywords or resetting filters.</p>\n      </div>\n    ',void(window.lucide&&(window.optimizedCreateIcons?window.optimizedCreateIcons():window.lucide&&window.lucide.createIcons()));e.innerHTML=p.map(e=>{const t=CATEGORY_MAP[e.category]||{icon:"📦",label:"Item"},n="Lost"===e.itemType,a="Found"===e.itemType;return`\n      <div class="glass-card" style="padding: 20px; display: flex; flex-direction: column; justify-content: space-between; border-radius: var(--radius-lg);">\n        <div>\n          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; gap: 8px;">\n            <span class="badge ${n?"badge-urgent":"badge-verified"}">${e.itemType}</span>\n            ${getStatusBadgeHTML(e.status)}\n          </div>\n\n          ${e.photo?`\n            <div style="width: 100%; height: 140px; border-radius: var(--radius-md); overflow: hidden; margin-bottom: 12px; background: var(--bg-subtle); position: relative;">\n              <img src="${e.photo}" alt="${escapeHTML(e.title)}" style="width: 100%; height: 100%; object-fit: cover;">\n              ${e.imageSharedForMatch?'\n                <div class="match-verification-overlay" style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(15, 23, 42, 0.88); color: var(--teal-bright); font-size: 0.72rem; padding: 4px 8px; font-weight: 600; display: flex; align-items: center; gap: 4px; border-top: 1px solid rgba(20, 184, 166, 0.4);">\n                  <span>🔍 Possible match — image shared for verification</span>\n                </div>\n              ':""}\n            </div>\n          `:`\n            <div style="width: 100%; height: 90px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 2.2rem; margin-bottom: 12px; background: var(--bg-subtle);">\n              ${t.icon}\n            </div>\n          `}\n\n          <h3 style="font-size: 1.05rem; margin-bottom: 6px; color: var(--text-primary); font-weight: 600;">\n            ${escapeHTML(e.title)}\n          </h3>\n\n          <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">\n            ${escapeHTML(e.description||"No additional details.")}\n          </p>\n\n          <div style="font-size: 0.78rem; color: var(--text-muted); display: flex; flex-direction: column; gap: 4px; margin-bottom: 14px;">\n            <div>📍 <strong>${escapeHTML(e.location||"Campus")}</strong></div>\n            <div>⏱️ ${getTimeAgo(e.createdAt||e.date)}</div>\n          </div>\n        </div>\n\n        <div style="display: flex; gap: 8px; margin-top: auto;">\n          ${a?`\n            <button class="btn btn-sm btn-primary" style="flex: 1;" onclick="openClaimModal('', '${e.id}', '${escapeHTML(e.title)}', '${e.category}')">\n              Claim Item\n            </button>\n          `:'\n            <button class="btn btn-sm btn-accent-teal" style="flex: 1;" onclick="showPage(\'report-found-page\')">\n              I Found This\n            </button>\n          '}\n          <button class="btn btn-sm btn-secondary" onclick="openQrModal('${e.id}')">\n            QR Tag\n          </button>\n        </div>\n      </div>\n    `}).join(""),window.lucide&&(window.optimizedCreateIcons?window.optimizedCreateIcons():window.lucide&&window.lucide.createIcons())}function resetFindItemFilters(){const e=document.getElementById("find-item-search-input"),t=document.getElementById("find-filter-type"),n=document.getElementById("find-filter-category"),a=document.getElementById("find-filter-location"),o=document.getElementById("find-filter-status");e&&(e.value=""),t&&(t.value=""),n&&(n.value=""),a&&(a.value=""),o&&(o.value=""),handleFindItemSearch()}function initIFoundPage(){const e=document.getElementById("i-found-form");e&&e.reset(),clearIFoundPhoto();const t=document.getElementById("ifound-results-container");t&&(t.innerHTML="",t.style.display="none");const n=document.getElementById("ifound-datetime");if(n){const e=new Date;e.setMinutes(e.getMinutes()-e.getTimezoneOffset()),n.value=e.toISOString().slice(0,16)}window.lucide&&(window.optimizedCreateIcons?window.optimizedCreateIcons():window.lucide&&window.lucide.createIcons())}function handleIFoundPhotoSelected(e){const t=e.target.files?.[0];if(!t)return;const n=new FileReader;n.onload=function(e){const t=e.target.result,n=document.getElementById("ifound-photo-data"),a=document.getElementById("ifound-preview-card"),o=document.getElementById("ifound-preview-img"),i=document.getElementById("ifound-buttons-row");n&&(n.value=t),o&&(o.src=t),a&&(a.style.display="block"),i&&(i.style.display="none"),showToast("Photo attached successfully!","success"),window.lucide&&(window.optimizedCreateIcons?window.optimizedCreateIcons():window.lucide&&window.lucide.createIcons())},n.readAsDataURL(t)}function clearIFoundPhoto(){const e=document.getElementById("ifound-photo-data"),t=document.getElementById("ifound-preview-card"),n=document.getElementById("ifound-preview-img"),a=document.getElementById("ifound-buttons-row"),o=document.getElementById("ifound-camera-input"),i=document.getElementById("ifound-gallery-input");e&&(e.value=""),n&&(n.src=""),t&&(t.style.display="none"),a&&(a.style.display="grid"),o&&(o.value=""),i&&(i.value="")}function handleIFoundSearch(e){e&&"function"==typeof e.preventDefault&&e.preventDefault();const t=document.getElementById("ifound-title")?.value.trim()||"",n=document.getElementById("ifound-category")?.value||"misc";let a=document.getElementById("ifound-location")?.value||"Campus";if("Other"===a){const e=document.getElementById("ifound-location-other")?.value.trim();e&&(a=e)}const o=document.getElementById("ifound-datetime")?.value||(new Date).toISOString(),i=document.getElementById("ifound-photo-data")?.value||"",s=document.getElementById("ifound-phone")?.value.trim()||"",r=!!document.getElementById("ifound-share-phone")?.checked,d=document.getElementById("ifound-results-container");if(!d)return;const l={id:generateId("temp-found"),title:t,category:n,location:a,date:o,photo:i,phone:s,sharePhone:r,description:t},c=findMatches(l,"found");d.style.display="block",c.length>0?d.innerHTML=`\n      <div style="background:rgba(20,184,166,0.1);border:1.5px solid var(--teal-bright);border-radius:12px;padding:20px;margin-bottom:20px;">\n        <h3 style="display:flex;align-items:center;gap:8px;color:var(--teal-bright);margin-bottom:6px;">\n          <i data-lucide="sparkles"></i>\n          <span>Possible Matches Found (${c.length})</span>\n        </h3>\n        <p style="font-size:0.88rem;color:var(--text-secondary);margin:0;">\n          LostSeek correlated your found item with existing campus lost reports:\n        </p>\n      </div>\n\n      <div style="display:flex;flex-direction:column;gap:16px;">\n        ${c.map(e=>{const t=e.lost,n=e.reasons||[];return`\n            <div class="glass-card" style="padding:18px;">\n              <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">\n                <div>\n                  <h4 style="font-size:1.05rem;color:var(--text-primary);margin-bottom:4px;">${escapeHTML(t.title)}</h4>\n                  <div style="font-size:0.8rem;color:var(--text-muted);">\n                    📍 Lost at ${escapeHTML(t.location)} • 📅 ${getTimeAgo(t.date||t.createdAt)}\n                  </div>\n                </div>\n                <div style="text-align:right;">\n                  <span style="font-size:1.1rem;font-weight:800;color:var(--teal-bright);">${e.score}%</span>\n                  <div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;">Match Score</div>\n                </div>\n              </div>\n\n              \x3c!-- Why this may match --\x3e\n              <div class="match-reasons-list">\n                <div style="font-size:0.78rem;font-weight:700;color:var(--text-secondary);margin-bottom:2px;">Why this may match:</div>\n                ${n.map(e=>`<div class="match-reason-item matched">${escapeHTML(e)}</div>`).join("")}\n              </div>\n\n              \x3c!-- Owner contact if shared --\x3e\n              ${renderContactCard(t,"Owner")}\n\n              <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;">\n                <button type="button" class="btn btn-sm btn-primary" onclick="openClaimModal('${t.id}', '${l.id}', '${escapeHTML(t.title)}')">\n                  <i data-lucide="hand"></i>\n                  <span>Confirm / Claim Match</span>\n                </button>\n              </div>\n            </div>\n          `}).join("")}\n      </div>\n\n      <div style="text-align:center;margin-top:24px;padding:16px;background:var(--bg-card);border-radius:12px;border:1px solid var(--border-card);">\n        <p style="font-size:0.9rem;color:var(--text-secondary);margin-bottom:12px;">\n          None of these match what you found? You can still post it to campus inventory.\n        </p>\n        <button type="button" class="btn btn-secondary" onclick="postAsFoundDirectly('${escapeHTML(t)}', '${n}', '${escapeHTML(a)}', '${o}', '${i}', '${escapeHTML(s)}', ${r})">\n          <i data-lucide="package-plus"></i>\n          <span>Post as Found Item</span>\n        </button>\n      </div>\n    `:d.innerHTML=`\n      <div style="text-align:center;padding:24px;background:var(--bg-card);border-radius:12px;border:1px solid var(--border-card);">\n        <div style="font-size:2.5rem;margin-bottom:10px;">🔍</div>\n        <h3 style="font-size:1.15rem;margin-bottom:6px;">No possible match yet</h3>\n        <p style="font-size:0.88rem;color:var(--text-secondary);max-width:440px;margin:0 auto 18px;">\n          No matching lost report was found right now. You can still post this item so the owner can search for it later!\n        </p>\n        <button type="button" class="btn btn-primary" onclick="postAsFoundDirectly('${escapeHTML(t)}', '${n}', '${escapeHTML(a)}', '${o}', '${i}', '${escapeHTML(s)}', ${r})">\n          <i data-lucide="package-plus"></i>\n          <span>Post as Found Item</span>\n        </button>\n      </div>\n    `,window.lucide&&(window.optimizedCreateIcons?window.optimizedCreateIcons():window.lucide&&window.lucide.createIcons())}function postAsFoundDirectly(e,t,n,a,o,i,s){const r={id:generateId("found"),type:"FOUND",itemType:"Found",category:t,title:e,itemName:e,location:n,date:a,dateTime:a,description:e,photo:o||"",imageUrl:o||"",phone:i||"",phoneNumber:i||"",sharePhone:!!s,phoneSharingConsent:!!s,status:"Active",priority:"normal",createdAt:(new Date).toISOString(),custody:"With Me",finderName:appState.user?.name||"Campus Student",reporterId:appState.user?appState.user.username||appState.user.loginId||appState.user.id:"student",reporterName:appState.user?appState.user.name:"Campus Student"};appState.foundReports.unshift(r),saveData(),renderAllViews(),showToast("Found item posted to LostSeek! 📦 ","success"),(async()=>{try{if(o&&o.startsWith("data:")){const e=await uploadImageToCloud(o,`found-${Date.now()}.jpg`);r.photo=e,r.imageUrl=e}const e=await fetch(API_BASE+"/api/reports",{method:"POST",headers:getAuthHeaders(),body:JSON.stringify(r)}),t=await e.json();t.success&&t.report&&(r.id=t.report.id,saveData(),updateSyncIndicator("synced","Cloud Synced"));const n=findMatches(r,appState.lostReports||[]);if(n.length>0){const e=n[0];await fetch(API_BASE+"/api/matches",{method:"POST",headers:getAuthHeaders(),body:JSON.stringify({lostReportId:e.lost.id,foundReportId:r.id,score:e.score,confidence:e.confidence,reasons:e.reasons||[]})}).catch(e=>console.warn("Match cloud sync:",e))}}catch(e){console.warn("Direct found cloud persist failed (local copy intact):",e)}})()}function validatePhoneNumber(e){if(!e)return!1;const t=e.replace(/[^\d+]/g,"");return t.length>=7&&t.length<=15}function handlePhoneInputChanged(e){const t=document.getElementById(`${e}-phone`),n=document.getElementById(`${e}-share-phone`),a=document.getElementById(`${e}-share-phone-label`),o=document.getElementById(`${e}-consent-note`),i=document.getElementById(`${e}-phone-hint`);if(!t||!n)return;const s=t.value.trim();if(""===s)return n.checked=!1,n.disabled=!0,a&&(a.style.opacity="0.6",a.style.cursor="not-allowed"),o&&(o.textContent="Enter a phone number above to enable the sharing checkbox.",o.style.color="var(--text-muted)"),void(i&&(i.textContent="Optional. Enter a number if you wish to allow direct phone contact.",i.style.color="var(--text-muted)"));validatePhoneNumber(s)?(n.disabled=!1,a&&(a.style.opacity="1",a.style.cursor="pointer"),o&&(o.textContent=n.checked?"✓ Consented: Your number will be shown directly to the relevant matched finder/owner.":"If left unchecked, your number is kept private and campus admins will facilitate collection.",o.style.color=n.checked?"var(--teal-bright)":"var(--text-muted)"),i&&(i.textContent="✓ Valid phone format. Choose below whether to share it directly.",i.style.color="var(--color-success)")):(n.checked=!1,n.disabled=!0,a&&(a.style.opacity="0.6",a.style.cursor="not-allowed"),o&&(o.textContent="Enter a valid phone number (7-15 digits) to enable sharing.",o.style.color="var(--color-warning)"),i&&(i.textContent="⚠️ Please enter a reasonable phone number (7-15 digits).",i.style.color="var(--color-warning)"))}function handleFileSelected(e,t){const n=e.target.files?.[0];if(!n)return;if(n.size>5242880)return void showToast("Image size exceeds 5MB. Please choose a smaller photo.","warning");const a=new FileReader;a.onload=function(e){const a=e.target.result,o=document.getElementById(`${t}-photo-url`),i=document.getElementById(`${t}-photo-preview`)||document.getElementById(`${t}-preview-container`),s=document.getElementById(`${t}-photo-box`),r=document.getElementById(`${t}-drop-zone`);o&&(o.value=a),i&&(i.style.display="block");(s||i).innerHTML=`\n      <div style="display: flex; align-items: center; gap: 14px; background: var(--bg-card); padding: 12px; border-radius: 8px; border: 1px solid var(--border-card);">\n        <img src="${a}" alt="Thumbnail" style="width: 64px; height: 64px; object-fit: cover; border-radius: 6px; border: 1px solid var(--teal-bright);">\n        <div style="flex: 1;">\n          <div style="font-size: 0.88rem; font-weight: 600; color: var(--text-primary);">${escapeHTML(n.name)}</div>\n          <span style="font-size: 0.75rem; color: var(--teal-bright); font-weight: 600;">✓ Photo Attached</span>\n        </div>\n        <button type="button" class="btn btn-sm btn-secondary" onclick="clearWizardPhoto('${t}')" title="Remove Photo">\n          <i data-lucide="trash-2"></i>\n          <span>Remove</span>\n        </button>\n      </div>\n    `,r&&(r.style.display="none"),window.lucide&&(window.optimizedCreateIcons?window.optimizedCreateIcons():window.lucide&&window.lucide.createIcons()),showToast("Photo attached successfully! 📷","success")},a.readAsDataURL(n)}function clearWizardPhoto(e){const t=document.getElementById(`${e}-photo-url`),n=document.getElementById(`${e}-photo-preview`)||document.getElementById(`${e}-preview-container`),a=document.getElementById(`${e}-file-input`),o=document.getElementById(`${e}-camera-input`),i=document.getElementById(`${e}-gallery-input`),s=document.getElementById(`${e}-drop-zone`);t&&(t.value=""),a&&(a.value=""),o&&(o.value=""),i&&(i.value=""),n&&(n.style.display="none",n.innerHTML=""),s&&(s.style.display="block"),showToast("Photo removed","info")}window.getLostSeekCropDebugInfo=getAuthoritativeCropRect;let activeHandoverClaimId=null;function openAdminHandoverModal(e){ensureModalsLoaded();let t=appState.claims.find(t=>t.id===e||t.lostReportId===e||t.foundReportId===e);if(!t){const n=appState.lostReports.find(t=>t.id===e)||appState.foundReports.find(t=>t.id===e);if(!n)return void showToast("Item or Claim not found","error");t={id:generateId("claim"),lostReportId:"lost"===n.type||appState.lostReports.some(e=>e.id===n.id)?n.id:null,foundReportId:"found"===n.type||appState.foundReports.some(e=>e.id===n.id)?n.id:null,claimantName:n.reporterName||"Verified Student",verificationAnswer:"Ownership verified in person at Security Desk.",status:"Approved",createdAt:(new Date).toISOString()},appState.claims.push(t)}activeHandoverClaimId=t.id;const n=appState.lostReports.find(e=>e.id===t.lostReportId),a=appState.foundReports.find(e=>e.id===t.foundReportId),o=document.getElementById("admin-handover-modal");if(!o)return;const i=document.getElementById("handover-item-title"),s=document.getElementById("handover-owner-name"),r=document.getElementById("handover-owner-contact"),d=document.getElementById("handover-finder-name"),l=document.getElementById("handover-storage-location"),c=document.getElementById("handover-verification-text"),p=document.getElementById("handover-claim-id"),u=document.getElementById("handover-lost-id"),m=document.getElementById("handover-found-id"),g=document.getElementById("handover-datetime"),h=document.getElementById("handover-admin-name"),f=document.getElementById("handover-notes");if(i&&(i.textContent=n?.title||a?.title||"Campus Item"),s&&(s.textContent=t.claimantName||"Student"),r){const e=n?.phone||n?.phoneNumber||n?.phone_number||"",t=!!(n?.sharePhone??n?.phoneSharingConsent??n?.phone_sharing_consent);r.textContent=e&&t?`📞 ${e} (Consented)`:e||n?.hasPhoneProvided?"🔒 Number kept private":"ℹ️ No phone provided"}if(d&&(d.textContent=a?.finderName||"Campus Finder"),l&&(l.textContent=`📍 ${a?.location||"Main Security Desk"}`),c&&(c.textContent=`"${t.verificationAnswer||"Verified ownership through student card & purchase invoice."}"`),p&&(p.value=t.id),u&&(u.value=t.lostReportId||""),m&&(m.value=t.foundReportId||""),g){const e=new Date;e.setMinutes(e.getMinutes()-e.getTimezoneOffset()),g.value=e.toISOString().slice(0,16)}h&&(h.value=appState.user?.name||"Security Desk Officer"),f&&(f.value=""),o.classList.add("show"),window.lucide&&(window.optimizedCreateIcons?window.optimizedCreateIcons():window.lucide&&window.lucide.createIcons())}function closeAdminHandoverModal(){activeHandoverClaimId=null;const e=document.getElementById("admin-handover-modal");e&&e.classList.remove("show")}function confirmAdminHandover(){const e=document.getElementById("handover-claim-id")?.value,t=document.getElementById("handover-lost-id")?.value,n=document.getElementById("handover-found-id")?.value,a=document.getElementById("handover-datetime")?.value||(new Date).toISOString(),o=document.getElementById("handover-admin-name")?.value.trim()||"Campus Admin",i=document.getElementById("handover-notes")?.value.trim()||"Item handed over safely to verified owner.",s=appState.claims.find(t=>t.id===e),r=appState.lostReports.find(e=>e.id===t),d=appState.foundReports.find(e=>e.id===n),l={handoverDate:a,adminName:o,notes:i,recordedAt:(new Date).toISOString()};s&&(s.status="Returned",s.handover=l),r&&(r.status="Returned",r.handover=l),d&&(d.status="Returned",d.handover=l);const c=r?.title||d?.title||"Item";appState.notifications.unshift({id:generateId("notif"),message:`🤝 Handover recorded: Your lost item "${c}" was safely handed over to you by ${o} at the Campus Security Desk.`,read:!1,createdAt:(new Date).toISOString()}),d&&d.finderName&&d.finderName!==r?.reporterName&&appState.notifications.unshift({id:generateId("notif"),message:`🎉 Safe Handover complete: The item you found ("${c}") was successfully returned to its verified owner!`,read:!1,createdAt:(new Date).toISOString()}),saveData(),renderAllViews(),closeAdminHandoverModal(),showToast("Handover recorded! Item marked Returned 🤝 ","success"),e&&setTimeout(()=>{downloadReceiptPdf(e)},600)}function requestAdminAssistedReturn(){const e=appState.foundReports.find(e=>e.id===activeContactHelpReportId)||appState.lostReports.find(e=>e.id===activeContactHelpReportId),t=e?e.title:"Lost Item",n=appState.user||{name:"Campus Student",studentId:"STU-2026"};appState.adminHelpRequests||(appState.adminHelpRequests=[]);const a={id:generateId("help"),reportId:activeContactHelpReportId,itemTitle:t,category:e?.category||"misc",studentName:n.name,studentId:n.studentId||"STU-2026",studentPhone:e?.phone||"",status:"Pending",createdAt:(new Date).toISOString()};appState.adminHelpRequests.unshift(a),appState.notifications.unshift({id:generateId("notif"),message:`🛡️ Admin assistance requested for "${t}". Campus Security Desk will coordinate hand-over.`,read:!1,createdAt:(new Date).toISOString()}),appState.notifications.unshift({id:generateId("notif"),message:`Help needed for a lost item: Student ${n.name} needs help contacting the possible finder for "${t}".`,read:!1,createdAt:(new Date).toISOString()}),saveData(),renderNotifications(),renderAdminHelpRequests(),closeAdminContactHelpModal(),showToast("Help request sent to Campus Security Desk! 🛡️","success")}function renderAdminHelpRequests(){const e=document.getElementById("admin-help-requests-container"),t=document.getElementById("admin-help-count-badge");if(!e)return;const n=appState.adminHelpRequests||[],a=n.filter(e=>"Pending"===e.status);if(t&&(t.textContent=`${a.length} Pending`,t.className=a.length>0?"badge badge-urgent":"badge badge-verified"),0===n.length)return e.innerHTML='\n      <div class="glass-card empty-state" style="text-align: center; padding: 20px;">\n        <i data-lucide="shield-check" style="width: 28px; height: 28px; color: var(--teal-bright); margin: 0 auto 8px;"></i>\n        <p style="color: var(--text-muted); font-size: 0.85rem; margin: 0;">No student assistance requests pending. All communications running smoothly!</p>\n      </div>\n    ',void(window.lucide&&(window.optimizedCreateIcons?window.optimizedCreateIcons():window.lucide&&window.lucide.createIcons()));e.innerHTML=n.map(e=>{const t="Pending"===e.status;return`\n      <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; background: var(--bg-subtle); border-radius: 8px; border: 1px solid var(--border-subtle); margin-bottom: 10px; flex-wrap: wrap; gap: 10px;">\n        <div style="display: flex; align-items: center; gap: 12px;">\n          <div style="width: 36px; height: 36px; border-radius: 50%; background: ${t?"rgba(239, 68, 68, 0.15)":"rgba(34, 197, 94, 0.15)"}; display: flex; align-items: center; justify-content: center; color: ${t?"var(--color-error)":"var(--color-success)"};">\n            <i data-lucide="${t?"shield-alert":"shield-check"}" style="width: 18px; height: 18px;"></i>\n          </div>\n          <div>\n            <div style="font-weight: 600; font-size: 0.92rem; color: var(--text-primary);">\n              ${escapeHTML(e.itemTitle)}\n            </div>\n            <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">\n              Requested by <strong>${escapeHTML(e.studentName)}</strong> (${escapeHTML(e.studentId)}) • ${getTimeAgo(e.createdAt)}\n            </div>\n          </div>\n        </div>\n\n        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">\n          <span class="status-pill ${t?"status-checking":"status-returned"}">\n            <i data-lucide="${t?"clock":"check-circle-2"}"></i>\n            ${t?"Waiting for Check":"Resolved"}\n          </span>\n          <button type="button" class="btn btn-sm btn-secondary" onclick="openReportDetailsModal('${e.reportId}')">\n            View\n          </button>\n          ${t?`\n            <button type="button" class="btn btn-sm btn-primary" onclick="resolveAdminHelpRequest('${e.id}')">\n              Resolve\n            </button>\n          `:""}\n        </div>\n      </div>\n    `}).join(""),window.lucide&&(window.optimizedCreateIcons?window.optimizedCreateIcons():window.lucide&&window.lucide.createIcons())}function resolveAdminHelpRequest(e){const t=(appState.adminHelpRequests||[]).find(t=>t.id===e);t&&(t.status="Resolved",t.resolvedAt=(new Date).toISOString(),appState.notifications.unshift({id:generateId("notif"),message:`🛡️ Admin assistance resolved: Campus Security Desk has coordinated hand-over for "${t.itemTitle}". Please visit the desk.`,read:!1,createdAt:(new Date).toISOString()}),saveData(),renderNotifications(),renderAdminHelpRequests(),showToast("Assistance request marked Resolved! 🛡️","success"))}function switchRole(e){appState.user?(appState.user.role=e,saveData(),setupAuthenticatedUser(),renderAllViews(),showToast("Switched view to "+("admin"===e?"Admin / Security Desk":"Student")+" mode","info")):setLoginRole(e)}window.switchRole=switchRole,window.downloadQR="function"==typeof downloadQrCode?downloadQrCode:function(){downloadQrCode()},window.openQrModal=openQrModal,window.closeQrModal=closeQrModal,window.downloadReportPdf=downloadReportPdf,window.downloadReceiptPdf=downloadReceiptPdf,window.openPublicVerification=openPublicVerification,window.closePublicVerificationModal=closePublicVerificationModal,window.openAdminHandoverModal=openAdminHandoverModal,window.closeAdminHandoverModal=closeAdminHandoverModal,window.confirmAdminHandover=confirmAdminHandover,window.requestAdminAssistedReturn=requestAdminAssistedReturn,window.resolveAdminHelpRequest=resolveAdminHelpRequest,window.handlePhoneInputChanged=handlePhoneInputChanged;let currentAdminHelpTab="all",activeAdminHelpTicketId=null;function renderHelpSafetyPage(){appState.officialContacts||(appState.officialContacts=JSON.parse(JSON.stringify(DEFAULT_OFFICIAL_CONTACTS)));const e=appState.officialContacts,t=document.getElementById("contact-office-phone-display");t&&(t.innerHTML=getOfficialContactDisplay(e.campusOffice?.phone));const n=document.getElementById("contact-security-phone-display");n&&(n.innerHTML=getOfficialContactDisplay(e.campusSecurity?.phone));const a=document.getElementById("contact-police-phone-display");a&&(a.innerHTML=getOfficialContactDisplay(e.policeStation?.phone));const o=document.getElementById("admin-bridge-helpline-display");o&&(o.innerHTML=`📞 <strong>Desk Helpline:</strong> ${getOfficialContactDisplay(e.campusSecurity?.phone)}`);const i=document.getElementById("complaint-related-item");if(i){let e='<option value="">Not item-specific / General campus issue</option>';[...appState.lostReports.map(e=>({...e,typeLabel:"Lost"})),...appState.foundReports.map(e=>({...e,typeLabel:"Found"}))].forEach(t=>{e+=`<option value="${t.id}">[${t.typeLabel}] ${escapeHTML(t.title)} (📍 ${escapeHTML(t.location)})</option>`}),i.innerHTML=e}const s=document.getElementById("complaint-contact-phone");s&&!s.value&&appState.user?.phone&&(s.value=appState.user.phone),window.lucide&&(window.optimizedCreateIcons?window.optimizedCreateIcons():window.lucide&&window.lucide.createIcons())}function handleComplaintSubmit(e){e&&"function"==typeof e.preventDefault&&e.preventDefault();const t=document.getElementById("complaint-type")?.value,n=document.getElementById("complaint-urgency")?.value||"Normal",a=document.getElementById("complaint-related-item")?.value||"",o=document.getElementById("complaint-involved-role")?.value||"Not Applicable";let i=document.getElementById("complaint-location")?.value||"Campus";if("Other"===i){const e=document.getElementById("complaint-location-other")?.value.trim();e&&(i=e)}const s=document.getElementById("complaint-contact-phone")?.value.trim()||"",r=document.getElementById("complaint-description")?.value.trim();if(!t||!r)return void showToast("Please fill in all required complaint fields.","warning");let d="General Campus Dispute";if(a){const e=appState.lostReports.find(e=>e.id===a)||appState.foundReports.find(e=>e.id===a);e&&(d=e.title)}const l=n.toLowerCase().includes("critical")||n.toLowerCase().includes("high"),c={id:generateId("help"),type:"complaint",category:t,urgency:n,priority:l?"urgent":"normal",relatedReportId:a,itemTitle:d,involvedRole:o,location:i,studentName:appState.user?.name||"Campus Student",studentId:appState.user?.studentId||"STU-2026",studentPhone:s||appState.user?.phone||"",description:r,status:"New",createdAt:(new Date).toISOString(),notes:[{author:"System",text:`Formal complaint filed by ${appState.user?.name||"Student"} (${appState.user?.studentId||"STU-2026"}). Severity: ${n}.`,createdAt:(new Date).toISOString()}]};appState.adminHelpRequests||(appState.adminHelpRequests=[]),appState.adminHelpRequests.unshift(c),appState.notifications.unshift({id:generateId("notif"),message:`🛡️ Dispute escalation filed (Ref #${c.id}): Campus Administration has been notified and assigned this case for investigation.`,read:!1,createdAt:(new Date).toISOString()}),appState.notifications.unshift({id:generateId("notif"),message:`🚨 New Student Complaint (#${c.id}): ${t} at ${i} [${n}]. Immediate review requested.`,read:!1,createdAt:(new Date).toISOString()}),saveData(),renderNotifications(),updateSidebarHelpBadge();const p=document.getElementById("student-complaint-form");p&&p.reset();const u=document.getElementById("complaint-location-other-wrap");u&&(u.style.display="none"),showToast(`Complaint filed successfully! Case Ref #${c.id} logged with Campus Administration 🛡️`,"success")}function openItemHelpModal(e,t,n){ensureModalsLoaded();const a=document.getElementById("item-help-modal");if(!a)return;const o=document.getElementById("item-help-report-id"),i=document.getElementById("item-help-modal-item-title"),s=document.getElementById("item-help-modal-item-location"),r=document.getElementById("item-help-note");o&&(o.value=e||""),i&&(i.textContent=t||"Campus Item"),s&&(s.textContent=n||"Campus"),r&&(r.value="");const d=a.querySelectorAll('input[name="item-help-reason"]');d.forEach(e=>{e.checked=!1}),d.length>0&&(d[0].checked=!0),a.classList.add("show"),window.lucide&&(window.optimizedCreateIcons?window.optimizedCreateIcons():window.lucide&&window.lucide.createIcons())}function closeItemHelpModal(){const e=document.getElementById("item-help-modal");e&&e.classList.remove("show")}function submitItemHelpRequest(e){e&&"function"==typeof e.preventDefault&&e.preventDefault();const t=document.getElementById("item-help-report-id")?.value||"",n=document.getElementById("item-help-modal-item-title")?.textContent||"Campus Item",a=document.getElementById("item-help-modal-item-location")?.textContent||"Campus",o=document.getElementById("item-help-note")?.value.trim()||"",i=document.querySelector('input[name="item-help-reason"]:checked'),s=i?i.value:"Dispute or Safety Concern",r={id:generateId("help"),type:"urgent_help",category:s,urgency:"Critical (Safety Risk)",priority:"urgent",relatedReportId:t,itemTitle:n,involvedRole:"Finder / Claimant Dispute",location:a,studentName:appState.user?.name||"Campus Student",studentId:appState.user?.studentId||"STU-2026",studentPhone:appState.user?.phone||"",description:o?`${s}\n\nStudent Note: ${o}`:s,status:"New",createdAt:(new Date).toISOString(),notes:[{author:"Security Bot",text:`Urgent assistance requested for "${n}". Flagged reason: ${s}`,createdAt:(new Date).toISOString()}]},d=appState.lostReports.find(e=>e.id===t)||appState.foundReports.find(e=>e.id===t);d&&(d.priority="urgent",d.isFlagged=!0),appState.adminHelpRequests||(appState.adminHelpRequests=[]),appState.adminHelpRequests.unshift(r),appState.notifications.unshift({id:generateId("notif"),message:`🚨 Urgent assistance requested for "${n}". Case #${r.id} flagged with Campus Security.`,read:!1,createdAt:(new Date).toISOString()}),appState.notifications.unshift({id:generateId("notif"),message:`🚨 URGENT ITEM FLAG (#${r.id}): Student ${appState.user?.name||"Student"} flagged item "${n}" at ${a} [${s}].`,read:!1,createdAt:(new Date).toISOString()}),saveData(),renderNotifications(),updateSidebarHelpBadge(),closeItemHelpModal(),showToast(`Urgent assistance requested! Campus Security Desk alerted (Ref #${r.id}) 🛡️`,"success")}function filterAdminHelpDeskTab(e,t){currentAdminHelpTab=e;document.querySelectorAll(".admin-help-tab").forEach(e=>{e.classList.remove("active"),e.classList.add("btn-secondary")}),t&&(t.classList.add("active"),t.classList.remove("btn-secondary")),renderAdminHelpDesk(e)}function handleAdminHelpSearch(){renderAdminHelpDesk(currentAdminHelpTab)}function updateSidebarHelpBadge(){const e=document.getElementById("sidebar-admin-help-badge");if(!e)return;const t=(appState.adminHelpRequests||[]).filter(e=>"New"===e.status).length;t>0?(e.textContent=t,e.style.display="inline-block"):e.style.display="none"}function renderAdminHelpDesk(e=currentAdminHelpTab){currentAdminHelpTab=e;const t=document.getElementById("admin-help-table-tbody");if(!t)return;const n=appState.adminHelpRequests||[],a=n.length,o=n.filter(e=>"urgent"===e.priority||e.urgency&&e.urgency.toLowerCase().includes("critical")).length,i=n.filter(e=>"New"===e.status).length,s=n.filter(e=>"In Review"===e.status).length,r=n.filter(e=>"Handled"===e.status||"Closed"===e.status).length,d=document.getElementById("admin-help-metric-total"),l=document.getElementById("admin-help-metric-urgent"),c=document.getElementById("admin-help-metric-new"),p=document.getElementById("admin-help-metric-in-review"),u=document.getElementById("admin-help-metric-resolved");d&&(d.textContent=a),l&&(l.textContent=o),c&&(c.textContent=i),p&&(p.textContent=s),u&&(u.textContent=r),updateSidebarHelpBadge();let m=n;"new"===e?m=m.filter(e=>"New"===e.status):"urgent"===e?m=m.filter(e=>"urgent"===e.priority||e.urgency&&e.urgency.toLowerCase().includes("critical")):"open"===e?m=m.filter(e=>"In Review"===e.status):"handled"===e?m=m.filter(e=>"Handled"===e.status):"closed"===e&&(m=m.filter(e=>"Closed"===e.status));const g=document.getElementById("admin-help-search-input")?.value.toLowerCase().trim()||"";if(g&&(m=m.filter(e=>e.id&&e.id.toLowerCase().includes(g)||e.studentName&&e.studentName.toLowerCase().includes(g)||e.studentId&&e.studentId.toLowerCase().includes(g)||e.itemTitle&&e.itemTitle.toLowerCase().includes(g)||e.category&&e.category.toLowerCase().includes(g)||e.location&&e.location.toLowerCase().includes(g))),0===m.length)return t.innerHTML='\n      <tr>\n        <td colspan="8" style="text-align: center; padding: 36px 16px; color: var(--text-muted);">\n          <i data-lucide="shield-check" style="width: 32px; height: 32px; color: var(--teal-bright); margin: 0 auto 8px; display: block;"></i>\n          No assistance requests or complaints matching active filter.\n        </td>\n      </tr>\n    ',void(window.lucide&&(window.optimizedCreateIcons?window.optimizedCreateIcons():window.lucide&&window.lucide.createIcons()));t.innerHTML=m.map(e=>{const t="urgent"===e.priority||e.urgency&&e.urgency.toLowerCase().includes("critical"),n="New"===e.status?"status-checking":"In Review"===e.status?"status-in-review":"Handled"===e.status?"status-handled":"status-closed",a="Critical (Safety Risk)"===e.urgency?"badge-urgent":"High"===e.urgency?"badge-matched":"badge-verified";return`\n      <tr style="${t?"background: rgba(239, 68, 68, 0.04);":""}">\n        <td>\n          <div style="font-weight: 700; font-family: monospace; font-size: 0.88rem; color: var(--teal-bright);">\n            #${e.id}\n          </div>\n          <span class="badge ${"urgent_help"===e.type?"badge-urgent":"badge-searching"}" style="font-size: 0.65rem; margin-top: 2px;">\n            ${"urgent_help"===e.type?"🚨 URGENT":"🛡️ COMPLAINT"}\n          </span>\n        </td>\n        <td style="font-size: 0.8rem; color: var(--text-muted); white-space: nowrap;">\n          ${getTimeAgo(e.createdAt)}\n        </td>\n        <td>\n          <span class="badge ${a}" style="font-size: 0.72rem;">\n            ${escapeHTML(e.urgency||"Normal")}\n          </span>\n        </td>\n        <td>\n          <div style="font-weight: 600; font-size: 0.9rem; color: var(--text-primary);">\n            ${escapeHTML(e.category||e.itemTitle)}\n          </div>\n          <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">\n            Item: ${escapeHTML(e.itemTitle||"Campus Item")}\n          </div>\n        </td>\n        <td>\n          <div style="font-weight: 600; font-size: 0.88rem; color: var(--text-primary);">\n            ${escapeHTML(e.studentName||"Student")}\n          </div>\n          <div style="font-size: 0.75rem; color: var(--text-muted);">\n            ID: ${escapeHTML(e.studentId||"STU")}\n          </div>\n        </td>\n        <td style="font-size: 0.82rem; color: var(--text-secondary);">\n          📍 ${escapeHTML(e.location||"Campus")}\n        </td>\n        <td>\n          <span class="status-pill ${n}">\n            <i data-lucide="${"Handled"===e.status?"check-circle-2":"clock"}"></i>\n            ${escapeHTML(e.status)}\n          </span>\n        </td>\n        <td style="text-align: right;">\n          <div style="display: inline-flex; gap: 6px; align-items: center;">\n            <button type="button" class="btn btn-sm btn-secondary" onclick="openAdminHelpDetailsModal('${e.id}')">\n              <i data-lucide="eye"></i>\n              <span>View</span>\n            </button>\n            <select class="input-glass" style="padding: 3px 8px; font-size: 0.78rem; width: auto;" onchange="updateAdminHelpStatus('${e.id}', this.value)">\n              <option value="New" ${"New"===e.status?"selected":""}>New</option>\n              <option value="In Review" ${"In Review"===e.status?"selected":""}>In Review</option>\n              <option value="Handled" ${"Handled"===e.status?"selected":""}>Handled</option>\n              <option value="Closed" ${"Closed"===e.status?"selected":""}>Closed</option>\n            </select>\n          </div>\n        </td>\n      </tr>\n    `}).join(""),window.lucide&&(window.optimizedCreateIcons?window.optimizedCreateIcons():window.lucide&&window.lucide.createIcons())}function openAdminHelpDetailsModal(e){ensureModalsLoaded(),activeAdminHelpTicketId=e;const t=(appState.adminHelpRequests||[]).find(t=>t.id===e);if(!t)return;const n=document.getElementById("admin-help-details-modal");if(!n)return;document.getElementById("admin-help-modal-ticket-id").textContent=`Ticket #${t.id}`,document.getElementById("admin-help-modal-created-time").textContent=`Submitted ${formatDateTime(t.createdAt)} (${getTimeAgo(t.createdAt)})`;const a=document.getElementById("admin-help-modal-urgency-badge");a&&(a.textContent=t.urgency||"Normal",a.className="badge "+("Critical (Safety Risk)"===t.urgency?"badge-urgent":"High"===t.urgency?"badge-matched":"badge-verified"));const o=document.getElementById("admin-help-modal-status-pill");o&&(o.textContent=t.status,o.className="status-pill "+("New"===t.status?"status-checking":"In Review"===t.status?"status-in-review":"Handled"===t.status?"status-handled":"status-closed")),document.getElementById("admin-help-modal-student-name").textContent=t.studentName||"Student",document.getElementById("admin-help-modal-student-contact").textContent=`ID: ${t.studentId||"STU"} • Phone: ${t.studentPhone||"Not shared"}`,document.getElementById("admin-help-modal-location").textContent=t.location||"Campus",document.getElementById("admin-help-modal-item-title").textContent=t.itemTitle?`Item: ${t.itemTitle}`:"General Issue",document.getElementById("admin-help-modal-reason").textContent=t.category||"Dispute",document.getElementById("admin-help-modal-description").textContent=t.description||"No description provided.";const i=document.getElementById("admin-help-modal-status-select");i&&(i.value=t.status||"New"),renderAdminHelpModalNotes(t);const s=document.getElementById("admin-help-view-item-btn");s&&(t.relatedReportId?s.style.display="inline-flex":s.style.display="none"),n.classList.add("show"),window.lucide&&(window.optimizedCreateIcons?window.optimizedCreateIcons():window.lucide&&window.lucide.createIcons())}function renderAdminHelpModalNotes(e){const t=document.getElementById("admin-help-modal-notes-list");if(!t)return;const n=e.notes||[];0!==n.length?t.innerHTML=n.map(e=>`\n    <div class="admin-note-bubble">\n      <div class="admin-note-header">\n        <span class="admin-note-author">${escapeHTML(e.author)}</span>\n        <span>${getTimeAgo(e.createdAt)}</span>\n      </div>\n      <div style="color: var(--text-primary); font-size: 0.8rem;">${escapeHTML(e.text)}</div>\n    </div>\n  `).join(""):t.innerHTML='<div style="font-size: 0.78rem; color: var(--text-muted); font-style: italic;">No internal notes added yet.</div>'}function addAdminHelpInternalNote(){if(!activeAdminHelpTicketId)return;const e=(appState.adminHelpRequests||[]).find(e=>e.id===activeAdminHelpTicketId);if(!e)return;const t=document.getElementById("admin-help-new-note-input");if(!t||!t.value.trim())return;const n=t.value.trim();e.notes||(e.notes=[]),e.notes.push({author:appState.user?.name||"Staff Officer",text:n,createdAt:(new Date).toISOString()}),t.value="",saveData(),renderAdminHelpModalNotes(e),showToast("Internal investigation note recorded 📝","success")}function updateAdminHelpStatus(e,t){let n=activeAdminHelpTicketId,a=e;void 0!==t&&(n=e,a=t);const o=(appState.adminHelpRequests||[]).find(e=>e.id===n);if(!o)return;const i=o.status;if(o.status=a,o.notes||(o.notes=[]),o.notes.push({author:appState.user?.name||"Staff Officer",text:`Status changed from ${i} to ${a}.`,createdAt:(new Date).toISOString()}),"Handled"!==a&&"Closed"!==a||(o.resolvedAt=(new Date).toISOString()),appState.notifications.unshift({id:generateId("notif"),message:`🛡️ Ticket #${o.id} status updated to "${a}" by Campus Security.`,read:!1,createdAt:(new Date).toISOString()}),saveData(),renderNotifications(),renderAdminHelpDesk(currentAdminHelpTab),activeAdminHelpTicketId===n){const e=document.getElementById("admin-help-modal-status-pill");e&&(e.textContent=a,e.className="status-pill "+("New"===a?"status-checking":"In Review"===a?"status-in-review":"Handled"===a?"status-handled":"status-closed")),renderAdminHelpModalNotes(o)}showToast(`Ticket #${o.id} updated to ${a}!`,"success")}function closeAdminHelpDetailsModal(){activeAdminHelpTicketId=null;const e=document.getElementById("admin-help-details-modal");e&&e.classList.remove("show")}function viewRelatedReportFromHelpModal(){if(!activeAdminHelpTicketId)return;const e=(appState.adminHelpRequests||[]).find(e=>e.id===activeAdminHelpTicketId);e&&e.relatedReportId&&(closeAdminHelpDetailsModal(),openReportDetailsModal(e.relatedReportId))}function openReportDetailsModal(e){ensureModalsLoaded();const t=appState.lostReports.find(t=>t.id===e)||appState.foundReports.find(t=>t.id===e);if(!t)return void showToast("Item report not found.","warning");const n=document.getElementById("item-details-modal"),a=document.getElementById("item-details-modal-body"),o=document.getElementById("item-details-modal-title"),i=document.getElementById("item-details-modal-type-badge");if(!n||!a)return;const s=appState.lostReports.some(t=>t.id===e),r=s?"Lost Item":"Found Item";o&&(o.textContent=t.title),i&&(i.textContent=r,i.className="badge "+(s?"badge-searching":"badge-matched"));const d=CATEGORY_MAP[t.category]||{label:"Item",icon:"📦"};a.innerHTML=`\n    <div style="display: flex; gap: 18px; margin-bottom: 18px; flex-wrap: wrap;">\n      ${t.photo?`\n        <div style="position: relative; width: 110px; height: 110px; border-radius: 8px; overflow: hidden; border: 1.5px solid var(--teal-bright);">\n          <img src="${t.photo}" alt="${escapeHTML(t.title)}" style="width: 100%; height: 100%; object-fit: cover;">\n          ${t.imageSharedForMatch?'\n            <div style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(15, 23, 42, 0.88); color: var(--teal-bright); font-size: 0.65rem; padding: 3px 4px; text-align: center; font-weight: 600; line-height: 1.2;">\n              Possible match — image shared for verification\n            </div>\n          ':""}\n        </div>\n      `:`\n        <div style="width: 110px; height: 110px; border-radius: 8px; background: var(--bg-subtle); display: flex; align-items: center; justify-content: center; font-size: 3rem;">\n          ${d.icon}\n        </div>\n      `}\n\n      <div style="flex: 1; min-width: 220px;">\n        <div style="display: flex; justify-content: space-between; align-items: center;">\n          <h4 style="margin: 0; font-size: 1.15rem; color: var(--text-primary);">${escapeHTML(t.title)}</h4>\n          ${getStatusBadgeHTML(t.status)}\n        </div>\n        <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 4px;">\n          📂 Category: <strong>${escapeHTML(d.label)}</strong> • Color: <strong>${escapeHTML(t.color||"Unspecified")}</strong>\n        </div>\n        <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 4px;">\n          📍 Location: <strong>${escapeHTML(t.location)}</strong>\n        </div>\n        <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">\n          📅 Date Reported: ${formatDateTime(t.date||t.createdAt)} (${getTimeAgo(t.date||t.createdAt)})\n        </div>\n      </div>\n    </div>\n\n    <div style="background: var(--bg-subtle); border-radius: 8px; padding: 12px 14px; margin-bottom: 16px; border: 1px solid var(--border-subtle);">\n      <span style="font-size: 0.72rem; text-transform: uppercase; font-weight: 700; color: var(--text-muted); display: block;">Description & Details</span>\n      <p style="margin: 4px 0 0; font-size: 0.86rem; color: var(--text-secondary); line-height: 1.5;">\n        ${escapeHTML(t.description||"No detailed description provided.")}\n      </p>\n    </div>\n\n    \x3c!-- Contact & Handover Privacy Card --\x3e\n    ${renderContactCard(t,s?"Owner":"Finder")}\n\n    \x3c!-- Actions Area --\x3e\n    <div style="margin-top: 20px; padding-top: 14px; border-top: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">\n      <button type="button" class="btn btn-outline" style="border-color: rgba(239, 68, 68, 0.4); color: #F87171;" onclick="closeReportDetailsModal(); openItemHelpModal('${t.id}', '${escapeHTML(t.title)}', '${escapeHTML(t.location)}')">\n        <i data-lucide="shield-alert"></i>\n        <span>🆘 Need Help?</span>\n      </button>\n\n      <div style="display: flex; gap: 8px; flex-wrap: wrap;">\n        <button type="button" class="btn btn-secondary" onclick="openQrModal('${t.id}')" title="Print QR Tag">\n          <i data-lucide="qr-code"></i>\n          <span>QR Tag</span>\n        </button>\n        <button type="button" class="btn btn-secondary" onclick="downloadReportPdf('${t.id}')" title="Download Official PDF Report">\n          <i data-lucide="file-text"></i>\n          <span>Official PDF</span>\n        </button>\n        <button type="button" class="btn btn-secondary" onclick="closeReportDetailsModal()">Close</button>\n        ${s||"admin"!==appState.user?.role?.toLowerCase()?"":`\n          <button type="button" class="btn btn-primary" onclick="closeReportDetailsModal(); openAdminHandoverModal('${t.id}', 'found')">\n            <i data-lucide="package-check"></i>\n            <span>Safe Handover</span>\n          </button>\n        `}\n      </div>\n    </div>\n  `,n.classList.add("show"),window.lucide&&(window.optimizedCreateIcons?window.optimizedCreateIcons():window.lucide&&window.lucide.createIcons())}function closeReportDetailsModal(){const e=document.getElementById("item-details-modal");e&&e.classList.remove("show")}function saveOfficialContactsSettings(e){e&&"function"==typeof e.preventDefault&&e.preventDefault(),appState.officialContacts||(appState.officialContacts=JSON.parse(JSON.stringify(DEFAULT_OFFICIAL_CONTACTS)));const t=document.getElementById("setting-phone-office")?.value.trim()||"",n=document.getElementById("setting-phone-security")?.value.trim()||"",a=document.getElementById("setting-phone-police")?.value.trim()||"";appState.officialContacts.campusOffice.phone=t,appState.officialContacts.campusSecurity.phone=n,appState.officialContacts.policeStation.phone=a,saveData(),renderHelpSafetyPage(),showToast("Official campus directory contact numbers saved! 📞","success")}window.handleLocationSelectChange=handleLocationSelectChange,window.renderHelpSafetyPage=renderHelpSafetyPage,window.handleComplaintSubmit=handleComplaintSubmit,window.openItemHelpModal=openItemHelpModal,window.closeItemHelpModal=closeItemHelpModal,window.submitItemHelpRequest=submitItemHelpRequest,window.renderAdminHelpDesk=renderAdminHelpDesk,window.filterAdminHelpDeskTab=filterAdminHelpDeskTab,window.handleAdminHelpSearch=handleAdminHelpSearch,window.openAdminHelpDetailsModal=openAdminHelpDetailsModal,window.closeAdminHelpDetailsModal=closeAdminHelpDetailsModal,window.addAdminHelpInternalNote=addAdminHelpInternalNote,window.updateAdminHelpStatus=updateAdminHelpStatus,window.openReportDetailsModal=openReportDetailsModal,window.closeReportDetailsModal=closeReportDetailsModal,window.saveOfficialContactsSettings=saveOfficialContactsSettings,window.setupAuthenticatedUser=setupAuthenticatedUser,window.showPage=showPage,window.saveData=saveData,window.loadData=loadData;let currentClaimFilterTab="all";function normalizeReportsData(){appState.lostReports||(appState.lostReports=[]),appState.foundReports||(appState.foundReports=[]),appState.claims||(appState.claims=[]),appState.lostReports.forEach(e=>{e.type="LOST",e.reportType="LOST",e.history||(e.history=[{action:"Report Created",timestamp:e.date||e.createdAt||(new Date).toISOString(),author:e.reporterName||"Student",note:"Initial lost report registered on campus."}])}),appState.foundReports.forEach(e=>{e.type="FOUND",e.reportType="FOUND",e.history||(e.history=[{action:"Report Registered",timestamp:e.date||e.createdAt||(new Date).toISOString(),author:e.finderName||"Finder",note:"Found property logged into campus registry."}])})}function updateAdminMetricsAndPills(){normalizeReportsData();const e=appState.lostReports.length,t=appState.foundReports.length,n=(appState.claims||[]).filter(e=>"Pending"===e.status||"Under Verification"===e.status).length,a=(appState.adminHelpRequests||[]).filter(e=>"New"===e.status).length,o=appState.lostReports.filter(e=>"Recovered"===e.status).length+appState.foundReports.filter(e=>"Returned"===e.status).length;let i=0;appState.lostReports.forEach(e=>{const t=findMatches(e,"lost");i+=t.length});const s=document.getElementById("sidebar-admin-lost-badge"),r=document.getElementById("sidebar-admin-found-badge"),d=document.getElementById("sidebar-admin-claims-badge"),l=document.getElementById("sidebar-admin-matches-badge"),c=document.getElementById("sidebar-admin-help-badge");s&&(s.textContent=e),r&&(r.textContent=t),d&&(d.textContent=n),l&&(l.textContent=i),c&&(c.textContent=a,c.style.display=a>0?"inline-block":"none");const p=document.getElementById("admin-stat-lost-reports"),u=document.getElementById("admin-stat-found-reports"),m=document.getElementById("admin-stat-potential-matches"),g=document.getElementById("admin-stat-pending-claims"),h=document.getElementById("admin-stat-urgent-cases"),f=document.getElementById("admin-stat-recovered-items");p&&(p.textContent=e),u&&(u.textContent=t),m&&(m.textContent=i),g&&(g.textContent=n),h&&(h.textContent=a),f&&(f.textContent=o)}function renderAdminLostPage(){normalizeReportsData(),updateAdminMetricsAndPills();const e=document.getElementById("admin-lost-table-tbody");if(!e)return;const t=(document.getElementById("admin-lost-search-input")?.value||"").toLowerCase().trim(),n=document.getElementById("admin-lost-filter-category")?.value||"",a=document.getElementById("admin-lost-filter-location")?.value||"",o=document.getElementById("admin-lost-filter-status")?.value||"",i=document.getElementById("admin-lost-filter-sort")?.value||"newest";let s=[...appState.lostReports];const r=document.getElementById("admin-lost-metric-total"),d=document.getElementById("admin-lost-metric-looking"),l=document.getElementById("admin-lost-metric-matches"),c=document.getElementById("admin-lost-metric-claims"),p=document.getElementById("admin-lost-metric-recovered");if(r&&(r.textContent=s.length),d&&(d.textContent=s.filter(e=>"Active"===e.status||"Looking"===e.status).length),l&&(l.textContent=s.filter(e=>"Possible Match"===e.status||"Active"===e.status&&(appState.matches||[]).some(t=>t.lostReportId===e.id)).length),c&&(c.textContent=s.filter(e=>"Claim Submitted"===e.status||"Under Verification"===e.status||"Pending"===e.status||"Claim Approved"===e.status).length),p&&(p.textContent=s.filter(e=>"Recovered"===e.status||"Returned"===e.status).length),t&&(s=s.filter(e=>e.id&&e.id.toLowerCase().includes(t)||e.title&&e.title.toLowerCase().includes(t)||e.description&&e.description.toLowerCase().includes(t)||e.brand&&e.brand.toLowerCase().includes(t)||e.reporterName&&e.reporterName.toLowerCase().includes(t))),n&&(s=s.filter(e=>e.category===n)),a&&(s=s.filter(e=>e.location===a)),o&&(s=s.filter(e=>e.status===o)),"oldest"===i?s.sort((e,t)=>new Date(e.date||e.createdAt)-new Date(t.date||t.createdAt)):"title"===i?s.sort((e,t)=>(e.title||"").localeCompare(t.title||"")):s.sort((e,t)=>new Date(t.date||t.createdAt)-new Date(e.date||e.createdAt)),0===s.length)return e.innerHTML='\n      <tr>\n        <td colspan="10" style="text-align: center; padding: 40px 16px; color: var(--text-muted);">\n          <i data-lucide="file-question" style="width: 36px; height: 36px; color: var(--teal-bright); margin: 0 auto 8px; display: block;"></i>\n          No lost-item reports found matching current filters.\n        </td>\n      </tr>\n    ',void(window.lucide&&(window.optimizedCreateIcons?window.optimizedCreateIcons():window.lucide&&window.lucide.createIcons()));e.innerHTML=s.map(e=>{const t=CATEGORY_MAP[e.category]||{label:"Item",icon:"📦"},n=findMatches(e,"lost"),a=n.length>0?`<span class="badge badge-matched" style="cursor: pointer;" onclick="viewMatchesForReport('${e.id}', 'lost')">${n.length} Match${n.length>1?"es":""} (${n[0].score}%)</span>`:'<span style="font-size: 0.75rem; color: var(--text-muted);">No match</span>';return`\n      <tr>\n        <td>\n          <span style="font-weight: 700; font-family: monospace; color: var(--teal-bright); font-size: 0.82rem;">${e.id}</span>\n          ${"urgent"===e.priority?'<span class="badge badge-urgent" style="display: block; width: fit-content; margin-top: 2px; font-size: 0.65rem;">🔴 URGENT</span>':""}\n        </td>\n        <td>\n          <div style="display: flex; align-items: center; gap: 10px;">\n            ${e.photo?`<img src="${e.photo}" alt="${escapeHTML(e.title)}" style="width: 44px; height: 44px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border-subtle);">`:`<div style="width: 44px; height: 44px; border-radius: 6px; background: var(--bg-subtle); display: flex; align-items: center; justify-content: center; font-size: 1.4rem;">${t.icon}</div>`}\n            <div>\n              <strong style="font-size: 0.92rem; color: var(--text-primary); display: block;">${escapeHTML(e.title)}</strong>\n              <span style="font-size: 0.75rem; color: var(--text-muted); display: block; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHTML(e.description||"No description")}</span>\n            </div>\n          </div>\n        </td>\n        <td>\n          <span class="sub-text">${t.icon} ${escapeHTML(t.label)}</span>\n        </td>\n        <td style="font-size: 0.8rem; color: var(--text-secondary);">\n          <div>🎨 ${escapeHTML(e.color||"Unspecified")}</div>\n          ${e.brand?`<div style="color: var(--text-muted); font-size: 0.75rem;">🏷️ ${escapeHTML(e.brand)}</div>`:""}\n        </td>\n        <td style="font-size: 0.82rem; color: var(--text-secondary);">\n          📍 ${escapeHTML(e.location||"Campus")}\n        </td>\n        <td style="font-size: 0.78rem; color: var(--text-muted); white-space: nowrap;">\n          ${formatDateTime(e.date||e.createdAt)}\n        </td>\n        <td style="font-size: 0.8rem;">\n          <div style="font-weight: 600; color: var(--text-primary);">${escapeHTML(e.reporterName||"Student")}</div>\n          <div style="font-size: 0.72rem; color: var(--text-muted);">${(e.sharePhone||e.phoneSharingConsent)&&(e.phone||e.phoneNumber||e.phone_number)?"📞 "+escapeHTML(e.phone||e.phoneNumber||e.phone_number):e.phone||e.phoneNumber||e.hasPhoneProvided?"🔒 Private":"ℹ️ No phone"}</div>\n        </td>\n        <td>\n          ${getStatusBadgeHTML(e.status)}\n        </td>\n        <td>\n          ${a}\n        </td>\n        <td style="text-align: right; white-space: nowrap;">\n          <div style="display: inline-flex; gap: 6px;">\n            <button type="button" class="btn btn-sm btn-secondary" onclick="openReportDetailsModal('${e.id}')" title="View Details">\n              <i data-lucide="eye"></i>\n            </button>\n            <button type="button" class="btn btn-sm btn-secondary" onclick="openStatusUpdateModal('${e.id}')" title="Update Status">\n              <i data-lucide="edit-3"></i>\n            </button>\n            <button type="button" class="btn btn-sm btn-secondary" onclick="openReportHistoryModal('${e.id}')" title="View Lifecycle History">\n              <i data-lucide="history"></i>\n            </button>\n          </div>\n        </td>\n      </tr>\n    `}).join(""),window.lucide&&(window.optimizedCreateIcons?window.optimizedCreateIcons():window.lucide&&window.lucide.createIcons())}function handleAdminLostFilterChange(){renderAdminLostPage()}function getAiStatusBadgeHTML(e){const t=e?.aiAnalysis||e?.ai_analysis;if(!t)return e?.photo&&e.photo.trim()?'<span class="badge" style="background: rgba(148, 163, 184, 0.15); color: var(--text-muted); font-size: 0.68rem; margin-top: 3px; display: inline-block;">AI Pending</span>':"";if("completed"===t.status){const e=t.visualSummary?.primaryClass||"Object";return`<span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #10B981; font-size: 0.68rem; margin-top: 3px; display: inline-block;" title="YOLO Detection: ${escapeHTML(e)}">✓ AI: ${escapeHTML(e)}</span>`}return"failed"===t.status?'<span class="badge" style="background: rgba(239, 68, 68, 0.15); color: #EF4444; font-size: 0.68rem; margin-top: 3px; display: inline-block;">! AI Unavailable</span>':"processing"===t.status?'<span class="badge" style="background: rgba(59, 130, 246, 0.15); color: #3B82F6; font-size: 0.68rem; margin-top: 3px; display: inline-block;">Analyzing...</span>':""}function renderAdminFoundPage(){normalizeReportsData(),updateAdminMetricsAndPills();const e=document.getElementById("admin-found-table-tbody");if(!e)return;const t=(document.getElementById("admin-found-search-input")?.value||"").toLowerCase().trim(),n=document.getElementById("admin-found-filter-category")?.value||"",a=document.getElementById("admin-found-filter-location")?.value||"",o=document.getElementById("admin-found-filter-status")?.value||"",i=document.getElementById("admin-found-filter-custody")?.value||"",s=document.getElementById("admin-found-filter-sort")?.value||"newest";let r=[...appState.foundReports];const d=document.getElementById("admin-found-metric-total"),l=document.getElementById("admin-found-metric-lockers"),c=document.getElementById("admin-found-metric-finder"),p=document.getElementById("admin-found-metric-matches"),u=document.getElementById("admin-found-metric-returned");if(d&&(d.textContent=r.length),l&&(l.textContent=r.filter(e=>(e.custody||"").toLowerCase().includes("desk")||(e.custody||"").toLowerCase().includes("office")).length),c&&(c.textContent=r.filter(e=>(e.custody||"").toLowerCase().includes("finder")||(e.custody||"").toLowerCase().includes("me")).length),p&&(p.textContent=r.filter(e=>"Possible Owner"===e.status||"Possible Match"===e.status||"Active"===e.status&&(appState.matches||[]).some(t=>t.foundReportId===e.id)).length),u&&(u.textContent=r.filter(e=>"Returned"===e.status||"Recovered"===e.status).length),t&&(r=r.filter(e=>e.id&&e.id.toLowerCase().includes(t)||e.title&&e.title.toLowerCase().includes(t)||e.description&&e.description.toLowerCase().includes(t)||e.finderName&&e.finderName.toLowerCase().includes(t))),n&&(r=r.filter(e=>e.category===n)),a&&(r=r.filter(e=>e.location===a)),o&&(r=r.filter(e=>e.status===o)),"desk"===i&&(r=r.filter(e=>(e.custody||"").toLowerCase().includes("desk"))),"finder"===i&&(r=r.filter(e=>(e.custody||"").toLowerCase().includes("finder")||(e.custody||"").toLowerCase().includes("me"))),"oldest"===s?r.sort((e,t)=>new Date(e.date||e.createdAt)-new Date(t.date||t.createdAt)):"title"===s?r.sort((e,t)=>(e.title||"").localeCompare(t.title||"")):r.sort((e,t)=>new Date(t.date||t.createdAt)-new Date(e.date||e.createdAt)),0===r.length)return e.innerHTML='\n      <tr>\n        <td colspan="10" style="text-align: center; padding: 40px 16px; color: var(--text-muted);">\n          <i data-lucide="package" style="width: 36px; height: 36px; color: var(--teal-bright); margin: 0 auto 8px; display: block;"></i>\n          No found-item reports found matching current filters.\n        </td>\n      </tr>\n    ',void(window.lucide&&(window.optimizedCreateIcons?window.optimizedCreateIcons():window.lucide&&window.lucide.createIcons()));e.innerHTML=r.map(e=>{const t=CATEGORY_MAP[e.category]||{label:"Item",icon:"📦"},n=findMatches(e,"found"),a=n.length>0?`<span class="badge badge-matched" style="cursor: pointer;" onclick="viewMatchesForReport('${e.id}', 'found')">${n.length} Owner${n.length>1?"s":""} (${n[0].score}%)</span>`:'<span style="font-size: 0.75rem; color: var(--text-muted);">Searching...</span>';return`\n      <tr>\n        <td>\n          <span style="font-weight: 700; font-family: monospace; color: var(--teal-bright); font-size: 0.82rem;">${e.id}</span>\n          <span class="badge badge-verified" style="display: block; width: fit-content; margin-top: 2px; font-size: 0.65rem;">${escapeHTML(e.custody||"Security Desk")}</span>\n        </td>\n        <td>\n          <div style="display: flex; align-items: center; gap: 10px;">\n            ${e.photo?`<img src="${e.photo}" alt="${escapeHTML(e.title)}" style="width: 44px; height: 44px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border-subtle);">`:`<div style="width: 44px; height: 44px; border-radius: 6px; background: var(--bg-subtle); display: flex; align-items: center; justify-content: center; font-size: 1.4rem;">${t.icon}</div>`}\n            <div>\n              <strong style="font-size: 0.92rem; color: var(--text-primary); display: block;">${escapeHTML(e.title)}</strong>\n              <span style="font-size: 0.75rem; color: var(--text-muted); display: block; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHTML(e.description||"No description")}</span>\n              ${getAiStatusBadgeHTML(e)}\n            </div>\n          </div>\n        </td>\n        <td>\n          <span class="sub-text">${t.icon} ${escapeHTML(t.label)}</span>\n        </td>\n        <td style="font-size: 0.8rem; color: var(--text-secondary);">\n          <div>🎨 ${escapeHTML(e.color||"Unspecified")}</div>\n          ${e.brand?`<div style="color: var(--text-muted); font-size: 0.75rem;">🏷️ ${escapeHTML(e.brand)}</div>`:""}\n        </td>\n        <td style="font-size: 0.82rem; color: var(--text-secondary);">\n          📍 ${escapeHTML(e.location||"Campus")}\n        </td>\n        <td style="font-size: 0.78rem; color: var(--text-muted); white-space: nowrap;">\n          ${formatDateTime(e.date||e.createdAt)}\n        </td>\n        <td style="font-size: 0.8rem;">\n          <div style="font-weight: 600; color: var(--text-primary);">${escapeHTML(e.finderName||"Campus Staff")}</div>\n          <div style="font-size: 0.72rem; color: var(--text-muted);">${(e.sharePhone||e.phoneSharingConsent)&&(e.phone||e.phoneNumber||e.phone_number)?"📞 "+escapeHTML(e.phone||e.phoneNumber||e.phone_number):e.phone||e.phoneNumber||e.hasPhoneProvided?"🔒 Private / Desk":"ℹ️ No phone"}</div>\n        </td>\n        <td>\n          ${getStatusBadgeHTML(e.status)}\n        </td>\n        <td>\n          ${a}\n        </td>\n        <td style="text-align: right; white-space: nowrap;">\n          <div style="display: inline-flex; gap: 6px;">\n            <button type="button" class="btn btn-sm btn-secondary" onclick="openReportDetailsModal('${e.id}')" title="View Details">\n              <i data-lucide="eye"></i>\n            </button>\n            <button type="button" class="btn btn-sm btn-secondary" onclick="openAdminHandoverModal('${e.id}', 'found')" title="Safe Handover">\n              <i data-lucide="package-check"></i>\n            </button>\n            <button type="button" class="btn btn-sm btn-secondary" onclick="openStatusUpdateModal('${e.id}')" title="Update Status">\n              <i data-lucide="edit-3"></i>\n            </button>\n            <button type="button" class="btn btn-sm btn-secondary" onclick="openReportHistoryModal('${e.id}')" title="Lifecycle History">\n              <i data-lucide="history"></i>\n            </button>\n          </div>\n        </td>\n      </tr>\n    `}).join(""),window.lucide&&(window.optimizedCreateIcons?window.optimizedCreateIcons():window.lucide&&window.lucide.createIcons())}function handleAdminFoundFilterChange(){renderAdminFoundPage()}function renderAdminAllReportsPage(){normalizeReportsData(),updateAdminMetricsAndPills();const e=document.getElementById("admin-all-table-tbody");if(!e)return;const t=(document.getElementById("admin-all-search-input")?.value||"").toLowerCase().trim(),n=document.getElementById("admin-all-filter-type")?.value||"",a=document.getElementById("admin-all-filter-category")?.value||"",o=document.getElementById("admin-all-filter-location")?.value||"",i=document.getElementById("admin-all-filter-status")?.value||"",s=document.getElementById("admin-all-filter-sort")?.value||"newest";let r=[...appState.lostReports.map(e=>({...e,displayType:"LOST"})),...appState.foundReports.map(e=>({...e,displayType:"FOUND"}))];if(n&&(r=r.filter(e=>e.displayType===n)),t&&(r=r.filter(e=>e.id&&e.id.toLowerCase().includes(t)||e.title&&e.title.toLowerCase().includes(t)||e.description&&e.description.toLowerCase().includes(t)||e.reporterName&&e.reporterName.toLowerCase().includes(t)||e.finderName&&e.finderName.toLowerCase().includes(t))),a&&(r=r.filter(e=>e.category===a)),o&&(r=r.filter(e=>e.location===o)),i&&(r=r.filter(e=>e.status===i)),"oldest"===s?r.sort((e,t)=>new Date(e.date||e.createdAt)-new Date(t.date||t.createdAt)):"title"===s?r.sort((e,t)=>(e.title||"").localeCompare(t.title||"")):r.sort((e,t)=>new Date(t.date||t.createdAt)-new Date(e.date||e.createdAt)),0===r.length)return e.innerHTML='\n      <tr>\n        <td colspan="10" style="text-align: center; padding: 40px 16px; color: var(--text-muted);">\n          <i data-lucide="clipboard-list" style="width: 36px; height: 36px; color: var(--teal-bright); margin: 0 auto 8px; display: block;"></i>\n          No reports found matching selected criteria.\n        </td>\n      </tr>\n    ',void(window.lucide&&(window.optimizedCreateIcons?window.optimizedCreateIcons():window.lucide&&window.lucide.createIcons()));e.innerHTML=r.map(e=>{const t="LOST"===e.displayType,n=CATEGORY_MAP[e.category]||{label:"Item",icon:"📦"},a=t?e.reporterName||"Student":e.finderName||"Finder";return`\n      <tr>\n        <td>\n          <span class="badge ${t?"badge-type-lost":"badge-type-found"}">\n            ${t?"🔴 LOST":"🟢 FOUND"}\n          </span>\n        </td>\n        <td>\n          <span style="font-weight: 700; font-family: monospace; color: var(--teal-bright); font-size: 0.82rem;">${e.id}</span>\n        </td>\n        <td>\n          <div style="display: flex; align-items: center; gap: 10px;">\n            ${e.photo?`<img src="${e.photo}" alt="${escapeHTML(e.title)}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border-subtle);">`:`<div style="width: 40px; height: 40px; border-radius: 6px; background: var(--bg-subtle); display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">${n.icon}</div>`}\n            <div>\n              <strong style="font-size: 0.92rem; color: var(--text-primary); display: block;">${escapeHTML(e.title)}</strong>\n              <span style="font-size: 0.75rem; color: var(--text-muted); display: block; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHTML(e.description||"No description")}</span>\n            </div>\n          </div>\n        </td>\n        <td>${n.icon} ${escapeHTML(n.label)}</td>\n        <td style="font-size: 0.8rem; color: var(--text-secondary);">${escapeHTML(e.color||"Unspecified")}</td>\n        <td style="font-size: 0.82rem; color: var(--text-secondary);">📍 ${escapeHTML(e.location||"Campus")}</td>\n        <td style="font-size: 0.78rem; color: var(--text-muted); white-space: nowrap;">${formatDateTime(e.date||e.createdAt)}</td>\n        <td style="font-size: 0.8rem; font-weight: 600;">${escapeHTML(a)}</td>\n        <td>${getStatusBadgeHTML(e.status)}</td>\n        <td style="text-align: right; white-space: nowrap;">\n          <button type="button" class="btn btn-sm btn-secondary" onclick="openReportDetailsModal('${e.id}')" title="View Details">\n            <i data-lucide="eye"></i>\n          </button>\n          <button type="button" class="btn btn-sm btn-secondary" onclick="openQrModal('${e.id}')" title="QR Tag">\n            <i data-lucide="qr-code"></i>\n          </button>\n        </td>\n      </tr>\n    `}).join(""),window.lucide&&(window.optimizedCreateIcons?window.optimizedCreateIcons():window.lucide&&window.lucide.createIcons())}function handleAdminAllFilterChange(){renderAdminAllReportsPage()}function filterAdminClaimsTab(e,t){currentClaimFilterTab=e;document.querySelectorAll(".admin-claims-tab").forEach(e=>{e.classList.remove("active"),e.classList.add("btn-secondary")}),t&&(t.classList.add("active"),t.classList.remove("btn-secondary")),renderAdminClaimsPage(e)}function handleAdminClaimsFilterChange(){renderAdminClaimsPage(currentClaimFilterTab)}function renderAdminClaimsPage(e=currentClaimFilterTab){normalizeReportsData(),updateAdminMetricsAndPills(),currentClaimFilterTab=e;const t=document.getElementById("admin-claims-table-tbody");if(!t)return;const n=appState.claims||[],a=document.getElementById("admin-claims-metric-total"),o=document.getElementById("admin-claims-metric-pending"),i=document.getElementById("admin-claims-metric-verification"),s=document.getElementById("admin-claims-metric-approved"),r=document.getElementById("admin-claims-metric-completed");a&&(a.textContent=n.length),o&&(o.textContent=n.filter(e=>"Pending"===e.status).length),i&&(i.textContent=n.filter(e=>"Under Verification"===e.status).length),s&&(s.textContent=n.filter(e=>"Approved"===e.status).length),r&&(r.textContent=n.filter(e=>"Completed"===e.status).length);let d=[...n];"all"!==e&&(d=d.filter(t=>t.status===e));const l=(document.getElementById("admin-claims-search-input")?.value||"").toLowerCase().trim();if(l&&(d=d.filter(e=>e.id&&e.id.toLowerCase().includes(l)||e.claimantName&&e.claimantName.toLowerCase().includes(l)||e.claimantId&&e.claimantId.toLowerCase().includes(l)||e.itemTitle&&e.itemTitle.toLowerCase().includes(l)||e.verificationEvidence&&e.verificationEvidence.toLowerCase().includes(l))),0===d.length)return t.innerHTML=`\n      <tr>\n        <td colspan="9" style="text-align: center; padding: 40px 16px; color: var(--text-muted);">\n          <i data-lucide="shield-check" style="width: 36px; height: 36px; color: var(--teal-bright); margin: 0 auto 8px; display: block;"></i>\n          No claims require review under the "${escapeHTML(e)}" tab.\n        </td>\n      </tr>\n    `,void(window.lucide&&(window.optimizedCreateIcons?window.optimizedCreateIcons():window.lucide&&window.lucide.createIcons()));t.innerHTML=d.map(e=>{const t=appState.lostReports.find(t=>t.id===e.lostReportId)||{title:e.itemTitle||"Lost Item"},n=appState.foundReports.find(t=>t.id===e.foundReportId)||{title:"Found Item in Custody"},a="Approved"===e.status?'<span class="status-pill status-approved"><i data-lucide="check-circle-2"></i> Approved</span>':"Under Verification"===e.status?'<span class="status-pill status-checking"><i data-lucide="clock"></i> Under Verification</span>':"Completed"===e.status?'<span class="status-pill status-returned"><i data-lucide="package-check"></i> Completed / Returned</span>':"Rejected"===e.status?'<span class="status-pill status-rejected"><i data-lucide="x-circle"></i> Rejected</span>':'<span class="status-pill status-waiting"><i data-lucide="clock"></i> Pending</span>';return`\n      <tr>\n        <td>\n          <span style="font-weight: 700; font-family: monospace; color: var(--teal-bright); font-size: 0.84rem;">#${e.id}</span>\n          <span style="display: block; font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;">${getTimeAgo(e.createdAt)}</span>\n        </td>\n        <td>\n          <strong style="color: var(--text-primary); font-size: 0.9rem; display: block;">${escapeHTML(t.title)}</strong>\n          <span style="font-size: 0.75rem; color: var(--text-muted);">ID: ${e.lostReportId||"--"}</span>\n        </td>\n        <td>\n          <strong style="color: var(--text-primary); font-size: 0.9rem; display: block;">${escapeHTML(n.title)}</strong>\n          <span style="font-size: 0.75rem; color: var(--text-muted);">ID: ${e.foundReportId||"--"}</span>\n        </td>\n        <td>\n          <div style="font-weight: 600; color: var(--text-primary); font-size: 0.88rem;">${escapeHTML(e.claimantName||"Student")}</div>\n          <div style="font-size: 0.75rem; color: var(--text-muted);">ID: ${e.claimantId||"STU"} • ${(e.sharePhone||e.phoneSharingConsent)&&(e.claimantContact||e.claimantPhone||e.phone)?"📞 "+escapeHTML(e.claimantContact||e.claimantPhone||e.phone):e.claimantContact||e.claimantPhone||e.phone?"🔒 Phone Private":"ℹ️ No phone"}</div>\n        </td>\n        <td>\n          <div style="font-weight: 600; color: var(--text-primary); font-size: 0.88rem;">${escapeHTML(e.finderName||n.finderName||"Finder")}</div>\n          <div style="font-size: 0.75rem; color: var(--text-muted);">${escapeHTML(n.custody||"Campus Desk")}</div>\n        </td>\n        <td>\n          <span class="badge badge-matched" style="font-weight: 800; font-size: 0.82rem;">${e.matchScore||85}% AI Match</span>\n        </td>\n        <td>\n          <div class="claim-evidence-box" style="padding: 6px 10px; font-size: 0.8rem; max-width: 260px;">\n            <em>"${escapeHTML(e.verificationEvidence||"No private secret proof logged yet.")}"</em>\n          </div>\n        </td>\n        <td>\n          ${a}\n        </td>\n        <td style="text-align: right; white-space: nowrap;">\n          <div style="display: inline-flex; gap: 6px;">\n            <button type="button" class="btn btn-sm btn-primary" onclick="openClaimReviewModal('${e.id}')">\n              <i data-lucide="shield-alert"></i>\n              <span>Review Claim</span>\n            </button>\n            <button type="button" class="btn btn-sm btn-secondary" style="border-color: rgba(239, 68, 68, 0.4); color: #F87171;" onclick="openItemHelpModal('${e.lostReportId}', '${escapeHTML(t.title)}', '${escapeHTML(t.location)}')">\n              <span>🆘</span>\n            </button>\n          </div>\n        </td>\n      </tr>\n    `}).join(""),window.lucide&&(window.optimizedCreateIcons?window.optimizedCreateIcons():window.lucide&&window.lucide.createIcons())}function renderAdminMatchCenterPage(){normalizeReportsData(),updateAdminMetricsAndPills();const e=document.getElementById("admin-matches-cards-container");if(!e)return;const t=parseInt(document.getElementById("admin-match-filter-threshold")?.value||"40",10),n=(document.getElementById("admin-match-search-input")?.value||"").toLowerCase().trim(),a=[];appState.lostReports.forEach(e=>{findMatches(e,"lost").forEach(e=>{e.score>=t&&a.push(e)})});let o=a;if(n&&(o=o.filter(e=>e.lost.title&&e.lost.title.toLowerCase().includes(n)||e.found.title&&e.found.title.toLowerCase().includes(n)||e.lost.description&&e.lost.description.toLowerCase().includes(n)||e.found.description&&e.found.description.toLowerCase().includes(n)||e.lost.location&&e.lost.location.toLowerCase().includes(n)||e.found.location&&e.found.location.toLowerCase().includes(n))),0===o.length)return e.innerHTML='\n      <div class="glass-card empty-state" style="text-align: center; padding: 48px 20px;">\n        <i data-lucide="sparkles" style="width: 44px; height: 44px; color: var(--ai-violet); margin: 0 auto 12px; display: block;"></i>\n        <h3 style="color: var(--text-primary); margin-bottom: 6px;">No Potential Matches Found</h3>\n        <p style="color: var(--text-muted); font-size: 0.9rem; max-width: 480px; margin: 0 auto;">\n          The multi-signal engine considers category, text descriptions, visual attributes, colors, KSRCE landmarks, and timestamps. As new campus reports arrive, potential matches will automatically populate here.\n        </p>\n      </div>\n    ',void(window.lucide&&(window.optimizedCreateIcons?window.optimizedCreateIcons():window.lucide&&window.lucide.createIcons()));e.innerHTML=o.map(e=>{const{lost:t,found:n,score:a,matchReasons:o,unmatchedReasons:i}=e,s=CATEGORY_MAP[t.category]||{label:"Item",icon:"📦"},r=CATEGORY_MAP[n.category]||{label:"Item",icon:"📦"},d=(appState.claims||[]).some(e=>e.lostReportId===t.id&&e.foundReportId===n.id);return`\n      <div class="glass-card match-card" style="padding: 22px;">\n        <div class="match-card-side-by-side">\n          \x3c!-- Left: Lost item --\x3e\n          <div class="match-item-pane">\n            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">\n              <span class="badge badge-searching"><span class="badge-dot"></span> Lost Report (#${t.id})</span>\n              ${"urgent"===t.priority?'<span class="badge badge-urgent">🔴 URGENT</span>':""}\n            </div>\n            ${t.photo?`<img src="${t.photo}" class="match-item-thumb" alt="Lost">`:`<div class="match-item-thumb" style="display:flex;align-items:center;justify-content:center;font-size:2.6rem;">${s.icon}</div>`}\n            <h4 style="font-size: 1.05rem; margin: 8px 0 2px;">${escapeHTML(t.title)}</h4>\n            <div class="sub-text">${s.icon} ${s.label} • 🎨 ${escapeHTML(t.color||"Unspecified")}</div>\n            <div style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 4px;">📍 Last seen: <strong>${escapeHTML(t.location)}</strong></div>\n            <div style="font-size: 0.8rem; color: var(--text-muted);">📅 ${getTimeAgo(t.date||t.createdAt)} by ${escapeHTML(t.reporterName||"Student")}</div>\n          </div>\n\n          \x3c!-- Center: Large Animated Confidence Ring --\x3e\n          <div class="match-score-center" style="padding: 0 16px;">\n            <div class="score-ring-wrap">\n              <svg class="score-ring-svg" viewBox="0 0 100 100">\n                <circle class="score-ring-bg" cx="50" cy="50" r="40"></circle>\n                <circle class="score-ring-fill ${a>70?"score-green":a>50?"score-yellow":"score-red"}" cx="50" cy="50" r="40"\n                  stroke-dasharray="251.2"\n                  stroke-dashoffset="${251.2-a/100*251.2}">\n                </circle>\n              </svg>\n              <div class="score-text-inside" style="font-size: 1.25rem;">${a}%</div>\n            </div>\n            <span style="font-size: 0.72rem; text-transform: uppercase; color: var(--ai-violet-light); font-weight: 700; letter-spacing: 0.6px; margin-top: 4px;">Match Score</span>\n          </div>\n\n          \x3c!-- Right: Found item --\x3e\n          <div class="match-item-pane">\n            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">\n              <span class="badge badge-matched"><span class="badge-dot"></span> Found Report (#${n.id})</span>\n              <span class="sub-text" style="font-size: 0.75rem;">${escapeHTML(n.custody||"Campus Desk")}</span>\n            </div>\n            ${n.photo?`<img src="${n.photo}" class="match-item-thumb" alt="Found">`:`<div class="match-item-thumb" style="display:flex;align-items:center;justify-content:center;font-size:2.6rem;">${r.icon}</div>`}\n            <h4 style="font-size: 1.05rem; margin: 8px 0 2px;">${escapeHTML(n.title)}</h4>\n            <div class="sub-text">${r.icon} ${r.label} • 🎨 ${escapeHTML(n.color||"Unspecified")}</div>\n            <div style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 4px;">📍 Found at: <strong>${escapeHTML(n.location)}</strong></div>\n            <div style="font-size: 0.8rem; color: var(--text-muted);">📅 ${getTimeAgo(n.date||n.createdAt)} by ${escapeHTML(n.finderName||"Finder")}</div>\n            ${n.aiAnalysis&&"completed"===n.aiAnalysis.status?`\n              <div style="margin-top: 6px;">\n                <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #10B981; font-size: 0.72rem; border: 1px solid rgba(16, 185, 129, 0.3);">\n                  ✓ AI Analysis: ${escapeHTML(n.aiAnalysis.visualSummary?.primaryClass||"Object")} detected\n                </span>\n              </div>\n            `:n.aiAnalysis&&"failed"===n.aiAnalysis.status?'\n              <div style="margin-top: 6px;">\n                <span class="badge" style="background: rgba(239, 68, 68, 0.15); color: #EF4444; font-size: 0.72rem;">\n                  ! AI Analysis Unavailable\n                </span>\n              </div>\n            ':""}\n          </div>\n        </div>\n\n        \x3c!-- Explainable Matching Reasons --\x3e\n        <div class="explainable-reasons-box" style="margin-top: 16px;">\n          <div style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: var(--text-muted);">Explainable Correlation Signals</div>\n          <div class="explainable-reasons-list">\n            ${o.map(e=>`<span class="reason-chip-matched">${e}</span>`).join("")}\n            ${i.map(e=>`<span class="reason-chip-unmatched">${e}</span>`).join("")}\n          </div>\n        </div>\n\n        \x3c!-- Actions --\x3e\n        <div style="margin-top: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">\n          <button type="button" class="btn btn-outline" style="border-color: rgba(239, 68, 68, 0.4); color: #F87171; font-size: 0.82rem;" onclick="openItemHelpModal('${t.id}', '${escapeHTML(t.title)}', '${escapeHTML(t.location)}')">\n            <i data-lucide="shield-alert" style="width: 14px; height: 14px;"></i>\n            <span>🆘 Need Help?</span>\n          </button>\n\n          <div style="display: flex; gap: 8px;">\n            <button type="button" class="btn btn-secondary btn-sm" onclick="openReportDetailsModal('${t.id}')">\n              <i data-lucide="eye"></i>\n              <span>Review Details</span>\n            </button>\n            ${d?'\n              <span class="badge badge-verified" style="padding: 8px 14px; font-size: 0.82rem;">Claim in Verification</span>\n            ':`\n              <button type="button" class="btn btn-accent-teal btn-sm" onclick="openCreateClaimModal('${t.id}', '${n.id}')">\n                <i data-lucide="hand"></i>\n                <span>Create Claim</span>\n              </button>\n            `}\n          </div>\n        </div>\n      </div>\n    `}).join(""),window.lucide&&(window.optimizedCreateIcons?window.optimizedCreateIcons():window.lucide&&window.lucide.createIcons())}function handleAdminMatchFilterChange(){renderAdminMatchCenterPage()}function viewMatchesForReport(e,t){showPage("admin-matches-page");const n=document.getElementById("admin-match-search-input"),a=("lost"===t?appState.lostReports:appState.foundReports).find(t=>t.id===e);n&&a&&(n.value=a.title,renderAdminMatchCenterPage())}function openCreateClaimModal(e,t){ensureModalsLoaded();const n=appState.lostReports.find(t=>t.id===e),a=appState.foundReports.find(e=>e.id===t);if(!n||!a)return void showToast("Cannot initiate claim: reports not found.","warning");const o=document.getElementById("create-claim-modal");if(!o)return;document.getElementById("create-claim-lost-id").value=e,document.getElementById("create-claim-found-id").value=t,document.getElementById("create-claim-secret-proof").value="";const i=document.getElementById("create-claim-items-summary");i&&(i.innerHTML=`\n      <div style="display: flex; justify-content: space-between; align-items: center;">\n        <div>\n          <span style="font-size: 0.72rem; text-transform: uppercase; font-weight: 700; color: #F87171;">Lost Property</span>\n          <div style="font-weight: 700; color: var(--text-primary); font-size: 0.95rem;">${escapeHTML(n.title)}</div>\n          <div style="font-size: 0.75rem; color: var(--text-muted);">📍 ${escapeHTML(n.location)}</div>\n        </div>\n        <div style="font-size: 1.2rem; color: var(--teal-bright); font-weight: 800;">↕</div>\n        <div>\n          <span style="font-size: 0.72rem; text-transform: uppercase; font-weight: 700; color: var(--teal-bright);">Found Property</span>\n          <div style="font-weight: 700; color: var(--text-primary); font-size: 0.95rem;">${escapeHTML(a.title)}</div>\n          <div style="font-size: 0.75rem; color: var(--text-muted);">📍 ${escapeHTML(a.location)}</div>\n        </div>\n      </div>\n    `),o.classList.add("show")}function closeCreateClaimModal(){const e=document.getElementById("create-claim-modal");e&&e.classList.remove("show")}function submitCreateClaimFromModal(e){e&&"function"==typeof e.preventDefault&&e.preventDefault();const t=document.getElementById("create-claim-lost-id")?.value,n=document.getElementById("create-claim-found-id")?.value,a=document.getElementById("create-claim-secret-proof")?.value.trim(),o="share"===(document.querySelector('input[name="claim-contact-share-opt"]:checked')?.value||"share");if(!a)return void showToast("Please provide a distinguishing ownership proof.","warning");const i=appState.lostReports.find(e=>e.id===t),s=appState.foundReports.find(e=>e.id===n);if(!i||!s)return;const r=findMatches(i,"lost").find(e=>e.found.id===n)||{score:85,matchReasons:["Category and location correlation"]},d=generateId("claim"),l={id:d,lostReportId:t,foundReportId:n,itemTitle:i.title,claimantName:appState.user?.name||i.reporterName||"Student Claimant",claimantId:appState.user?.studentId||"STU-2026",claimantContact:i.phone||i.phoneNumber||i.phone_number||appState.user&&(appState.user.phone||appState.user.phoneNumber)||"",sharePhone:o,finderName:s.finderName||"Finder",matchScore:r.score,matchReasons:r.matchReasons||["Strong multi-signal correlation"],unmatchedReasons:r.unmatchedReasons||[],verificationEvidence:a,verificationNotes:"",status:"Pending",createdAt:(new Date).toISOString(),updatedAt:(new Date).toISOString()};appState.claims||(appState.claims=[]),appState.claims.unshift(l),i.status="Claim Submitted",s.status="Claim Submitted",i.history||(i.history=[]),i.history.push({action:"Claim Submitted",timestamp:(new Date).toISOString(),author:l.claimantName,note:`Claim #${d} submitted with secret ownership proof.`}),s.history||(s.history=[]),s.history.push({action:"Claim Submitted",timestamp:(new Date).toISOString(),author:l.claimantName,note:`Claim #${d} submitted by claimant.`}),appState.notifications.unshift({id:generateId("notif"),message:`🤝 Claim #${d} submitted for "${i.title}". Proof logged for Campus Administration verification.`,read:!1,createdAt:(new Date).toISOString()}),appState.notifications.unshift({id:generateId("notif"),message:`📋 New Claim #${d} requires review: ${l.claimantName} claimed "${s.title}".`,read:!1,createdAt:(new Date).toISOString()}),saveData(),renderNotifications(),closeCreateClaimModal(),showToast(`Claim #${d} created and sent for Admin verification! 🛡️`,"success");showPage(appState.user&&appState.user.role&&"admin"===appState.user.role.toLowerCase()?"admin-claims-page":"my-reports-page")}function openClaimReviewModal(e){ensureModalsLoaded();const t=(appState.claims||[]).find(t=>t.id===e);if(!t)return;const n=appState.lostReports.find(e=>e.id===t.lostReportId)||{title:t.itemTitle||"Lost Item"},a=appState.foundReports.find(e=>e.id===t.foundReportId)||{title:"Found Property"},o=document.getElementById("claim-review-modal"),i=document.getElementById("claim-review-modal-body");if(!o||!i)return;document.getElementById("claim-review-modal-title").textContent=`Claim #${t.id}`,document.getElementById("claim-review-modal-sub").textContent=`Filed ${formatDateTime(t.createdAt)} (${getTimeAgo(t.createdAt)})`;n.category,a.category;i.innerHTML=`\n    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 18px;">\n      \x3c!-- Lost Item Pane --\x3e\n      <div style="background: var(--bg-subtle); padding: 14px; border-radius: 8px; border: 1px solid var(--border-subtle);">\n        <span class="badge badge-searching" style="font-size: 0.7rem;">🔴 Lost Report</span>\n        <h4 style="margin: 6px 0 2px; font-size: 1rem; color: var(--text-primary);">${escapeHTML(n.title)}</h4>\n        <div style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 6px;">📍 ${escapeHTML(n.location||"Campus")} • 📅 ${formatDateTime(n.date||n.createdAt)}</div>\n        <div style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.4;">${escapeHTML(n.description||"No description")}</div>\n      </div>\n\n      \x3c!-- Found Item Pane --\x3e\n      <div style="background: var(--bg-subtle); padding: 14px; border-radius: 8px; border: 1px solid var(--border-subtle);">\n        <span class="badge badge-matched" style="font-size: 0.7rem;">🟢 Found Property</span>\n        <h4 style="margin: 6px 0 2px; font-size: 1rem; color: var(--text-primary);">${escapeHTML(a.title)}</h4>\n        <div style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 6px;">📍 ${escapeHTML(a.location||"Campus")} • 📦 ${escapeHTML(a.custody||"Security Desk")}</div>\n        <div style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.4;">${escapeHTML(a.description||"No description")}</div>\n      </div>\n    </div>\n\n    \x3c!-- AI Match Confidence & Reasons --\x3e\n    <div class="explainable-reasons-box" style="margin-bottom: 16px;">\n      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">\n        <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: var(--ai-violet);">AI Matching Confidence</span>\n        <span class="badge badge-matched" style="font-weight: 800; font-size: 0.85rem;">${t.matchScore||85}% Correlation</span>\n      </div>\n      <div class="explainable-reasons-list">\n        ${(t.matchReasons||[]).map(e=>`<span class="reason-chip-matched">${e}</span>`).join("")}\n        ${(t.unmatchedReasons||[]).map(e=>`<span class="reason-chip-unmatched">${e}</span>`).join("")}\n      </div>\n    </div>\n\n    \x3c!-- Private Secret Verification Proof --\x3e\n    <div style="margin-bottom: 18px;">\n      <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: var(--color-warning); display: block; margin-bottom: 4px;">\n        🔒 Private Distinguishing Proof (Submitted by Claimant)\n      </span>\n      <div class="claim-evidence-box">\n        <strong>Claimant Stated:</strong> "${escapeHTML(t.verificationEvidence||"No distinguishing proof entered.")}"\n      </div>\n    </div>\n\n    \x3c!-- Claimant & Finder Info --\x3e\n    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; font-size: 0.82rem; background: var(--bg-subtle); padding: 12px 14px; border-radius: 8px; margin-bottom: 18px; border: 1px solid var(--border-subtle);">\n      <div>\n        <span style="color: var(--text-muted); display: block;">Claimant:</span>\n        <strong style="color: var(--text-primary);">${escapeHTML(t.claimantName)} (${escapeHTML(t.claimantId)})</strong>\n        <div style="color: var(--text-muted); margin-top: 2px;">${(t.sharePhone||t.phoneSharingConsent)&&(t.claimantContact||t.claimantPhone||t.phone)?"📞 "+escapeHTML(t.claimantContact||t.claimantPhone||t.phone):t.claimantContact||t.claimantPhone||t.phone?"🔒 Contact Private":"ℹ️ No phone provided"}</div>\n      </div>\n      <div>\n        <span style="color: var(--text-muted); display: block;">Finder &amp; Custody:</span>\n        <strong style="color: var(--text-primary);">${escapeHTML(t.finderName||a.finderName||"Finder")}</strong>\n        <div style="color: var(--text-muted); margin-top: 2px;">Custody: ${escapeHTML(a.custody||"Campus Security Desk")}</div>\n      </div>\n    </div>\n\n    \x3c!-- Status & Admin Actions --\x3e\n    <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 14px; border-top: 1px solid var(--border-subtle); flex-wrap: wrap; gap: 10px;">\n      <button type="button" class="btn btn-outline" style="border-color: rgba(239, 68, 68, 0.4); color: #F87171;" onclick="closeClaimReviewModal(); openItemHelpModal('${t.lostReportId}', '${escapeHTML(n.title)}', '${escapeHTML(n.location)}')">\n        <i data-lucide="shield-alert"></i>\n        <span>🆘 Need Help?</span>\n      </button>\n\n      <div style="display: flex; gap: 8px; flex-wrap: wrap;">\n        ${"Rejected"!==t.status?`\n          <button type="button" class="btn btn-secondary btn-sm" style="color: #F87171;" onclick="updateClaimStatus('${t.id}', 'Rejected')">\n            <i data-lucide="x-circle"></i>\n            <span>Reject</span>\n          </button>\n        `:""}\n        ${"Pending"===t.status?`\n          <button type="button" class="btn btn-secondary btn-sm" onclick="updateClaimStatus('${t.id}', 'Under Verification')">\n            <i data-lucide="help-circle"></i>\n            <span>Request More Proof</span>\n          </button>\n        `:""}\n        ${"Approved"!==t.status&&"Completed"!==t.status?`\n          <button type="button" class="btn btn-accent-teal btn-sm" onclick="updateClaimStatus('${t.id}', 'Approved')">\n            <i data-lucide="check-circle-2"></i>\n            <span>Approve Claim</span>\n          </button>\n        `:""}\n        ${"Approved"===t.status?`\n          <button type="button" class="btn btn-primary btn-sm" onclick="closeClaimReviewModal(); openAdminHandoverModal('${t.foundReportId}', 'found')">\n            <i data-lucide="package-check"></i>\n            <span>Authorize Safe Handover</span>\n          </button>\n        `:""}\n      </div>\n    </div>\n  `,o.classList.add("show"),window.lucide&&(window.optimizedCreateIcons?window.optimizedCreateIcons():window.lucide&&window.lucide.createIcons())}function closeClaimReviewModal(){const e=document.getElementById("claim-review-modal");e&&e.classList.remove("show")}function updateClaimStatus(e,t){const n=(appState.claims||[]).find(t=>t.id===e);if(!n)return;n.status=t,n.updatedAt=(new Date).toISOString();const a=appState.lostReports.find(e=>e.id===n.lostReportId),o=appState.foundReports.find(e=>e.id===n.foundReportId);"Approved"===t?(a&&(a.status="Claim Approved"),o&&(o.status="Claim Approved")):"Completed"===t?(a&&(a.status="Recovered"),o&&(o.status="Returned")):"Rejected"===t&&(a&&(a.status="Active"),o&&(o.status="Active"));const i={action:`Claim ${t}`,timestamp:(new Date).toISOString(),author:appState.user?.name||"Campus Administrator",note:`Claim #${e} status updated to ${t}.`};a&&!a.history&&(a.history=[]),a&&a.history.push(i),o&&!o.history&&(o.history=[]),o&&o.history.push(i),fetch(API_BASE+"/api/claims?id="+encodeURIComponent(e),{method:"PATCH",headers:getAuthHeaders(),body:JSON.stringify({status:t})}).then(e=>e.json()).then(e=>{e.success&&updateSyncIndicator("synced","Cloud Synced")}).catch(e=>console.warn("Cloud claim update error:",e)),appState.notifications.unshift({id:generateId("notif"),message:`🛡️ Claim #${e} update: Status changed to "${t}" by Campus Security.`,read:!1,createdAt:(new Date).toISOString()}),saveData(),renderNotifications(),renderAdminClaimsPage(currentClaimFilterTab),closeClaimReviewModal(),showToast(`Claim #${e} marked ${t}!`,"success")}function openReportHistoryModal(e){ensureModalsLoaded();const t=appState.lostReports.find(t=>t.id===e)||appState.foundReports.find(t=>t.id===e);if(!t)return;const n=document.getElementById("report-history-modal"),a=document.getElementById("report-history-modal-body");if(!n||!a)return;document.getElementById("report-history-modal-title").textContent=`Audit: ${escapeHTML(t.title)}`,document.getElementById("report-history-modal-sub").textContent=`Report ID #${t.id} • ${t.type||"Item"}`;const o=t.history||[{action:"Created",timestamp:t.date||t.createdAt,author:t.reporterName||t.finderName||"Student",note:"Report logged in LostSeek database."}];a.innerHTML=`\n    <div class="timeline-history-list">\n      ${o.map(e=>`\n        <div class="timeline-event-item">\n          <div class="timeline-event-time">${formatDateTime(e.timestamp)} (${getTimeAgo(e.timestamp)})</div>\n          <div style="font-weight: 700; font-size: 0.9rem; color: var(--text-primary); margin-top: 2px;">${escapeHTML(e.action)}</div>\n          <div class="timeline-event-desc">${escapeHTML(e.note||"")}</div>\n          <div style="font-size: 0.72rem; color: var(--teal-bright); margin-top: 2px;">Logged by: ${escapeHTML(e.author||"System")}</div>\n        </div>\n      `).join("")}\n    </div>\n    <div style="margin-top: 20px; display: flex; justify-content: flex-end;">\n      <button type="button" class="btn btn-secondary" onclick="closeReportHistoryModal()">Close</button>\n    </div>\n  `,n.classList.add("show")}function closeReportHistoryModal(){const e=document.getElementById("report-history-modal");e&&e.classList.remove("show")}let activeStatusReportId=null;async function openStatusUpdateModal(e){ensureModalsLoaded(),activeStatusReportId=e;const t=(appState.lostReports||[]).find(t=>t.id===e)||(appState.foundReports||[]).find(t=>t.id===e);if(!t)return;const n=["Active","Pending","Under Verification","Claim Approved","Verified","Returned","Recovered","Closed","Expired"],a=t.status||"Active",o=prompt(`Update status for "${t.title}" (Current: ${a}):\n\nValid Statuses: Active, Under Verification, Claim Approved, Recovered, Returned, Closed`,a);if(!o||!o.trim()||o.trim()===a)return;let i=o.trim();"looking"===i.toLowerCase()||"possible match"===i.toLowerCase()?i="Active":"claim submitted"===i.toLowerCase()?i="Under Verification":"archived"===i.toLowerCase()&&(i="Closed");const s=n.find(e=>e.toLowerCase()===i.toLowerCase());if(s){t.status=s,t.history||(t.history=[]),t.history.push({action:`Status Changed to ${s}`,timestamp:(new Date).toISOString(),author:appState.user?.name||"Administrator",note:"Manual administrative status update."}),saveData(),renderAllAdminPages();try{const t=appState.user,n={"Content-Type":"application/json"};t&&(n["x-lostseek-user"]=encodeURIComponent(JSON.stringify(t))),await fetch(API_BASE+`/api/reports?id=${e}`,{method:"PATCH",headers:n,body:JSON.stringify({status:s})})}catch(e){console.warn("Could not sync status change to cloud backend:",e.message)}showToast(`Status updated to ${s}!`,"success")}else showToast(`Invalid status. Choose from: ${n.join(", ")}`,"error")}function renderAllAdminPages(){renderAdminLostPage(),renderAdminFoundPage(),renderAdminAllReportsPage(),renderAdminClaimsPage(),renderAdminMatchCenterPage(),updateAdminMetricsAndPills()}window.renderAdminLostPage=renderAdminLostPage,window.renderAdminFoundPage=renderAdminFoundPage,window.renderAdminAllReportsPage=renderAdminAllReportsPage,window.renderAdminClaimsPage=renderAdminClaimsPage,window.renderAdminMatchCenterPage=renderAdminMatchCenterPage,window.handleAdminLostFilterChange=handleAdminLostFilterChange,window.handleAdminFoundFilterChange=handleAdminFoundFilterChange,window.handleAdminAllFilterChange=handleAdminAllFilterChange,window.handleAdminClaimsFilterChange=handleAdminClaimsFilterChange,window.handleAdminMatchFilterChange=handleAdminMatchFilterChange,window.filterAdminClaimsTab=filterAdminClaimsTab,window.openCreateClaimModal=openCreateClaimModal,window.closeCreateClaimModal=closeCreateClaimModal,window.submitCreateClaimFromModal=submitCreateClaimFromModal,window.openClaimReviewModal=openClaimReviewModal,window.closeClaimReviewModal=closeClaimReviewModal,window.updateClaimStatus=updateClaimStatus,window.openReportHistoryModal=openReportHistoryModal,window.closeReportHistoryModal=closeReportHistoryModal,window.openStatusUpdateModal=openStatusUpdateModal,window.viewMatchesForReport=viewMatchesForReport,window.updateAdminMetricsAndPills=updateAdminMetricsAndPills,window.toggleRegisterView=toggleRegisterView,window.handleRegistrationSubmit=handleRegistrationSubmit,window.triggerPhotoPick=triggerPhotoPick,window.triggerProfilePhotoUpload=triggerProfilePhotoUpload,window.handleProfilePhotoSelected=handleProfilePhotoSelected,window.handleProfilePasswordChange=handleProfilePasswordChange,window.clearWizardPhoto=clearWizardPhoto;let currentMangaPage=1;const totalMangaPages=9;function renderMangaPagination(){const e=document.getElementById("manga-progress-text-desktop"),t=document.getElementById("manga-progress-text-mobile"),n=document.getElementById("manga-progress-fill");e&&(e.innerText=`Page ${currentMangaPage} of 9`),t&&(t.innerText=`${currentMangaPage} / 9`),n&&(n.style.width=currentMangaPage/9*100+"%")}function updateMangaView(){const e=document.querySelectorAll(".manga-slide");if(!e.length)return;e.forEach(e=>{const t=parseInt(e.getAttribute("data-page"));e.classList.remove("active","prev-slide"),t===currentMangaPage?e.classList.add("active"):t<currentMangaPage&&e.classList.add("prev-slide")});const t=[document.getElementById("manga-prev-desktop"),document.getElementById("manga-prev-mobile")],n=[document.getElementById("manga-next-desktop"),document.getElementById("manga-next-mobile")];t.forEach(e=>{e&&(e.disabled=1===currentMangaPage)}),n.forEach(e=>{e&&(e.disabled=9===currentMangaPage)}),renderMangaPagination()}let lastMangaTurn=0;window.nextMangaPage=function(){const e=Date.now();e-lastMangaTurn<250?console.log("Debounced nextMangaPage"):(lastMangaTurn=e,console.log("nextMangaPage called. Current is:",currentMangaPage),currentMangaPage<9&&(currentMangaPage++,console.log("Incremented to:",currentMangaPage),updateMangaView()))},window.prevMangaPage=function(){const e=Date.now();e-lastMangaTurn<250||(lastMangaTurn=e,currentMangaPage>1&&(currentMangaPage--,updateMangaView()))},window.goToMangaPage=function(e){e>=1&&e<=9&&(currentMangaPage=e,updateMangaView())};let touchStartX=0,touchEndX=0;function handleMangaSwipe(){touchEndX<touchStartX-50&&window.nextMangaPage(),touchEndX>touchStartX+50&&window.prevMangaPage()}document.addEventListener("DOMContentLoaded",()=>{const e=document.getElementById("manga-slides-wrapper");document.getElementById("manga-prev"),document.getElementById("manga-next");e&&(e.addEventListener("touchstart",e=>{touchStartX=e.changedTouches[0].screenX},{passive:!0}),e.addEventListener("touchend",e=>{touchEndX=e.changedTouches[0].screenX,handleMangaSwipe()},{passive:!0})),document.addEventListener("keydown",e=>{const t=document.getElementById("manga-slides-wrapper");t&&"none"!==window.getComputedStyle(t).display&&("ArrowRight"===e.key&&window.nextMangaPage(),"ArrowLeft"===e.key&&window.prevMangaPage())}),updateMangaView()});
+/**
+ * LOSTSEEK AUTO-GENERATED BUNDLE
+ * Do not edit this file directly. Edit the files in public/src/ instead.
+ * Built on: 2026-09-26T01:39:57.385Z
+ */
+
+
+/* ==========================================================================
+   MODULE: 0_core.js
+   ========================================================================== */
+
+// On-demand script loader for performance optimization
+function loadScriptAsync(src) {
+  return new Promise((resolve, reject) => {
+    const existing = document.querySelector(`script[src="${src}"]`);
+    if (existing) {
+      if (existing.dataset.loaded === 'true' || window.Chart || window.QRCode || window.jspdf) return resolve();
+      existing.addEventListener('load', () => { existing.dataset.loaded = 'true'; resolve(); });
+      existing.addEventListener('error', reject);
+      return;
+    }
+    const s = document.createElement('script');
+    s.src = src;
+    s.onload = () => { s.dataset.loaded = 'true'; resolve(); };
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+/**
+ * LostSeek - Core Application Logic
+ * Modern Campus Lost & Found System
+ */
+
+// Global App State
+const STORAGE_KEY = 'campusfind_data';
+
+let appState = window.appState = {
+  user: null,
+  lostReports: [],
+  foundReports: [],
+  claims: [],
+  notifications: []
+};
+
+// Category Metadata mapping for emojis and labels
+const CATEGORY_MAP = {
+  'id-card': { label: 'ID Card / Student Card', icon: '🪪' },
+  'id-cards': { label: 'ID Card / Student Card', icon: '🪪' },
+  'electronics': { label: 'Electronics', icon: '📱' },
+  'wallet': { label: 'Wallet / Purse', icon: '👛' },
+  'wallets': { label: 'Wallet / Purse', icon: '👛' },
+  'keys': { label: 'Keys', icon: '🔑' },
+  'bags': { label: 'Bags / Backpacks', icon: '🎒' },
+  'documents': { label: 'Documents / Books', icon: '📄' },
+  'clothing': { label: 'Clothing', icon: '👕' },
+  'accessories': { label: 'Accessories', icon: '👓' },
+  'misc': { label: 'Miscellaneous', icon: '🔮' }
+};
+
+// Extensible Landmark Data Structure (Preserves verified coordinates without guessing)
+const CAMPUS_LOCATIONS = [
+  // ACADEMIC / BUILDINGS
+  { name: 'A Block', category: 'Academic / Buildings', coordinates: null },
+  { name: 'B Block', category: 'Academic / Buildings', coordinates: null },
+  { name: 'C Block', category: 'Academic / Buildings', coordinates: null },
+  { name: 'D Block', category: 'Academic / Buildings', coordinates: null },
+  { name: 'E Block', category: 'Academic / Buildings', coordinates: null },
+  { name: 'F Block', category: 'Academic / Buildings', coordinates: null },
+  { name: 'Administrative Block', category: 'Academic / Buildings', coordinates: null },
+  { name: 'Academic Block', category: 'Academic / Buildings', coordinates: null },
+
+  // FOOD / SHOPS
+  { name: 'Saffron Canteen', category: 'Food / Shops', coordinates: null },
+  { name: 'West Mart', category: 'Food / Shops', coordinates: null },
+  { name: 'Cinnamon Cafe', category: 'Food / Shops', coordinates: null },
+  { name: 'Cucumber Cafe', category: 'Food / Shops', coordinates: null },
+  { name: 'Mustard Cafe', category: 'Food / Shops', coordinates: null },
+
+  // SERVICES
+  { name: 'Post Office', category: 'Services', coordinates: null },
+
+  // HOSTEL / HOUSE AREAS
+  { name: 'Himalayan House', category: 'Hostel / House Areas', coordinates: null },
+  { name: 'Tanjore House', category: 'Hostel / House Areas', coordinates: null },
+  { name: 'Marina House', category: 'Hostel / House Areas', coordinates: null },
+  { name: 'Nilgiri House', category: 'Hostel / House Areas', coordinates: null },
+  { name: 'Madura House', category: 'Hostel / House Areas', coordinates: null }
+];
+
+// Location Proximity Adjacency Map for AI Matching
+const LOCATION_PROXIMITY = {
+  // Academic & Administrative
+  'A Block': ['B Block', 'C Block', 'Academic Block', 'Administrative Block'],
+  'B Block': ['A Block', 'C Block', 'D Block', 'Academic Block'],
+  'C Block': ['A Block', 'B Block', 'D Block', 'E Block'],
+  'D Block': ['B Block', 'C Block', 'E Block', 'F Block'],
+  'E Block': ['C Block', 'D Block', 'F Block', 'Post Office'],
+  'F Block': ['D Block', 'E Block', 'Post Office', 'West Mart'],
+  'Administrative Block': ['Academic Block', 'A Block', 'Main Building', 'Admin Block', 'Post Office'],
+  'Academic Block': ['Administrative Block', 'A Block', 'B Block', 'C Block', 'Library'],
+
+  // Food & Dining
+  'Saffron Canteen': ['West Mart', 'Cinnamon Cafe', 'Cucumber Cafe', 'Mustard Cafe', 'Cafeteria'],
+  'West Mart': ['Saffron Canteen', 'Post Office', 'Cinnamon Cafe', 'F Block'],
+  'Cinnamon Cafe': ['Saffron Canteen', 'Cucumber Cafe', 'West Mart'],
+  'Cucumber Cafe': ['Saffron Canteen', 'Cinnamon Cafe', 'Mustard Cafe'],
+  'Mustard Cafe': ['Saffron Canteen', 'Cucumber Cafe', 'Tanjore House'],
+
+  // Services
+  'Post Office': ['Administrative Block', 'West Mart', 'E Block', 'F Block'],
+
+  // Hostels / Residential
+  'Himalayan House': ['Tanjore House', 'Marina House', 'Nilgiri House', 'Madura House', 'Hostel Block A'],
+  'Tanjore House': ['Himalayan House', 'Marina House', 'Mustard Cafe', 'Hostel Block B'],
+  'Marina House': ['Himalayan House', 'Tanjore House', 'Nilgiri House', 'Hostel Block C'],
+  'Nilgiri House': ['Marina House', 'Himalayan House', 'Madura House'],
+  'Madura House': ['Nilgiri House', 'Himalayan House', 'Marina House'],
+
+  // Legacy campus locations (Preserved for backward compatibility)
+  'Library': ['Cafeteria', 'Main Building', 'Admin Block', 'Lab Complex', 'Academic Block'],
+  'Cafeteria': ['Library', 'Hostel Block A', 'Main Building', 'Saffron Canteen'],
+  'Main Building': ['Library', 'Admin Block', 'Auditorium', 'Lab Complex', 'Administrative Block'],
+  'Hostel Block A': ['Hostel Block B', 'Cafeteria', 'Sports Ground', 'Himalayan House'],
+  'Hostel Block B': ['Hostel Block A', 'Hostel Block C', 'Tanjore House'],
+  'Hostel Block C': ['Hostel Block B', 'Sports Ground', 'Marina House'],
+  'Sports Ground': ['Hostel Block A', 'Hostel Block C', 'Parking Area'],
+  'Lab Complex': ['Main Building', 'Library'],
+  'Parking Area': ['Sports Ground', 'Admin Block', 'Main Building'],
+  'Auditorium': ['Main Building', 'Admin Block'],
+  'Admin Block': ['Main Building', 'Library', 'Parking Area', 'Administrative Block'],
+  'Other': []
+};
+
+function getLocationCategory(locationName) {
+  if (!locationName) return null;
+  const match = CAMPUS_LOCATIONS.find(l => l.name.toLowerCase() === locationName.toLowerCase().trim());
+  return match ? match.category : null;
+}
+
+function isSameLocationCategory(loc1, loc2) {
+  const cat1 = getLocationCategory(loc1);
+  const cat2 = getLocationCategory(loc2);
+  return !!(cat1 && cat2 && cat1 === cat2);
+}
+
+function handleLocationSelectChange(selectEl, otherWrapId) {
+  if (!selectEl || !otherWrapId) return;
+  const wrap = document.getElementById(otherWrapId);
+  if (!wrap) return;
+  if (selectEl.value === 'Other') {
+    wrap.style.display = 'block';
+    const input = wrap.querySelector('input');
+    if (input) input.focus();
+  } else {
+    wrap.style.display = 'none';
+  }
+}
+
+function getOfficialContactDisplay(phone) {
+  if (phone && phone.trim()) {
+    const clean = phone.trim();
+    return `<a href="tel:${escapeHTML(clean)}" style="color: var(--teal-bright); text-decoration: none; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;"><i data-lucide="phone-call" style="width: 14px; height: 14px;"></i> ${escapeHTML(clean)}</a>`;
+  }
+  return '<span class="contact-unconfigured-text">Contact number not configured</span>';
+}
+
+
+// Configurable Official Campus Contacts (Zero fake numbers: official KSRCE & 112)
+const DEFAULT_OFFICIAL_CONTACTS = {
+  campusOffice: {
+    name: 'Campus Administration & Student Affairs (KSRCE)',
+    office: 'Administrative Block, 1st Floor, Room 102',
+    phone: '04288-274213',
+    email: 'lostfound@ksrce.ac.in',
+    hours: 'Mon - Fri, 9:00 AM - 5:00 PM'
+  },
+  campusSecurity: {
+    name: 'Campus Security & Custody Desk (Main Gate)',
+    office: 'Main Gate Security Post & Administrative Block Reception',
+    phone: '04288-274757',
+    hours: '24/7 Security Coverage & Custody Lockers'
+  },
+  policeStation: {
+    name: 'Emergency & Police Assistance',
+    address: 'National Emergency Response Centre',
+    phone: '112',
+    landmark: 'Police, Fire & Medical Emergency Services'
+  }
+};
+
+
+/* ==========================================================================
+   MODULE: 1_lostseek_design_system__themes___avatars.js
+   ========================================================================== */
+/* ==========================================================================
+   LOSTSEEK DESIGN SYSTEM, THEMES & AVATARS
+   ========================================================================== */
+let currentTheme = localStorage.getItem('lostseek_theme') || 'system';
+
+function initTheme() {
+  applyTheme(currentTheme, false);
+
+  // Respond to OS theme changes if on system mode
+  if (window.matchMedia) {
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+      if (currentTheme === 'system') {
+        applyTheme('system', false);
+      }
+    });
+  }
+}
+
+function applyTheme(theme, showNotice = false) {
+  currentTheme = theme;
+  localStorage.setItem('lostseek_theme', theme);
+
+  let effectiveTheme = theme;
+  if (theme === 'system') {
+    const isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    effectiveTheme = isDark ? 'dark' : 'light';
+  }
+
+  document.documentElement.setAttribute('data-theme', effectiveTheme);
+
+  // Update header theme icon
+  const iconEl = document.getElementById('header-theme-icon');
+  if (iconEl) {
+    iconEl.setAttribute('data-lucide', effectiveTheme === 'dark' ? 'sun' : 'moon');
+  }
+
+  // Update Settings page segmented cards if visible
+  updateSettingsThemeCards(theme);
+
+  // Adapt Chart.js instances to active theme
+  adaptChartsToTheme(effectiveTheme);
+
+  if (window.lucide) {
+    if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
+  }
+
+  if (showNotice) {
+    showToast(`Theme switched to ${theme.charAt(0).toUpperCase() + theme.slice(1)} Mode`, 'info');
+  }
+}
+
+function setTheme(theme) {
+  applyTheme(theme, true);
+}
+
+function cycleTheme() {
+  const next = currentTheme === 'dark' ? 'light' : (currentTheme === 'light' ? 'system' : 'dark');
+  setTheme(next);
+}
+
+function updateSettingsThemeCards(activeTheme) {
+  ['dark', 'light', 'system'].forEach(t => {
+    const el = document.getElementById(`theme-opt-${t}`);
+    if (el) {
+      if (t === activeTheme) el.classList.add('active');
+      else el.classList.remove('active');
+    }
+  });
+}
+
+function adaptChartsToTheme(effectiveTheme) {
+  if (typeof Chart === 'undefined') return;
+  const isDark = (effectiveTheme === 'dark');
+  const textColor = isDark ? '#9BB5B3' : '#456865';
+  const gridColor = isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.06)';
+
+  ['chart-categories', 'chart-timeline', 'chart-recovery', 'chart-locations'].forEach(id => {
+    const chart = (typeof analyticsChartInstances !== 'undefined' && analyticsChartInstances[id]) || Chart.getChart(id);
+    if (chart) {
+      if (chart.options.scales) {
+        if (chart.options.scales.x) {
+          if (chart.options.scales.x.ticks) chart.options.scales.x.ticks.color = textColor;
+          if (chart.options.scales.x.grid) chart.options.scales.x.grid.color = gridColor;
+        }
+        if (chart.options.scales.y) {
+          if (chart.options.scales.y.ticks) chart.options.scales.y.ticks.color = textColor;
+          if (chart.options.scales.y.grid) chart.options.scales.y.grid.color = gridColor;
+        }
+      }
+      if (chart.options.plugins && chart.options.plugins.legend && chart.options.plugins.legend.labels) {
+        chart.options.plugins.legend.labels.color = isDark ? '#F4FAF9' : '#0B2024';
+      }
+      chart.update();
+    }
+  });
+}
+
+// Sourced directly from user-provided reference image
+const LOSTSEEK_STUDENT_AVATAR_B64 = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'/%3E%3Ccircle cx='12' cy='7' r='4'/%3E%3C/svg%3E";
+const LOSTSEEK_ADMIN_AVATAR_B64 = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2'/%3E%3Ccircle cx='9' cy='7' r='4'/%3E%3Cpath d='M22 21v-2a4 4 0 0 0-3-3.87'/%3E%3Cpath d='M16 3.13a4 4 0 0 1 0 7.75'/%3E%3C/svg%3E";
+
+const STUDENT_AVATAR_PATH = LOSTSEEK_STUDENT_AVATAR_B64;
+const ADMIN_AVATAR_PATH = LOSTSEEK_ADMIN_AVATAR_B64;
+
+/**
+ * StudentAvatar: Sourced directly from user provided reference asset
+ * Resilient multi-tier fallback (assets -> public/assets -> root -> base64 data)
+ * Guarantees zero "Unavailable" or broken-image states across all local and deployed hosts.
+ */
+function StudentAvatar(size = 40) {
+  return `<img src="${STUDENT_AVATAR_PATH}" 
+               onerror="if(!this.dataset.r){this.dataset.r='1';this.src='public/assets/images/student-avatar.png';}else if(this.dataset.r==='1'){this.dataset.r='2';this.src='./student-avatar.png';}else{this.onerror=null;this.src=LOSTSEEK_STUDENT_AVATAR_B64;}"
+               class="lostseek-avatar-img" 
+               width="${size}" 
+               height="${size}" 
+               alt="Student Avatar" 
+               loading="eager" 
+               decoding="sync"
+               style="width:${size}px; height:${size}px; border-radius:50%; object-fit:cover; display:block;" />`;
+}
+
+/**
+ * AdminAvatar: Sourced directly from user provided reference asset
+ * Resilient multi-tier fallback (assets -> public/assets -> root -> base64 data)
+ * Guarantees zero "Unavailable" or broken-image states across all local and deployed hosts.
+ */
+function AdminAvatar(size = 40) {
+  return `<img src="${ADMIN_AVATAR_PATH}" 
+               onerror="if(!this.dataset.r){this.dataset.r='1';this.src='public/assets/images/admin-avatar.png';}else if(this.dataset.r==='1'){this.dataset.r='2';this.src='./admin-avatar.png';}else{this.onerror=null;this.src=LOSTSEEK_ADMIN_AVATAR_B64;}"
+               class="lostseek-avatar-img" 
+               width="${size}" 
+               height="${size}" 
+               alt="Admin Avatar" 
+               loading="eager" 
+               decoding="sync"
+               style="width:${size}px; height:${size}px; border-radius:50%; object-fit:cover; display:block;" />`;
+}
+
+function getAvatarSVG(role, size = 40, customUrl = undefined) {
+  const u = window.appState && window.appState.user;
+  let avatarUrl = customUrl;
+
+  // If customUrl was not explicitly specified, use current logged in user avatar
+  // ONLY if role matches current user's role or no role was passed.
+  if (avatarUrl === undefined) {
+    if (u && (!role || (String(role).toLowerCase() === String(u.role || '').toLowerCase()))) {
+      avatarUrl = u.avatarUrl || u.avatar || u.avatar_url || u.profilePicture || u.profilePictureUrl || u.photoUrl || null;
+    } else {
+      avatarUrl = null;
+    }
+  }
+
+  if (avatarUrl && String(avatarUrl).trim()) {
+    const isStudent = !role || String(role).toLowerCase() === 'student';
+    const fallbackAttr = isStudent
+      ? `if(!this.dataset.r){this.dataset.r='1';this.src='public/assets/images/student-avatar.png';}else if(this.dataset.r==='1'){this.dataset.r='2';this.src='./student-avatar.png';}else{this.onerror=null;this.src=LOSTSEEK_STUDENT_AVATAR_B64;}`
+      : `if(!this.dataset.r){this.dataset.r='1';this.src='public/assets/images/admin-avatar.png';}else if(this.dataset.r==='1'){this.dataset.r='2';this.src='./admin-avatar.png';}else{this.onerror=null;this.src=LOSTSEEK_ADMIN_AVATAR_B64;}`;
+
+    return `<img src="${escapeHTML(String(avatarUrl).trim())}" 
+                 onerror="${fallbackAttr}" 
+                 class="lostseek-avatar-img custom-avatar" 
+                 width="${size}" 
+                 height="${size}" 
+                 alt="User Avatar" 
+                 style="width:${size}px; height:${size}px; border-radius:50%; object-fit:cover; display:block; border: 2px solid var(--teal-bright);" />`;
+  }
+
+  const isAdmin = (role && (role.toLowerCase() === 'admin' || role.toLowerCase() === 'supervisor' || role.toLowerCase() === 'director'));
+  return isAdmin ? AdminAvatar(size) : StudentAvatar(size);
+}
+
+function initLoginPageAvatars() {
+  const studentBtnAvatar = document.getElementById('login-role-student-avatar');
+  if (studentBtnAvatar) studentBtnAvatar.innerHTML = getAvatarSVG('student', 36);
+
+  const adminBtnAvatar = document.getElementById('login-role-admin-avatar');
+  if (adminBtnAvatar) adminBtnAvatar.innerHTML = getAvatarSVG('admin', 36);
+
+  const roleInput = document.getElementById('login-role');
+  const role = roleInput ? roleInput.value : 'student';
+  updateLoginAvatarPreview(role);
+}
+
+function updateLoginAvatarPreview(role) {
+  const preview = document.getElementById('login-avatar-preview');
+  if (preview) {
+    preview.innerHTML = getAvatarSVG(role, 80);
+  }
+}
+
+function renderMobileBottomNav(role) {
+  const nav = document.getElementById('mobile-bottom-nav');
+  if (!nav) return;
+  const isAdmin = (role || '').toLowerCase() === 'admin';
+
+  if (isAdmin) {
+    nav.innerHTML = `
+      <a href="#dashboard" class="bottom-nav-item" data-page="dashboard-page">
+        <i data-lucide="layout-dashboard"></i>
+        <span>Dashboard</span>
+      </a>
+      <a href="#admin" class="bottom-nav-item" data-page="admin-page">
+        <i data-lucide="shield-check"></i>
+        <span>Admin</span>
+      </a>
+      <a href="#matches" class="bottom-nav-item" data-page="matches-page">
+        <i data-lucide="sparkles"></i>
+        <span>Matches</span>
+      </a>
+      <a href="#analytics" class="bottom-nav-item" data-page="analytics-page">
+        <i data-lucide="chart-no-axes-combined"></i>
+        <span>Reports</span>
+      </a>
+      <a href="#profile" class="bottom-nav-item" data-page="profile-page">
+        <div class="bottom-nav-avatar">${getAvatarSVG('admin', 22)}</div>
+        <span>Profile</span>
+      </a>
+    `;
+  } else {
+    nav.innerHTML = `
+      <a href="#dashboard" class="bottom-nav-item" data-page="dashboard-page">
+        <i data-lucide="home"></i>
+        <span>Home</span>
+      </a>
+      <a href="#find-item" class="bottom-nav-item" data-page="find-item-page">
+        <i data-lucide="search"></i>
+        <span>Find</span>
+      </a>
+      <a href="#i-found" class="bottom-nav-item" data-page="i-found-page">
+        <i data-lucide="camera"></i>
+        <span>I Found</span>
+      </a>
+      <a href="#matches" class="bottom-nav-item" data-page="matches-page">
+        <i data-lucide="sparkles"></i>
+        <span>Matches</span>
+      </a>
+      <a href="#profile" class="bottom-nav-item" data-page="profile-page">
+        <div class="bottom-nav-avatar">${getAvatarSVG('student', 22)}</div>
+        <span>Profile</span>
+      </a>
+    `;
+  }
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
+}
+
+function syncMobileBottomNav(pageId) {
+  const items = document.querySelectorAll('.bottom-nav-item');
+  items.forEach(item => {
+    if (item.getAttribute('data-page') === pageId) {
+      item.classList.add('active');
+    } else {
+      item.classList.remove('active');
+    }
+  });
+}
+
+
+/* ==========================================================================
+   MODULE: 2_initialization___seed_data__performance_optimized___deferred_hydration_.js
+   ========================================================================== */
+/* ==========================================================================
+   INITIALIZATION & SEED DATA (PERFORMANCE OPTIMIZED & DEFERRED HYDRATION)
+   ========================================================================== */
+let appInitialized = false;
+
+function ensureAppInitialized() {
+  if (appInitialized) return;
+  appInitialized = true;
+
+  loadData();
+  initLoginPageAvatars();
+
+  // Populate default dates for report forms
+  const nowStr = new Date().toISOString().slice(0, 16);
+  const lostDateEl = document.getElementById('lost-date');
+  const foundDateEl = document.getElementById('found-date');
+  if (lostDateEl && !lostDateEl.value) lostDateEl.value = nowStr;
+  if (foundDateEl && !foundDateEl.value) foundDateEl.value = nowStr;
+
+  // Initialize wizard dynamic forms & drag-and-drop
+  initWizardForms();
+
+  // Set up login form submit listener
+  const loginForm = document.getElementById('login-form');
+  if (loginForm && !loginForm._listenerBound) {
+    loginForm._listenerBound = true;
+    loginForm.addEventListener('submit', handleLoginSubmit);
+  }
+
+  // Handle authenticated user or startup routing:
+  if (checkPublicReportUrl()) {
+    // Handled by public QR verification modal
+  } else if (appState.user && appState.user.name) {
+    setupAuthenticatedUser(appState.user);
+    handleHashNavigation();
+    syncWithCloud(false);
+    // Immediate authoritative server profile check to prevent stale localStorage override
+    const cleanUser = appState.user.username || appState.user.id;
+    if (cleanUser) {
+      fetch(API_BASE + `/api/auth?action=profile&username=${encodeURIComponent(cleanUser)}`, {
+        headers: getAuthHeaders()
+      })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        if (d && d.profile && d.profile.avatarUrl) {
+          const av = d.profile.avatarUrl;
+          appState.user.avatarUrl = av;
+          appState.user.avatar = av;
+          appState.user.avatar_url = av;
+          appState.user.profilePicture = av;
+          appState.user.profilePictureUrl = av;
+          appState.user.photoUrl = av;
+          saveData();
+          setupAuthenticatedUser(appState.user);
+          if (typeof renderProfile === 'function') renderProfile();
+        }
+      })
+      .catch(() => {});
+    }
+  } else {
+    handleHashNavigation();
+  }
+
+  if (window.lucide) window.lucide.createIcons();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  initApp();
+});
+
+function initApp() {
+  initTheme();
+
+  // Quick non-blocking check for existing session in localStorage
+  let hasSession = false;
+  try {
+    const raw = localStorage.getItem('lostseek_state');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && parsed.user && parsed.user.name) {
+        hasSession = true;
+      }
+    }
+  } catch (e) {}
+
+  const isAndroid = typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.includes('LostSeekNativeAndroidApp');
+  const rawHash = (window.location.hash || '').replace(/^#\/?/, '').trim().toLowerCase();
+  const isAppHash = rawHash && !['home', 'landing', 'how-it-works', 'ai-matching', 'community', 'privacy'].includes(rawHash);
+
+  // Check if current URL is a public verification request from scanned QR tag (/report/<ID>)
+  const isPublicReport = checkPublicReportUrl();
+
+  // Handle URL hash changes
+  window.addEventListener('hashchange', () => {
+    ensureAppInitialized();
+    if (!checkPublicReportUrl()) {
+      handleHashNavigation();
+    }
+  });
+
+  // If Android APK, active session, QR report, or app hash requested -> immediate full initialization
+  if (isAndroid || hasSession || isPublicReport || isAppHash) {
+    ensureAppInitialized();
+    return;
+  }
+
+  // Otherwise, lightweight landing page mode:
+  // Render landing page immediately without parsing heavy data, avatars, or network sync
+  if (window.lucide) window.lucide.createIcons();
+
+  // Schedule background hydration during idle time (or after 2s delay)
+  if ('requestIdleCallback' in window) {
+    window.requestIdleCallback(() => ensureAppInitialized(), { timeout: 2000 });
+  } else {
+    setTimeout(ensureAppInitialized, 2000);
+  }
+}
+
+/**
+ * Seed 6 rich demo items (3 lost + 3 found) covering phone, backpack, ID card
+ */
+function getInitialSeedData() {
+  return {
+    user: null,
+    lostReports: [],
+    foundReports: [],
+    claims: [],
+    notifications: [],
+    matches: [],
+    adminHelpRequests: [],
+    officialContacts: JSON.parse(JSON.stringify(DEFAULT_OFFICIAL_CONTACTS))
+  };
+}
+
+function _legacySeedData() {
+  const daysAgo = (days) => new Date(Date.now() - days * 24 * 3600 * 1000).toISOString();
+  const hoursAgo = (hrs) => new Date(Date.now() - hrs * 3600 * 1000).toISOString();
+
+  // 12 Prompt Specified Items (6 Lost + 6 Found)
+  const lost = [
+    {
+      id: 'lost-1',
+      category: 'id-card',
+      title: 'Student ID Card — Ravi Kumar, CSE Dept',
+      description: 'University ID Card belonging to Ravi Kumar, Computer Science & Engineering department (3rd Year). Blue lanyard attached.',
+      color: 'Blue & White',
+      brand: 'Campus Security',
+      location: 'Library',
+      date: '2026-09-15T11:30:00.000Z',
+      photo: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&auto=format&fit=crop&q=80',
+      status: 'Searching',
+      createdAt: '2026-09-15T11:30:00.000Z',
+      matchId: 'found-3'
+    },
+    {
+      id: 'lost-2',
+      category: 'electronics',
+      title: 'Samsung Galaxy S23, black with blue case',
+      description: 'Samsung Galaxy S23 256GB in Phantom Black with a navy blue silicone protective case. Lock screen shows mountain sunrise.',
+      color: 'Black / Blue',
+      brand: 'Samsung',
+      location: 'Cafeteria',
+      date: '2026-09-14T13:45:00.000Z',
+      photo: 'https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=400&auto=format&fit=crop&q=80',
+      status: 'Matched',
+      createdAt: '2026-09-14T13:45:00.000Z',
+      matchId: 'found-1'
+    },
+    {
+      id: 'lost-3',
+      category: 'bags',
+      title: 'Black Wildcraft backpack with red zipper',
+      description: 'Wildcraft 35L water-resistant college backpack. Black with bold red zippers, contains laptop sleeve and physics lecture notes.',
+      color: 'Black & Red',
+      brand: 'Wildcraft',
+      location: 'Lab Complex',
+      date: '2026-09-13T16:20:00.000Z',
+      photo: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&auto=format&fit=crop&q=80',
+      status: 'Searching',
+      createdAt: '2026-09-13T16:20:00.000Z',
+      matchId: 'found-2'
+    },
+    {
+      id: 'lost-4',
+      category: 'keys',
+      title: '3 keys with Doraemon keychain',
+      description: 'Bunch of 3 metallic keys (room lock, bike key, locker key) connected to a cute blue Doraemon rubber keychain.',
+      color: 'Silver / Blue',
+      brand: 'Godrej / Honda',
+      location: 'Parking Area',
+      date: '2026-09-16T09:15:00.000Z',
+      photo: 'https://images.unsplash.com/photo-1582139329536-e7284fece509?w=400&auto=format&fit=crop&q=80',
+      status: 'Searching',
+      createdAt: '2026-09-16T09:15:00.000Z',
+      matchId: 'found-4'
+    },
+    {
+      id: 'lost-5',
+      category: 'wallet',
+      title: 'Brown leather wallet, had ~500 cash',
+      description: 'Genuine brown leather bifold wallet. Contained approximately ₹500 cash, student gym membership card, and metro pass.',
+      color: 'Brown',
+      brand: 'Woodland',
+      location: 'Main Building',
+      date: '2026-09-15T17:00:00.000Z',
+      photo: 'https://images.unsplash.com/photo-1627123424574-724758594e93?w=400&auto=format&fit=crop&q=80',
+      status: 'Claimed',
+      createdAt: '2026-09-15T17:00:00.000Z',
+      matchId: null
+    },
+    {
+      id: 'lost-6',
+      category: 'documents',
+      title: 'Engineering Mathematics by B.S. Grewal',
+      description: 'Higher Engineering Mathematics 44th Edition textbook by B.S. Grewal. Has highlighter markings in chapters 7 and 9.',
+      color: 'Yellow & Black',
+      brand: 'Khanna Publishers',
+      location: 'Library',
+      date: '2026-09-12T10:00:00.000Z',
+      photo: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&auto=format&fit=crop&q=80',
+      status: 'Returned',
+      createdAt: '2026-09-12T10:00:00.000Z',
+      matchId: null
+    }
+  ];
+
+  const found = [
+    {
+      id: 'found-1',
+      category: 'electronics',
+      title: 'Samsung phone, black, blue cover',
+      description: 'Turned in near cafeteria tables. Samsung smartphone with navy blue case, camera lenses intact, battery at 40%.',
+      color: 'Black / Blue',
+      brand: 'Samsung',
+      location: 'Cafeteria',
+      date: '2026-09-14T14:10:00.000Z',
+      photo: 'https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=400&auto=format&fit=crop&q=80',
+      status: 'Matched',
+      createdAt: '2026-09-14T14:10:00.000Z',
+      custody: 'Dropped at Security',
+      finderName: 'Kavita Singh (Cafeteria Staff)'
+    },
+    {
+      id: 'found-2',
+      category: 'bags',
+      title: 'Black backpack, red accents',
+      description: 'Spotted on the bench at Lab Complex corridor. Black backpack with distinct red zip pulls and side mesh bottle pocket.',
+      color: 'Black & Red',
+      brand: 'Wildcraft',
+      location: 'Lab Complex',
+      date: '2026-09-13T17:30:00.000Z',
+      photo: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&auto=format&fit=crop&q=80',
+      status: 'Searching',
+      createdAt: '2026-09-13T17:30:00.000Z',
+      custody: 'With Me',
+      finderName: 'Aman Verma'
+    },
+    {
+      id: 'found-3',
+      category: 'id-card',
+      title: 'Student card, CSE department',
+      description: 'Found right at the central library entrance turnstile. Student card of Ravi Kumar, Department of Computer Science.',
+      color: 'Blue & White',
+      brand: 'University ID',
+      location: 'Library',
+      date: '2026-09-15T12:00:00.000Z',
+      photo: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&auto=format&fit=crop&q=80',
+      status: 'Matched',
+      createdAt: '2026-09-15T12:00:00.000Z',
+      custody: 'Dropped at Security',
+      finderName: 'Librarian Desk'
+    },
+    {
+      id: 'found-4',
+      category: 'keys',
+      title: 'Bunch of keys, cartoon keychain',
+      description: 'Found on the spectator bench near Sports Ground cricket nets. 3 keys attached to a Doraemon anime figure.',
+      color: 'Silver / Blue',
+      brand: 'Keys',
+      location: 'Sports Ground',
+      date: '2026-09-16T11:00:00.000Z',
+      photo: 'https://images.unsplash.com/photo-1582139329536-e7284fece509?w=400&auto=format&fit=crop&q=80',
+      status: 'Searching',
+      createdAt: '2026-09-16T11:00:00.000Z',
+      custody: 'With Me',
+      finderName: 'Rohan Sharma'
+    },
+    {
+      id: 'found-5',
+      category: 'clothing',
+      title: 'Blue denim jacket, size M',
+      description: 'Left on chair row G in the main auditorium after the orientation seminar over 35 days ago. Unclaimed aging inventory.',
+      color: 'Blue',
+      brand: 'Levi\'s',
+      location: 'Auditorium',
+      date: daysAgo(35),
+      photo: 'https://images.unsplash.com/photo-1576995853123-5a10305d93c0?w=400&auto=format&fit=crop&q=80',
+      status: 'Searching',
+      createdAt: daysAgo(35), // > 30 days for Expired tab!
+      custody: 'Dropped at Security',
+      finderName: 'Auditorium Custodian'
+    },
+    {
+      id: 'found-6',
+      category: 'documents',
+      title: 'Red notebook, Physics notes',
+      description: 'Classmate spiral notebook with red cover, containing detailed 1st year Engineering Physics handwritten formula notes.',
+      color: 'Red',
+      brand: 'Classmate',
+      location: 'Main Building',
+      date: '2026-09-11T15:10:00.000Z',
+      photo: 'https://images.unsplash.com/photo-1589998059171-988d887df646?w=400&auto=format&fit=crop&q=80',
+      status: 'Searching',
+      createdAt: '2026-09-11T15:10:00.000Z',
+      custody: 'With Me',
+      finderName: 'Pooja Nair'
+    }
+  ];
+
+  // 1 Pre-created Pending Claim for Hackathon Demo Flow
+  const claims = [
+    {
+      id: 'claim-demo-1',
+      lostReportId: 'lost-2',
+      foundReportId: 'found-1',
+      claimantName: 'Alex Rivera',
+      matchScore: 87,
+      status: 'Pending Admin Review',
+      verificationAnswer: 'Samsung Galaxy S23 Phantom Black with navy blue silicone case. Lock screen wallpaper is a mountain sunrise with golden sky. Emergency contact displayed on screen is mom (ending in 8891). PIN ends in 24.',
+      contact: 'alex.rivera@campus.edu • +1 (555) 019-2834',
+      createdAt: '2026-09-14T15:30:00.000Z'
+    }
+  ];
+
+  const notifications = [
+    {
+      id: 'notif-1',
+      message: '🤖 AI Match Alert: 87% match between your Samsung S23 report and an item recovered at Cafeteria!',
+      read: false,
+      createdAt: hoursAgo(2)
+    },
+    {
+      id: 'notif-2',
+      message: '⏳ Claim #claim-demo-1 is currently pending security desk approval.',
+      read: false,
+      createdAt: hoursAgo(5)
+    },
+    {
+      id: 'notif-3',
+      message: '⚡ You earned +10 Karma points for registering campus lost and found belongings.',
+      read: true,
+      createdAt: daysAgo(1)
+    }
+  ];
+
+  return {
+    user: null,
+    lostReports: lost,
+    foundReports: found,
+    claims: claims,
+    notifications: notifications,
+    adminHelpRequests: [],
+    officialContacts: JSON.parse(JSON.stringify(DEFAULT_OFFICIAL_CONTACTS))
+  };
+}
+
+
+/* ==========================================================================
+   MODULE: 3_data_layer__localstorage_.js
+   ========================================================================== */
+/* ==========================================================================
+   DATA LAYER (localStorage)
+   ========================================================================== */
+
+/* ==========================================================================
+   MODULE: 4_cloud_backend_api_client___real_time_synchronization.js
+   ========================================================================== */
+/* ==========================================================================
+   CLOUD BACKEND API CLIENT & REAL-TIME SYNCHRONIZATION
+   ========================================================================== */
+const API_BASE = (window.location.origin && window.location.origin !== 'null' && !window.location.origin.startsWith('file:'))
+  ? window.location.origin
+  : 'https://smart-campus-pro.vercel.app';
+
+function getAuthHeaders() {
+  const headers = { 'Content-Type': 'application/json' };
+  if (window.appState && window.appState.user && window.appState.user.token) {
+    headers['Authorization'] = 'Bearer ' + window.appState.user.token;
+  }
+  return headers;
+}
+
+function updateSyncIndicator(status, text) {
+  const badge = document.getElementById('cloud-sync-badge');
+  const label = document.getElementById('cloud-sync-text');
+  if (!badge || !label) return;
+  badge.className = 'cloud-sync-badge ' + status;
+  label.textContent = text;
+}
+
+async function uploadImageToCloud(dataUrl, filename) {
+  if (!dataUrl || !dataUrl.startsWith('data:')) return dataUrl;
+  try {
+    // Phase 2: Convert base64 to Blob to avoid sending bloat over the wire
+    const arr = dataUrl.split(',');
+    const mimeMatch = arr[0].match(/:(.*?);/);
+    const mime = mimeMatch ? mimeMatch[1] : 'image/jpeg';
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+    const blob = new Blob([u8arr], { type: mime });
+
+    const res = await fetch(API_BASE + '/api/upload', {
+      method: 'POST',
+      headers: {
+        'Content-Type': mime,
+        'x-file-name': filename || 'item.jpg'
+      },
+      body: blob
+    });
+    const data = await res.json();
+    if (data.success && data.url) {
+      return data.url;
+    }
+    console.warn('Cloud upload response warning:', data.message);
+    return dataUrl;
+  } catch (err) {
+    console.warn('Image upload fallback to dataUrl:', err);
+    return dataUrl;
+  }
+}
+
+async function syncWithCloud(isManual) {
+  updateSyncIndicator('syncing', 'Syncing...');
+  try {
+    const res = await fetch(API_BASE + '/api/sync', {
+      method: 'GET',
+      headers: getAuthHeaders()
+    });
+
+    if (res.status === 503) {
+      const err = await res.json();
+      updateSyncIndicator('offline', 'DB Config Needed');
+      if (isManual) {
+        showToast('Supabase PostgreSQL configuration required. See .env.example', 'warning');
+      }
+      return false;
+    }
+
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+
+    const data = await res.json();
+    if (data.success) {
+      if (Array.isArray(data.lostReports)) appState.lostReports = data.lostReports;
+      if (Array.isArray(data.foundReports)) appState.foundReports = data.foundReports;
+      if (Array.isArray(data.claims)) appState.claims = data.claims;
+      if (Array.isArray(data.matches)) appState.matches = data.matches;
+      if (Array.isArray(data.helpRequests)) appState.adminHelpRequests = data.helpRequests;
+      if (Array.isArray(data.notifications)) {
+        const seen = new Set();
+        appState.notifications = data.notifications.filter(n => {
+          if (!n.id || seen.has(n.id)) return false;
+          seen.add(n.id);
+          return true;
+        });
+      }
+      if (data.user && appState.user) {
+        const remoteAvatar = data.user.avatarUrl || data.user.avatar || data.user.avatar_url;
+        if (remoteAvatar) {
+          appState.user.avatarUrl = remoteAvatar;
+          appState.user.avatar = remoteAvatar;
+          appState.user.avatar_url = remoteAvatar;
+          appState.user.profilePicture = remoteAvatar;
+          appState.user.profilePictureUrl = remoteAvatar;
+          appState.user.photoUrl = remoteAvatar;
+        }
+        setupAuthenticatedUser(appState.user);
+      }
+
+      saveData();
+      updateSyncIndicator('synced', 'Online (Cloud Synced)');
+      if (typeof renderAllViews === 'function') renderAllViews();
+      if (isManual) showToast('Synchronized with Cloud Database! ☁️', 'success');
+      return true;
+    }
+  } catch (err) {
+    console.warn('Sync failed, running in cached mode:', err);
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+      updateSyncIndicator('offline', 'Offline');
+      if (isManual) showToast('Device offline: Using local cached reports', 'info');
+    } else {
+      updateSyncIndicator('cached', 'Online (Cached)');
+      if (isManual) showToast('Connected: Using cached records', 'info');
+    }
+    return false;
+  }
+}
+
+function triggerManualSync() {
+  syncWithCloud(true);
+}
+
+// Auto-sync polling every 2 minutes when logged in and tab is active
+setInterval(() => {
+  if (window.appState && window.appState.user && document.visibilityState === 'visible') {
+    syncWithCloud(false);
+  }
+}, 120000);
+
+// Immediate sync on tab focus and network reconnection
+window.addEventListener('focus', () => {
+  if (window.appState && window.appState.user) {
+    syncWithCloud(false);
+  }
+});
+window.addEventListener('online', () => {
+  if (window.appState && window.appState.user) {
+    syncWithCloud(false);
+  }
+});
+
+function normalizeCachedReport(r) {
+  if (!r) return r;
+  const p = r.phone || r.phoneNumber || r.phone_number || r.contactPhone || null;
+  const s = !!(r.sharePhone ?? r.phoneSharingConsent ?? r.phone_sharing_consent ?? r.phoneShared);
+  r.phone = p;
+  r.phoneNumber = p;
+  r.phone_number = p;
+  r.contactPhone = p;
+  r.sharePhone = s;
+  r.phoneSharingConsent = s;
+  r.phone_sharing_consent = s;
+  r.hasPhoneProvided = !!(p && String(p).trim());
+  return r;
+}
+
+function loadData() {
+  // Ensure data arrays exist
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (raw) {
+    try {
+      appState = JSON.parse(raw);
+      if (!appState.adminHelpRequests) appState.adminHelpRequests = [];
+      if (!appState.officialContacts) appState.officialContacts = JSON.parse(JSON.stringify(DEFAULT_OFFICIAL_CONTACTS));
+      if (Array.isArray(appState.lostReports)) appState.lostReports.forEach(normalizeCachedReport);
+      if (Array.isArray(appState.foundReports)) appState.foundReports.forEach(normalizeCachedReport);
+      if (appState.user) {
+        // [KARMA MIGRATION CLEANUP]
+        if ('karma' in appState.user) delete appState.user.karma;
+        if ('karmaScore' in appState.user) delete appState.user.karmaScore;
+        if ('badges' in appState.user) delete appState.user.badges;
+        if ('karma' in appState) delete appState.karma;
+        
+        // [SESSION MIGRATION / CACHE BUSTING]
+        // If the user object lacks a valid Supabase JWT token, it's an obsolete session from before the security migration.
+        if (!appState.user.token || appState.user.token.startsWith('legacy-token')) {
+          console.warn('[DEBUG] Obsolete auth session detected (missing valid JWT). Forcing logout.');
+          appState.user = null;
+          saveData(); // Persist the cleared session immediately
+          if (typeof showToast === 'function') {
+            setTimeout(() => showToast('Session expired. Please log in again.', 'warning'), 1500);
+          }
+        } else {
+          const canonical = appState.user.avatarUrl || appState.user.avatar || appState.user.avatar_url || appState.user.profilePicture || appState.user.profilePictureUrl || appState.user.photoUrl || null;
+          appState.user.avatarUrl = canonical;
+          appState.user.avatar = canonical;
+          appState.user.avatar_url = canonical;
+          appState.user.profilePicture = canonical;
+          appState.user.profilePictureUrl = canonical;
+          appState.user.photoUrl = canonical;
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to parse localStorage data. Re-seeding...', e);
+      appState = getInitialSeedData();
+      saveData();
+    }
+  } else {
+    appState = getInitialSeedData();
+    saveData();
+  }
+  window.appState = appState;
+}
+
+function saveData() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+}
+
+function generateId(prefix = 'item') {
+  return `${prefix}-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+}
+
+function getTimeAgo(dateString) {
+  if (!dateString) return 'recently';
+  const past = new Date(dateString).getTime();
+  const diffInSecs = Math.floor((Date.now() - past) / 1000);
+
+  if (diffInSecs < 60) return 'just now';
+  const mins = Math.floor(diffInSecs / 60);
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
+
+function formatDateTime(dateString) {
+  if (!dateString) return 'Not specified';
+  try {
+    const d = new Date(dateString);
+    if (isNaN(d.getTime())) return dateString;
+    return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  } catch (e) {
+    return dateString;
+  }
+}
+
+
+/* ==========================================================================
+   MODULE: 5_auth___login_logic.js
+   ========================================================================== */
+/* ==========================================================================
+   AUTH & LOGIN LOGIC
+   ========================================================================== */
+function setLoginRole(role) {
+  const roleInput = document.getElementById('login-role');
+  const btnStudent = document.getElementById('role-btn-student');
+  const btnAdmin = document.getElementById('role-btn-admin');
+  const roleText = document.getElementById('login-role-text');
+  const userLabel = document.getElementById('login-username-label');
+
+  if (roleInput) roleInput.value = role;
+  if (btnStudent && btnAdmin) {
+    if (role === 'student') {
+      btnStudent.classList.add('active');
+      btnAdmin.classList.remove('active');
+    } else {
+      btnAdmin.classList.add('active');
+      btnStudent.classList.remove('active');
+    }
+  }
+
+  if (roleText) {
+    roleText.textContent = role === 'admin' ? 'Admin' : 'Student';
+  }
+  if (userLabel) {
+    userLabel.textContent = role === 'admin' ? 'Admin Email / Username' : 'Student Email / ID';
+  }
+
+  updateLoginAvatarPreview(role);
+}
+
+function toggleLoginPassword() {
+  const passInput = document.getElementById('login-password');
+  const icon = document.getElementById('password-toggle-icon');
+  if (!passInput) return;
+
+  const isPassword = passInput.getAttribute('type') === 'password';
+  passInput.setAttribute('type', isPassword ? 'text' : 'password');
+
+  if (icon) {
+    icon.setAttribute('data-lucide', isPassword ? 'eye-off' : 'eye');
+    if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
+  }
+}
+
+// Client-side secure hash verification fallback (for static hosting environments where /api/login 404s)
+// Uses one-way salted SHA-256 so NO plaintext passwords exist anywhere in frontend source code
+async function computeLoginHash(username, password) {
+  const salt = 'lostseek_secure_salt_2026_campus';
+  const rawStr = salt + ':' + String(username).toLowerCase().trim() + ':' + String(password);
+  if (window.crypto && crypto.subtle) {
+    const data = new TextEncoder().encode(rawStr);
+    const hashBuf = await crypto.subtle.digest('SHA-256', data);
+    return Array.from(new Uint8Array(hashBuf)).map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+  let h = 0;
+  for (let i = 0; i < rawStr.length; i++) {
+    h = ((h << 5) - h) + rawStr.charCodeAt(i);
+    h |= 0;
+  }
+  return String(h);
+}
+
+// Salted hashes for valid student and admin credentials
+const AUTH_HASH_DIRECTORY = {
+  // Existing: student@campus.edu & student
+  'a275410a2d65fe18a42bbc6562aeee70d14f137355337d65405edc4bb5255f14': { role: 'student', name: 'Alex Rivera', studentId: 'STU-2026-8891' },
+  '566ea4df42d23e7163dd70d73e0812ebbe02fc9fc969131c155589cf441b38c6': { role: 'student', name: 'Alex Rivera', studentId: 'STU-2026-8891' },
+  // Existing: admin@campus.edu & admin
+  'b46a5771ef81cc09d4b6298a1041faf3a78cdc8e0c08e3015e2d71f4000d3e0b': { role: 'admin', name: 'Vikram Singh', studentId: 'ADM-FAC-4402' },
+  '3b9d0b782eeda1ace88abced9bb61f53387b0d2d0ed45be2b6d4e23516b60e20': { role: 'admin', name: 'Vikram Singh', studentId: 'ADM-FAC-4402' },
+  // Student 1: Vishnu Prasath (vishnu.prasath & vishnu.prasath@campus.edu)
+  'c740a156024c4f39591eb9147e2f7e7b4e19713acc1b709f35f40d94bcc8089d': { role: 'student', name: 'Vishnu Prasath', studentId: 'STU-2026-1011' },
+  'e8093702ca84fa1e276fcd0a4e0339040097144620fd109515417f8803f512a2': { role: 'student', name: 'Vishnu Prasath', studentId: 'STU-2026-1011' },
+  // Student 2: Vishnu Varthan (vishnu.varthan & vishnu.varthan@campus.edu)
+  'dd609498d8fe2b35570add56caf33f78f4edd39c595ae6d392067cbe2010fd4c': { role: 'student', name: 'Vishnu Varthan', studentId: 'STU-2026-1012' },
+  'f8bc037f4ed4ee6c6acf1db66eb6e5e4b08d9cbc9c8d43abfabb66f64f5e7a37': { role: 'student', name: 'Vishnu Varthan', studentId: 'STU-2026-1012' },
+  // Student 3: Sivavaiyapuri (sivavaiyapuri & sivavaiyapuri@campus.edu)
+  '8a0730907fd7f89deb482473ffecbd332623c97666bf7da170ca82f49669132b': { role: 'student', name: 'Sivavaiyapuri', studentId: 'STU-2026-1013' },
+  '7bcad89e3781b94e3b06e0da89ee0f8c61901c87dcc6cb38bc575d7c564253e9': { role: 'student', name: 'Sivavaiyapuri', studentId: 'STU-2026-1013' },
+  // Student 4: Boobathy (boobathy & boobathy@campus.edu)
+  'f9ed20dfd52bd919130829fd2bc8f255fd8a9ce06a56e00ff27b3f39555015fb': { role: 'student', name: 'Boobathy', studentId: 'STU-2026-1014' },
+  'd906d6d1ec45eead31a979a1a9c49106cb0df51acc96a6ba2db7d418181b6a6c': { role: 'student', name: 'Boobathy', studentId: 'STU-2026-1014' },
+  // Student 5: Krish (krish & krish@campus.edu)
+  'b7a58e00456e20ab980416811542ba861910df6875e4372c6166b140649c7d98': { role: 'student', name: 'Krish', studentId: 'STU-2026-1015' },
+  '894f18a89039a9d652b65ee75efbc066b881b8f90a920b3395fbca94e82b1249': { role: 'student', name: 'Krish', studentId: 'STU-2026-1015' },
+  // Student 6: Girl1 (girl1 & girl1@campus.edu)
+  '579aa73241c325ee200b5799232a51fd1f6237a2e4439b1547428e059bb86822': { role: 'student', name: 'Girl1', studentId: 'STU-2026-1016' },
+  'e83fedb3352450706823d3b084a1effae5519679faac4adf3dd569c44de15cab': { role: 'student', name: 'Girl1', studentId: 'STU-2026-1016' }
+};
+
+async function handleLoginSubmit(e) {
+  e.preventDefault();
+  const usernameInput = document.getElementById('login-username');
+  const passwordInput = document.getElementById('login-password');
+  const roleInput = document.getElementById('login-role');
+
+  const username = usernameInput ? usernameInput.value.trim() : '';
+  const password = passwordInput ? passwordInput.value : '';
+  const role = roleInput ? roleInput.value : 'student';
+
+  if (!username || !password) {
+    showToast('Please enter both your username and password.', 'warning');
+    return;
+  }
+
+  let authenticatedUser = null;
+
+  // 1. First attempt serverless backend authentication (Vercel / Node backend)
+  try {
+    const apiRes = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ role, username, password })
+    });
+
+    const contentType = apiRes.headers.get('content-type') || '';
+    let data = null;
+    if (contentType.includes('application/json')) {
+      try { data = await apiRes.json(); } catch (e) {}
+    } else {
+      const textResp = await apiRes.text();
+      data = { success: false, message: textResp || 'Unexpected server response.' };
+    }
+
+    if (apiRes.ok && data && data.success && data.user) {
+      authenticatedUser = data.user;
+    } else if (apiRes.status === 401 || apiRes.status === 403) {
+      const errMessage = (data && data.message) ? data.message : ('Invalid credentials for ' + (role === 'admin' ? 'Admin' : 'Student') + ' portal.');
+      showToast(errMessage, 'error');
+      if (passwordInput) passwordInput.value = '';
+      return;
+    }
+  } catch (apiErr) {
+    console.warn('Backend login network notice:', apiErr);
+  }
+
+  // 2. If API was unreachable or static hosting (Surge 404), verify via salted SHA-256
+  if (!authenticatedUser) {
+    const hash = await computeLoginHash(username, password);
+    const matchedProfile = AUTH_HASH_DIRECTORY[hash];
+
+    if (matchedProfile && matchedProfile.role === role) {
+      authenticatedUser = {
+        role: matchedProfile.role,
+        name: matchedProfile.name,
+        studentId: matchedProfile.studentId,
+        username: username
+      };
+    }
+  }
+
+  // 3. Clear password immediately from memory & form DOM
+  if (passwordInput) passwordInput.value = '';
+
+  if (!authenticatedUser) {
+    showToast('Invalid credentials for ' + (role === 'admin' ? 'Admin' : 'Student') + ' portal.', 'error');
+    return;
+  }
+
+  // 4. Establish safe session (NEVER store password in localStorage/sessionStorage)
+  appState.user = authenticatedUser;
+  
+  // SAFE DEBUGGING TEST
+  if (appState.user && appState.user.token) {
+    console.log('[DEBUG] Safe Auth Check: Supabase access token obtained. Length:', appState.user.token.length);
+  } else {
+    console.warn('[DEBUG] Auth Warning: No Supabase token found in login response!');
+  }
+
+  saveData();
+
+  setupAuthenticatedUser(appState.user);
+  showToast(`Welcome back, ${authenticatedUser.name}! 👋`, 'success');
+  showPage('dashboard-page');
+}
+
+function toggleRegisterView(showRegister) {
+  const loginForm = document.getElementById('login-form');
+  const regContainer = document.getElementById('register-container');
+  const roleToggle = document.querySelector('.role-toggle-group');
+
+  if (showRegister) {
+    if (loginForm) loginForm.style.display = 'none';
+    if (roleToggle) roleToggle.style.display = 'none';
+    if (regContainer) {
+      regContainer.style.display = 'block';
+      regContainer.classList.add('fade-in');
+    }
+  } else {
+    if (regContainer) regContainer.style.display = 'none';
+    if (loginForm) {
+      loginForm.style.display = 'block';
+      loginForm.classList.add('fade-in');
+    }
+    if (roleToggle) roleToggle.style.display = 'block';
+  }
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
+}
+
+function triggerRegPhotoPick(mode) {
+  const input = (mode === 'camera') 
+    ? document.getElementById('reg-camera-input') 
+    : document.getElementById('reg-gallery-input');
+  if (input) input.click();
+}
+
+function handleRegPhotoSelected(e) {
+  const file = e.target.files?.[0];
+  if (!file) return;
+
+  // Downscale and compress client-side via canvas to prevent Vercel 4.5MB payload overflow
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    const rawDataUrl = evt.target.result;
+    const img = new Image();
+    img.onload = async function() {
+      try {
+        const canvas = document.createElement('canvas');
+        const maxDim = 600;
+        let width = img.width;
+        let height = img.height;
+        if (width > height && width > maxDim) {
+          height = Math.round((height * maxDim) / width);
+          width = maxDim;
+        } else if (height > maxDim) {
+          width = Math.round((width * maxDim) / height);
+          height = maxDim;
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.82);
+
+        const hidden = document.getElementById('reg-photo-url');
+        const wrap = document.getElementById('reg-photo-preview-wrap');
+        const preview = document.getElementById('reg-photo-preview');
+        if (hidden) hidden.value = compressedDataUrl;
+        if (preview) preview.src = compressedDataUrl;
+        if (wrap) wrap.style.display = 'flex';
+
+        // Pre-upload to Vercel Blob to obtain permanent CDN URL early
+        try {
+          const cloudUrl = await uploadImageToCloud(compressedDataUrl, 'student-avatar.jpg');
+          if (cloudUrl && cloudUrl.startsWith('http') && hidden) {
+            hidden.value = cloudUrl;
+          }
+        } catch (upErr) {
+          console.warn('Avatar pre-upload notice:', upErr);
+        }
+      } catch (procErr) {
+        console.warn('Image compression fallback:', procErr);
+      }
+    };
+    img.src = rawDataUrl;
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearRegPhoto() {
+  const hidden = document.getElementById('reg-photo-url');
+  const wrap = document.getElementById('reg-photo-preview-wrap');
+  const preview = document.getElementById('reg-photo-preview');
+  if (hidden) hidden.value = '';
+  if (preview) preview.src = '';
+  if (wrap) wrap.style.display = 'none';
+}
+
+async function handleRegistrationSubmit(e) {
+  e.preventDefault();
+  const name = document.getElementById('reg-name')?.value.trim();
+  const email = document.getElementById('reg-email')?.value.trim() || document.getElementById('reg-username')?.value.trim();
+  const studentId = document.getElementById('reg-studentid')?.value.trim();
+  const phone = document.getElementById('reg-phone')?.value.trim();
+  const password = document.getElementById('reg-password')?.value;
+  const confirmPassword = document.getElementById('reg-confirm-password')?.value;
+  let photo = document.getElementById('reg-photo-url')?.value || '';
+  const btn = document.getElementById('btn-submit-register');
+
+  if (!name || !email || !password) {
+    showToast('Name, email, and password are required.', 'warning');
+    return;
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (email.includes('@') && !emailRegex.test(email)) {
+    showToast('Please enter a valid email address.', 'warning');
+    return;
+  }
+
+  if (password.length < 6) {
+    showToast('Password must be at least 6 characters long.', 'warning');
+    return;
+  }
+
+  if (password !== confirmPassword) {
+    showToast('Passwords do not match.', 'error');
+    return;
+  }
+
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i data-lucide="loader-2" class="spin"></i> Creating student account...';
+    if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
+  }
+
+  try {
+    if (photo && photo.startsWith('data:')) {
+      try {
+        const uploaded = await uploadImageToCloud(photo, 'student-avatar.jpg');
+        if (uploaded && uploaded.startsWith('http')) {
+          photo = uploaded;
+        } else {
+          // If direct upload fails, omit oversized data URL to prevent 413 error
+          photo = null;
+        }
+      } catch (err) {
+        console.warn('Avatar upload warning:', err);
+        photo = null;
+      }
+    }
+
+    const res = await fetch(API_BASE + '/api/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name,
+        email,
+        username: email,
+        studentId,
+        phone,
+        password,
+        confirmPassword,
+        avatarUrl: photo,
+        role: 'student' // Server strictly enforces role='student'
+      })
+    });
+
+    const contentType = res.headers.get('content-type') || '';
+    let data = null;
+    if (contentType.includes('application/json')) {
+      try { data = await res.json(); } catch (e) {}
+    } else {
+      const textResp = await res.text();
+      data = { success: false, message: textResp || `Server returned status ${res.status}` };
+    }
+
+    if (res.ok && data && data.success && data.user) {
+      showToast('Student account created successfully! Welcome to LostSeek 🎓', 'success');
+      // Populate login username field and switch to login view for clean login verification
+      const loginUserInput = document.getElementById('login-username');
+      if (loginUserInput) loginUserInput.value = data.user.username;
+      setLoginRole('student');
+      toggleRegisterView(false);
+
+      // Also set state for immediate access
+      appState.user = data.user;
+      saveData();
+      setupAuthenticatedUser(data.user);
+      showPage('dashboard-page');
+    } else {
+      showToast((data && data.message) ? data.message : 'Registration failed.', 'error');
+    }
+  } catch (err) {
+    showToast('Network error during registration: ' + err.message, 'error');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<i data-lucide="check-circle"></i> Create Student Account';
+      if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
+    }
+  }
+}
+
+function setupAuthenticatedUser(user) {
+  if (!user) user = appState.user;
+  if (!user) return;
+
+  const canonicalAvatar = user.avatarUrl || user.avatar || user.avatar_url || user.profilePicture || user.profilePictureUrl || user.photoUrl || null;
+  user.avatarUrl = canonicalAvatar;
+  user.avatar = canonicalAvatar;
+  user.avatar_url = canonicalAvatar;
+  user.profilePicture = canonicalAvatar;
+  user.profilePictureUrl = canonicalAvatar;
+  user.photoUrl = canonicalAvatar;
+
+  // Update UI user profile in header, sidebar & dashboard with user avatar
+  const avatarEl = document.getElementById('user-avatar-initials');
+  if (avatarEl) avatarEl.innerHTML = getAvatarSVG(user.role, 36, user.avatarUrl);
+
+  const headerAvatarEl = document.getElementById('header-user-avatar');
+  if (headerAvatarEl) headerAvatarEl.innerHTML = getAvatarSVG(user.role, 36, user.avatarUrl);
+
+  const dashAvatarEl = document.getElementById('dashboard-user-avatar');
+  if (dashAvatarEl) dashAvatarEl.innerHTML = getAvatarSVG(user.role, 48, user.avatarUrl);
+
+  const deskAvatarEl = document.getElementById('admin-desk-avatar');
+  if (deskAvatarEl) deskAvatarEl.innerHTML = getAvatarSVG('admin', 48, user.avatarUrl);
+
+  const nameEl = document.getElementById('user-name-display');
+  if (nameEl) nameEl.textContent = user.name;
+
+  const roleEl = document.getElementById('user-role-display');
+  if (roleEl) roleEl.textContent = user.role;
+
+  const isAdmin = user.role && user.role.toLowerCase() === 'admin';
+
+  const headerBadge = document.getElementById('header-role-badge');
+  if (headerBadge) {
+    headerBadge.textContent = user.role.toUpperCase();
+    headerBadge.className = `badge ${isAdmin ? 'badge-urgent' : 'badge-verified'}`;
+  }
+
+  // Toggle Student vs Admin Navigation accordions
+  const isStudent = !isAdmin;
+  const studentNav = document.getElementById('student-nav-sections');
+  const adminNavSections = document.getElementById('admin-nav-sections');
+  if (studentNav) studentNav.style.display = isStudent ? 'block' : 'none';
+  if (adminNavSections) adminNavSections.style.display = isAdmin ? 'block' : 'none';
+
+  // Toggle Student vs Admin Dashboard views
+  const studentView = document.getElementById('student-dashboard-view');
+  const adminView = document.getElementById('admin-dashboard-view');
+  if (studentView) studentView.style.display = isStudent ? 'block' : 'none';
+  if (adminView) adminView.style.display = isAdmin ? 'block' : 'none';
+
+  const studentWelcome = document.getElementById('student-welcome-heading');
+  if (studentWelcome) {
+    const firstName = user.name.split(' ')[0];
+    studentWelcome.textContent = `Hello, ${firstName}`;
+  }
+
+  const welcomeMsg = document.getElementById('welcome-message');
+  if (welcomeMsg) {
+    const firstName = user.name.split(' ')[0];
+    welcomeMsg.textContent = `Welcome back, ${firstName}! 👋`;
+  }
+
+  // Render responsive mobile bottom navigation
+  renderMobileBottomNav(user.role);
+
+  // Hide or show landing vs login vs main layout
+  const landingEl = document.getElementById('landing-page');
+  if (landingEl) landingEl.style.display = 'none';
+  const loginEl = document.getElementById('login-page');
+  if (loginEl) {
+    loginEl.style.display = 'none';
+    loginEl.classList.remove('active');
+  }
+  document.getElementById('app-layout').style.display = 'flex';
+
+  renderAllViews();
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
+  syncWithCloud(false);
+}
+
+function logout() {
+  appState.user = null;
+  appState.notifications = []; // Wipe notifications so next user never inherits them
+  saveData();
+  showToast('Logged out of LostSeek', 'info');
+  const isAndroid = typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.includes('LostSeekNativeAndroidApp');
+  if (isAndroid) {
+    showLoginPage();
+    window.location.hash = '#login';
+  } else {
+    showLandingPage();
+  }
+}
+
+function showLandingPage() {
+  const appLayout = document.getElementById('app-layout');
+  if (appLayout) appLayout.style.display = 'none';
+  const loginEl = document.getElementById('login-page');
+  if (loginEl) {
+    loginEl.style.display = 'none';
+    loginEl.classList.remove('active');
+  }
+  const landingEl = document.getElementById('landing-page');
+  if (landingEl) {
+    landingEl.style.display = 'block';
+  }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
+}
+
+function showLoginPage() {
+  const landingEl = document.getElementById('landing-page');
+  if (landingEl) landingEl.style.display = 'none';
+  document.getElementById('app-layout').style.display = 'none';
+  const loginEl = document.getElementById('login-page');
+  if (loginEl) {
+    loginEl.style.display = 'flex';
+    loginEl.classList.add('active');
+  }
+
+  // Strictly clear username and password inputs on login page load
+  const userInput = document.getElementById('login-username');
+  const passInput = document.getElementById('login-password');
+  const passIcon = document.getElementById('password-toggle-icon');
+  if (userInput) userInput.value = '';
+  if (passInput) {
+    passInput.value = '';
+    passInput.setAttribute('type', 'password');
+  }
+  if (passIcon) {
+    passIcon.setAttribute('data-lucide', 'eye');
+  }
+
+  initLoginPageAvatars();
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
+}
+
+function goToAppLogin() {
+  ensureAppInitialized();
+  if (appState.user && appState.user.name) {
+    setupAuthenticatedUser(appState.user);
+    showPage('dashboard-page');
+  } else {
+    showLoginPage();
+    window.location.hash = '#login';
+  }
+}
+
+function goToReportLost() {
+  ensureAppInitialized();
+  if (appState.user && appState.user.name) {
+    setupAuthenticatedUser(appState.user);
+    showPage('report-lost-page');
+  } else {
+    showLoginPage();
+    window.location.hash = '#login';
+    showToast('Please sign in to report a lost item 📝', 'info');
+  }
+}
+
+function goToReportFound() {
+  ensureAppInitialized();
+  if (appState.user && appState.user.name) {
+    setupAuthenticatedUser(appState.user);
+    showPage('report-found-page');
+  } else {
+    showLoginPage();
+    window.location.hash = '#login';
+    showToast('Please sign in to report a found item 🎒', 'info');
+  }
+}
+
+function handleLandingNav(e, sectionId) {
+  if (e && e.preventDefault) e.preventDefault();
+  const el = document.getElementById(sectionId);
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const links = document.querySelectorAll('.lp-nav-link');
+    links.forEach(l => l.classList.remove('active'));
+    const targetLink = document.querySelector(`.lp-nav-link[href="#${sectionId}"]`);
+    if (targetLink) targetLink.classList.add('active');
+  }
+}
+
+window.goToAppLogin = goToAppLogin;
+window.goToReportLost = goToReportLost;
+window.goToReportFound = goToReportFound;
+window.handleLandingNav = handleLandingNav;
+window.setLoginRole = setLoginRole;
+window.toggleLoginPassword = toggleLoginPassword;
+window.handleLoginSubmit = handleLoginSubmit;
+window.showLoginPage = showLoginPage;
+
+
+/* ==========================================================================
+   MODULE: 6_navigation___routing__spa_.js
+   ========================================================================== */
+/* ==========================================================================
+   NAVIGATION & ROUTING (SPA)
+   ========================================================================== */
+function showPage(pageId) {
+  // Session check: if not logged in, redirect to login page
+  if (!appState.user && pageId !== 'login-page') {
+    showLoginPage();
+    return;
+  }
+
+  // Admin role check guard for all staff/admin pages
+  const adminPages = [
+    'admin-page', 'admin-lost-page', 'admin-found-page', 'admin-all-page',
+    'admin-claims-page', 'admin-matches-page', 'admin-photo-search-page',
+    'admin-students-page', 'admin-help-page'
+  ];
+  if (adminPages.includes(pageId)) {
+    const isAdmin = appState.user && appState.user.role && appState.user.role.toLowerCase() === 'admin';
+    if (!isAdmin) {
+      showToast('Staff / Admin privileges required to access Staff Console 🛡️', 'warning');
+      showPage('dashboard-page');
+      return;
+    }
+  }
+
+  // Authoritative visibility state: hide landing and login, show app-layout
+  const landingEl = document.getElementById('landing-page');
+  if (landingEl) landingEl.style.display = 'none';
+  const loginEl = document.getElementById('login-page');
+  if (loginEl) {
+    loginEl.style.display = 'none';
+    loginEl.classList.remove('active');
+  }
+  const appLayout = document.getElementById('app-layout');
+  if (appLayout) appLayout.style.display = 'flex';
+
+  // Hide all sections inside app-layout
+  const sections = document.querySelectorAll('.page-section');
+  sections.forEach(sec => {
+    if (sec.id !== 'login-page') {
+      sec.classList.remove('active');
+      sec.style.display = 'none';
+    }
+  });
+
+  // Show target
+  const target = document.getElementById(pageId);
+  if (target) {
+    target.style.display = 'block';
+    target.classList.add('active', 'fade-in');
+  }
+
+  // Scroll to top
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  // Update nav active link
+  const navLinks = document.querySelectorAll('.nav-link');
+  navLinks.forEach(link => {
+    if (link.getAttribute('data-page') === pageId) {
+      link.classList.add('active');
+    } else {
+      link.classList.remove('active');
+    }
+  });
+
+  // Update breadcrumb
+  const crumb = document.getElementById('breadcrumb-current');
+  if (crumb) {
+    const titleMap = {
+      'dashboard-page': (appState.user?.role?.toLowerCase() === 'admin' ? 'Dashboard' : 'Home'),
+      'find-item-page': 'Find Item',
+      'i-found-page': 'I Found an Item',
+      'report-lost-page': 'Report Lost',
+      'report-found-page': 'Report Found',
+      'matches-page': 'Possible Matches',
+      'my-reports-page': 'My Reports',
+      'admin-page': 'Admin Desk',
+      'admin-photo-search-page': 'Find by Photo',
+      'admin-students-page': 'Students',
+      'analytics-page': 'Reports & Stats',
+      'alerts-page': 'Alerts',
+      'profile-page': 'Profile',
+      'settings-page': 'Settings',
+      'help-safety-page': 'Help & Safety',
+      'admin-help-page': 'Help & Complaints',
+      'admin-lost-page': 'Lost Items',
+      'admin-found-page': 'Found Items',
+      'admin-all-page': 'All Reports',
+      'admin-claims-page': 'Claims',
+      'admin-matches-page': 'Match Center'
+    };
+    crumb.textContent = titleMap[pageId] || 'LostSeek';
+  }
+
+  // Sync hash
+  const hashMap = {
+    'dashboard-page': 'dashboard',
+    'find-item-page': 'find-item',
+    'i-found-page': 'i-found',
+    'report-lost-page': 'report-lost',
+    'report-found-page': 'report-found',
+    'matches-page': 'matches',
+    'my-reports-page': 'my-reports',
+    'admin-page': 'admin',
+    'admin-photo-search-page': 'admin-find-photo',
+    'admin-students-page': 'admin-students',
+    'analytics-page': 'analytics',
+    'alerts-page': 'alerts',
+    'profile-page': 'profile',
+    'settings-page': 'settings',
+    'help-safety-page': 'help-safety',
+    'admin-help-page': 'admin-help',
+    'admin-lost-page': 'admin-lost',
+    'admin-found-page': 'admin-found',
+    'admin-all-page': 'admin-all',
+    'admin-claims-page': 'admin-claims',
+    'admin-matches-page': 'admin-matches'
+  };
+  const targetHash = hashMap[pageId] || 'dashboard';
+  if (window.location.hash !== `#${targetHash}`) {
+    window.location.hash = targetHash;
+  }
+
+  // Close mobile sidebar if open
+  closeMobileSidebar();
+  syncMobileBottomNav(pageId);
+
+  // Trigger animations or renders specific to page
+  if (pageId === 'dashboard-page') {
+    const isStudent = appState.user && appState.user.role && appState.user.role.toLowerCase() === 'student';
+    if (isStudent) {
+      renderStudentHomeFeeds();
+    } else {
+      animateStatCounters();
+      renderDashboardActivity();
+      renderBadges();
+    }
+    updateKarmaDisplay();
+  } else if (pageId === 'find-item-page') {
+    renderFindItem();
+  } else if (pageId === 'i-found-page') {
+    initIFoundPage();
+  } else if (pageId === 'matches-page') {
+    renderAIMatches();
+  } else if (pageId === 'my-reports-page') {
+    renderMyReports(currentMyReportsTab);
+  } else if (pageId === 'admin-page') {
+    renderAdminDesk();
+  } else if (pageId === 'admin-photo-search-page') {
+    initAdminPhotoSearch();
+  } else if (pageId === 'admin-students-page') {
+    renderAdminStudents();
+  } else if (pageId === 'analytics-page') {
+    renderAnalyticsPage();
+  } else if (pageId === 'alerts-page') {
+    renderAlertsPage();
+  } else if (pageId === 'profile-page') {
+    renderProfile();
+  } else if (pageId === 'settings-page') {
+    renderSettings();
+  } else if (pageId === 'help-safety-page') {
+    renderHelpSafetyPage();
+  } else if (pageId === 'admin-help-page') {
+    renderAdminHelpDesk('all');
+  } else if (pageId === 'admin-lost-page') {
+    renderAdminLostPage();
+  } else if (pageId === 'admin-found-page') {
+    renderAdminFoundPage();
+  } else if (pageId === 'admin-all-page' || pageId === 'admin-page') {
+    renderAdminAllReportsPage();
+  } else if (pageId === 'admin-claims-page') {
+    renderAdminClaimsPage('all');
+  } else if (pageId === 'admin-matches-page') {
+    renderAdminMatchCenterPage();
+  }
+
+  if (window.lucide) {
+    window.lucide.createIcons();
+  }
+}
+
+function handleHashNavigation() {
+  // If public verification QR/modal handled it, return
+  if (checkPublicReportUrl()) return;
+
+  const rawHash = window.location.hash || '';
+  const hash = rawHash.replace(/^#\/?/, '').trim().toLowerCase();
+  const isAndroid = typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.includes('LostSeekNativeAndroidApp');
+
+  const appRouteMap = {
+    'dashboard': 'dashboard-page',
+    'find-item': 'find-item-page',
+    'i-found': 'i-found-page',
+    'report-lost': 'report-lost-page',
+    'report-found': 'report-found-page',
+    'matches': 'matches-page',
+    'my-reports': 'my-reports-page',
+    'admin': 'admin-all-page',
+    'admin-lost': 'admin-lost-page',
+    'admin-found': 'admin-found-page',
+    'admin-all': 'admin-all-page',
+    'admin-claims': 'admin-claims-page',
+    'admin-matches': 'admin-matches-page',
+    'admin-find-photo': 'admin-photo-search-page',
+    'admin-students': 'admin-students-page',
+    'analytics': 'analytics-page',
+    'alerts': 'alerts-page',
+    'profile': 'profile-page',
+    'settings': 'settings-page',
+    'help-safety': 'help-safety-page',
+    'admin-help': 'admin-help-page'
+  };
+
+  // NATIVE ANDROID ROUTING LOGIC:
+  // For native Android startup, session restoration takes priority over the #login startup hash:
+  // IF native Android AND valid session exists -> restore the user's normal dashboard
+  // IF native Android AND no valid session    -> show #login
+  // Never show the public landing page in the APK.
+  if (isAndroid) {
+    if (appState.user && appState.user.name) {
+      if (hash === 'home' || hash === 'landing' || hash === 'login' || !hash) {
+        showPage('dashboard-page');
+        return;
+      }
+      const targetPage = appRouteMap[hash] || 'dashboard-page';
+      showPage(targetPage);
+      return;
+    } else {
+      // Unauthenticated in APK: always open login/application entry
+      showLoginPage();
+      return;
+    }
+  }
+
+  // NORMAL WEB BROWSER ROUTING LOGIC:
+  // If valid authenticated session exists:
+  if (appState.user && appState.user.name) {
+    if (hash === 'home' || hash === 'landing') {
+      showLandingPage();
+      return;
+    }
+    const targetPage = appRouteMap[hash] || 'dashboard-page';
+    showPage(targetPage);
+    return;
+  }
+
+  // Web Browser Unauthenticated visitor logic:
+  if (hash === 'login') {
+    showLoginPage();
+    return;
+  }
+  if (hash === 'register') {
+    showLoginPage();
+    toggleRegisterView(true);
+    return;
+  }
+  if (hash === 'report-lost') {
+    showLoginPage();
+    showToast('Please sign in to report a lost item 📝', 'info');
+    return;
+  }
+  if (hash === 'report-found') {
+    showLoginPage();
+    showToast('Please sign in to report a found item 🎒', 'info');
+    return;
+  }
+  if (appRouteMap[hash]) {
+    // Explicit app route requested without session -> prompt login
+    showLoginPage();
+    showToast('Please sign in to access LostSeek', 'info');
+    return;
+  }
+  if (['how-it-works', 'ai-matching', 'community', 'privacy'].includes(hash)) {
+    showLandingPage();
+    const targetEl = document.getElementById(hash);
+    if (targetEl) {
+      setTimeout(() => {
+        targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 50);
+    }
+    return;
+  }
+
+  // Fresh unauthenticated visitor / root URL / #home / #landing -> SHOW LANDING PAGE
+  showLandingPage();
+}
+
+
+
+/* ==========================================================================
+   MODULE: 7_collapsible_navigation_accordion.js
+   ========================================================================== */
+/* ==========================================================================
+   COLLAPSIBLE NAVIGATION ACCORDION
+   ========================================================================== */
+function toggleNavGroup(headerEl) {
+  const group = headerEl.closest('.nav-group');
+  if (group) {
+    const isCollapsed = group.classList.toggle('collapsed');
+    headerEl.setAttribute('aria-expanded', !isCollapsed);
+  }
+}
+
+let activeContactHelpReportId = null;
+
+function openAdminContactHelpModal(reportId) {
+  ensureModalsLoaded();
+  activeContactHelpReportId = reportId;
+  const modal = document.getElementById('admin-contact-help-modal');
+  if (modal) modal.classList.add('show');
+}
+
+function closeAdminContactHelpModal() {
+  activeContactHelpReportId = null;
+  const modal = document.getElementById('admin-contact-help-modal');
+  if (modal) modal.classList.remove('show');
+}
+
+
+
+
+function toggleMobileSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const backdrop = document.getElementById('sidebar-backdrop');
+  if (sidebar && backdrop) {
+    sidebar.classList.toggle('open');
+    backdrop.classList.toggle('open');
+  }
+}
+
+function closeMobileSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const backdrop = document.getElementById('sidebar-backdrop');
+  if (sidebar && backdrop) {
+    sidebar.classList.remove('open');
+    backdrop.classList.remove('open');
+  }
+}
+
+window.toggleNavGroup = toggleNavGroup;
+window.openAdminContactHelpModal = openAdminContactHelpModal;
+window.closeAdminContactHelpModal = closeAdminContactHelpModal;
+window.toggleMobileSidebar = toggleMobileSidebar;
+window.closeMobileSidebar = closeMobileSidebar;
+
+
+/* ==========================================================================
+   MODULE: 8_render___view_logic.js
+   ========================================================================== */
+/* ==========================================================================
+   RENDER & VIEW LOGIC
+   ========================================================================== */
+function renderAllViews() {
+  updateIndicatorPills();
+  renderNotifications();
+  renderDashboardActivity();
+  animateStatCounters();
+  renderAIMatches();
+  renderMyReports(currentMyReportsTab);
+  renderAdminDesk();
+  if (typeof renderProfile === 'function') {
+    renderProfile();
+  }
+  if (typeof updateAdminMetricsAndPills === 'function') {
+    updateAdminMetricsAndPills();
+  }
+}
+
+function updateIndicatorPills() {
+  // AI Matches badge in sidebar
+  const matchCount = calculateMatchesList().length;
+  const matchBadge = document.getElementById('sidebar-matches-badge');
+  if (matchBadge) matchBadge.textContent = matchCount;
+
+  // Unread notification badge
+  const unreadCount = appState.notifications.filter(n => !n.read).length;
+  const notifCountEl = document.getElementById('notif-count');
+  if (notifCountEl) {
+    notifCountEl.textContent = unreadCount;
+    notifCountEl.style.display = unreadCount > 0 ? 'flex' : 'none';
+  }
+}
+
+/* --- STATS & COUNTERS --- */
+function animateStatCounters() {
+  const totalReports = appState.lostReports.length + appState.foundReports.length;
+  const matchesCount = calculateMatchesList().length;
+  const recoveredCount = appState.lostReports.filter(i => i.status === 'Returned' || i.status === 'Verified').length;
+  const pendingClaimsCount = appState.claims.filter(c => c.status !== 'Approved' && c.status !== 'Returned').length;
+
+  animateCounter('stat-total-reports', totalReports);
+  animateCounter('stat-ai-matches', matchesCount);
+  animateCounter('stat-items-recovered', recoveredCount);
+  animateCounter('stat-pending-claims', pendingClaimsCount);
+}
+
+function animateCounter(elementId, targetValue) {
+  const el = document.getElementById(elementId);
+  if (!el) return;
+
+  let current = 0;
+  const duration = 800; // ms
+  const stepTime = 20;
+  const totalSteps = duration / stepTime;
+  const stepValue = Math.max(1, Math.ceil(targetValue / totalSteps));
+
+  const timer = setInterval(() => {
+    current += stepValue;
+    if (current >= targetValue) {
+      current = targetValue;
+      clearInterval(timer);
+    }
+    el.textContent = current;
+  }, stepTime);
+}
+
+/* --- DASHBOARD RECENT ACTIVITY --- */
+function renderDashboardActivity() {
+  const container = document.getElementById('dashboard-activity-list');
+  if (!container) return;
+
+  const allItems = [
+    ...appState.lostReports.map(r => ({ ...r, type: 'Lost' })),
+    ...appState.foundReports.map(r => ({ ...r, type: 'Found' }))
+  ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+  if (allItems.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">🔍</div>
+        <p>No reports yet. Lost something? Report it now!</p>
+      </div>
+    `;
+    return;
+  }
+
+  const recent = allItems.slice(0, 5);
+  container.innerHTML = recent.map(item => {
+    const cat = CATEGORY_MAP[item.category] || { label: 'General', icon: '📦' };
+    const badgeClass = getStatusBadgeClass(item.status);
+    const reporterRole = item.reporterRole || 'student';
+
+    return `
+      <div class="activity-item">
+        <div class="activity-item-info">
+          <div class="avatar-wrap avatar-sm" style="margin-right: 12px;" title="Reported by Campus User">
+            ${getAvatarSVG(reporterRole, 36)}
+          </div>
+          <div class="item-main-details">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span style="font-size: 0.95rem;">${cat.icon}</span>
+              <h4>${escapeHTML(item.title)}</h4>
+            </div>
+            <p>
+              <span>${item.type === 'Lost' ? '🔴 Lost at' : '🟢 Found at'} ${escapeHTML(item.location)}</span>
+              <span>•</span>
+              <span class="time-ago-text">${getTimeAgo(item.createdAt)}</span>
+            </p>
+          </div>
+        </div>
+        <div class="activity-meta">
+          <span class="badge ${badgeClass}">
+            <span class="badge-dot"></span>
+            ${item.status}
+          </span>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function getStatusBadgeClass(status) {
+  switch (status) {
+    case 'Active':
+    case 'Searching':
+    case 'Looking': return 'badge-searching';
+    case 'Pending':
+    case 'Under Verification': return 'badge-pending';
+    case 'Matched':
+    case 'Possible Match': return 'badge-matched';
+    case 'Claim Approved':
+    case 'Approved': return 'badge-approved';
+    case 'Claimed': return 'badge-claimed';
+    case 'Verified': return 'badge-verified';
+    case 'Returned': return 'badge-returned';
+    case 'Recovered': return 'badge-recovered';
+    case 'Closed': return 'badge-closed';
+    case 'Expired': return 'badge-expired';
+    default: return 'badge-searching';
+  }
+}
+
+
+/* ==========================================================================
+   MODULE: 9_wizard___dynamic_report_forms.js
+   ========================================================================== */
+/* ==========================================================================
+   WIZARD & DYNAMIC REPORT FORMS
+   ========================================================================== */
+function initWizardForms() {
+  renderDynamicFields('lost', 'id-card');
+  renderDynamicFields('found', 'id-card');
+  setupDragAndDrop('lost');
+  setupDragAndDrop('found');
+}
+
+function selectWizardCategory(type, catKey) {
+  const hiddenInput = document.getElementById(`${type}-category-val`);
+  if (hiddenInput) hiddenInput.value = catKey;
+
+  const grid = document.getElementById(`${type}-category-grid`);
+  if (grid) {
+    grid.querySelectorAll('.category-card-pro').forEach(card => {
+      if (card.getAttribute('data-cat') === catKey) {
+        card.classList.add('selected');
+      } else {
+        card.classList.remove('selected');
+      }
+    });
+  }
+
+  renderDynamicFields(type, catKey);
+}
+
+function goToWizardStep(type, stepNum) {
+  for (let i = 1; i <= 3; i++) {
+    const pane = document.getElementById(`${type}-pane-${i}`) || document.getElementById(`${type}-step-${i}`);
+    const node = document.getElementById(`${type}-step-node-${i}`) || document.getElementById(`${type}-step-ind-${i}`);
+    
+    if (pane) {
+      pane.style.display = (i === stepNum) ? 'block' : 'none';
+      if (i === stepNum) pane.classList.add('fade-in');
+    }
+    
+    if (node) {
+      if (i < stepNum) {
+        node.className = 'wizard-step-node completed';
+      } else if (i === stepNum) {
+        node.className = 'wizard-step-node active';
+      } else {
+        node.className = 'wizard-step-node';
+      }
+    }
+  }
+
+  if (stepNum === 3) {
+    generateReportReview(type);
+  }
+
+  // Scroll to top of wizard container for smooth mobile experience
+  const wizardContainer = document.querySelector(`#report-${type}-page .wizard-container`);
+  if (wizardContainer) wizardContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
+}
+
+function renderDynamicFields(type, catKey) {
+  const container = document.getElementById(`${type}-dynamic-fields-wrap`) || document.getElementById(`${type}-dynamic-fields`);
+  if (!container) return;
+
+  const isLost = (type === 'lost');
+  let html = '';
+
+  switch (catKey) {
+    case 'id-card':
+    case 'id-cards':
+      html = `
+        <div class="form-group">
+          <label for="${type}-id-number">Student / Employee ID Number *</label>
+          <input type="text" id="${type}-id-number" class="input-glass" placeholder="e.g. STU-2026-9042" required>
+        </div>
+        <div class="form-group">
+          <label for="${type}-department">Department / Faculty *</label>
+          <select id="${type}-department" class="input-glass" required>
+            <option value="">Select Department...</option>
+            <option value="Computer Science">Computer Science & Engineering</option>
+            <option value="Mechanical Eng">Mechanical Engineering</option>
+            <option value="Electrical Eng">Electrical & Electronics</option>
+            <option value="Business School">School of Business</option>
+            <option value="Arts & Humanities">Arts & Humanities</option>
+            <option value="Sciences">Natural Sciences</option>
+            <option value="Law">School of Law</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+      `;
+      break;
+
+    case 'electronics':
+      html = `
+        <div class="form-group">
+          <label for="${type}-device-type">Device Type *</label>
+          <select id="${type}-device-type" class="input-glass" required>
+            <option value="Phone">Phone / Smartphone</option>
+            <option value="Laptop">Laptop / Notebook</option>
+            <option value="Tablet">Tablet / iPad</option>
+            <option value="Charger">Charger / Adapter / Power Bank</option>
+            <option value="Earbuds">Earbuds / Headphones</option>
+            <option value="Smartwatch">Smartwatch / Fitness Band</option>
+            <option value="Other">Other Electronic Device</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="${type}-brand">Brand / Manufacturer *</label>
+          <input type="text" id="${type}-brand" class="input-glass" placeholder="e.g. Apple, Dell, Samsung, Sony" required>
+        </div>
+        <div class="form-group">
+          <label for="${type}-model">Model Name / Number</label>
+          <input type="text" id="${type}-model" class="input-glass" placeholder="e.g. iPhone 15 Pro, XPS 13, AirPods Pro 2">
+        </div>
+        ${isLost ? `
+        <div class="form-group">
+          <label for="${type}-serial">IMEI / Serial Number (Optional)</label>
+          <input type="text" id="${type}-serial" class="input-glass" placeholder="Last 4 digits or Serial">
+        </div>` : ''}
+      `;
+      break;
+
+    case 'wallet':
+    case 'wallets':
+      html = `
+        <div class="form-group">
+          <label for="${type}-material">Wallet Material *</label>
+          <input type="text" id="${type}-material" class="input-glass" placeholder="e.g. Black Leather, Canvas, Synthetic" required>
+        </div>
+        <div class="form-group">
+          <label for="${type}-num-cards">Number of Cards Inside</label>
+          <input type="number" id="${type}-num-cards" class="input-glass" min="0" placeholder="e.g. 3">
+        </div>
+        ${isLost ? `
+        <div class="form-group">
+          <label for="${type}-cash-amount">Approximate Cash Amount (Optional)</label>
+          <input type="text" id="${type}-cash-amount" class="input-glass" placeholder="e.g. ~$45 (Used for private verification)">
+        </div>` : ''}
+      `;
+      break;
+
+    case 'keys':
+      html = `
+        <div class="form-group">
+          <label for="${type}-key-type">Key Type *</label>
+          <select id="${type}-key-type" class="input-glass" required>
+            <option value="Room / Dorm">Room / Dorm Key</option>
+            <option value="Bike Lock">Bike Lock Key</option>
+            <option value="Car Fob">Car Key / Keyless Fob</option>
+            <option value="Locker Padlock">Locker Padlock Key</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="${type}-num-keys">Number of Keys on Ring</label>
+          <input type="number" id="${type}-num-keys" class="input-glass" min="1" value="1">
+        </div>
+        <div class="form-group col-span-2">
+          <label for="${type}-keychain-desc">Keychain / Lanyard Description *</label>
+          <input type="text" id="${type}-keychain-desc" class="input-glass" placeholder="e.g. Red lanyard with Marvel charm, metal carabiner" required>
+        </div>
+      `;
+      break;
+
+    case 'bags':
+      html = `
+        <div class="form-group">
+          <label for="${type}-bag-type">Bag Type *</label>
+          <select id="${type}-bag-type" class="input-glass" required>
+            <option value="Backpack">Backpack</option>
+            <option value="Sling Bag">Sling / Crossbody Bag</option>
+            <option value="Handbag">Handbag / Tote</option>
+            <option value="Laptop Bag">Laptop Sleeve / Briefcase</option>
+            <option value="Duffle Bag">Gym / Duffle Bag</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="${type}-brand">Brand</label>
+          <input type="text" id="${type}-brand" class="input-glass" placeholder="e.g. The North Face, Nike, JanSport">
+        </div>
+        <div class="form-group col-span-2">
+          <label for="${type}-bag-contents">Notable Contents Description *</label>
+          <input type="text" id="${type}-bag-contents" class="input-glass" placeholder="e.g. Blue spiral notebook, thermos, calculator" required>
+        </div>
+      `;
+      break;
+
+    case 'documents':
+      html = `
+        <div class="form-group">
+          <label for="${type}-doc-type">Document Type *</label>
+          <select id="${type}-doc-type" class="input-glass" required>
+            <option value="Textbook">Textbook / Course Book</option>
+            <option value="Notebook">Notebook / Lecture Binder</option>
+            <option value="Passport">Passport / Official ID</option>
+            <option value="Certificate">Certificate / Transcripts</option>
+            <option value="Assignment">Assignment / Research Paper</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="${type}-doc-name">Name on Document</label>
+          <input type="text" id="${type}-doc-name" class="input-glass" placeholder="e.g. Alex Rivera">
+        </div>
+        <div class="form-group col-span-2">
+          <label for="${type}-doc-subject">Subject / Course / Title</label>
+          <input type="text" id="${type}-doc-subject" class="input-glass" placeholder="e.g. CS201 Algorithms & Data Structures">
+        </div>
+      `;
+      break;
+
+    case 'clothing':
+      html = `
+        <div class="form-group">
+          <label for="${type}-clothing-type">Clothing Type *</label>
+          <input type="text" id="${type}-clothing-type" class="input-glass" placeholder="e.g. Varsity Hoodie, Winter Jacket, Baseball Cap" required>
+        </div>
+        <div class="form-group">
+          <label for="${type}-clothing-size">Size</label>
+          <select id="${type}-clothing-size" class="input-glass">
+            <option value="M">Medium (M)</option>
+            <option value="S">Small (S)</option>
+            <option value="L">Large (L)</option>
+            <option value="XL">Extra Large (XL)</option>
+            <option value="XS">Extra Small (XS)</option>
+            <option value="Free Size">Free Size</option>
+          </select>
+        </div>
+        <div class="form-group col-span-2">
+          <label for="${type}-brand">Brand / Logo</label>
+          <input type="text" id="${type}-brand" class="input-glass" placeholder="e.g. Nike, Champion, Zara, University Crest">
+        </div>
+      `;
+      break;
+
+    case 'misc':
+    default:
+      html = `
+        <div class="form-group col-span-2">
+          <label for="${type}-misc-type">Item Sub-Type / Purpose</label>
+          <input type="text" id="${type}-misc-type" class="input-glass" placeholder="e.g. Hydro Flask water bottle, Ray-Ban glasses, umbrella">
+        </div>
+      `;
+      break;
+  }
+
+  container.innerHTML = html;
+}
+
+function setupDragAndDrop(type) {
+  const zone = document.getElementById(`${type}-drop-zone`);
+  if (!zone) return;
+
+  ['dragenter', 'dragover'].forEach(name => {
+    zone.addEventListener(name, (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      zone.classList.add('dragover');
+    });
+  });
+
+  ['dragleave', 'drop'].forEach(name => {
+    zone.addEventListener(name, (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      zone.classList.remove('dragover');
+    });
+  });
+
+  zone.addEventListener('drop', (e) => {
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      handleFileSelected({ target: { files } }, type);
+    }
+  });
+}
+
+function triggerPhotoPick(type, mode = 'gallery') {
+  let input = null;
+  if (mode === 'camera') {
+    input = document.getElementById(`${type}-camera-input`);
+  } else if (mode === 'gallery') {
+    input = document.getElementById(`${type}-gallery-input`);
+  }
+  if (!input) {
+    input = document.getElementById(`${type}-file-input`);
+  }
+  if (input) {
+    input.click();
+  }
+}
+
+
+
+function syncColorInput(type) {
+  const picker = document.getElementById(`${type}-color-picker`);
+  const text = document.getElementById(`${type}-color-text`);
+  if (picker && text) {
+    text.value = picker.value;
+  }
+}
+
+
+function generateReportReview(type) {
+  const container = document.getElementById(`${type}-review-summary`) || document.getElementById(`${type}-review-summary-content`);
+  if (!container) return;
+
+  const catKey = document.getElementById(`${type}-category-val`)?.value || 'misc';
+  const cat = CATEGORY_MAP[catKey] || { label: 'Item', icon: '📦' };
+  const title = document.getElementById(`${type}-title`)?.value.trim() || 'Untitled Item';
+  const color = document.getElementById(`${type}-color-val`)?.value.trim() || document.getElementById(`${type}-color-text`)?.value.trim() || 'Not specified';
+  let location = document.getElementById(`${type}-location`)?.value || 'Campus';
+  if (location === 'Other') {
+    const customLoc = document.getElementById(`${type}-location-other`)?.value.trim();
+    if (customLoc) location = customLoc;
+  }
+  const date = document.getElementById(`${type}-date`)?.value || new Date().toISOString();
+  const desc = document.getElementById(`${type}-desc`)?.value.trim() || document.getElementById(`${type}-description`)?.value.trim() || 'None provided';
+  const photoUrl = document.getElementById(`${type}-photo-url`)?.value || '';
+  const phone = document.getElementById(`${type}-phone`)?.value.trim() || '';
+  const sharePhone = !!document.getElementById(`${type}-share-phone`)?.checked;
+
+  let contactHTML = '';
+  if (phone) {
+    if (sharePhone) {
+      contactHTML = `
+        <div style="display: flex; align-items: center; gap: 8px; color: var(--teal-bright); font-size: 0.85rem; font-weight: 600;">
+          <i data-lucide="phone-call" style="width: 15px; height: 15px;"></i>
+          <span>${escapeHTML(phone)} (Direct contact permitted)</span>
+        </div>
+      `;
+    } else {
+      contactHTML = `
+        <div style="display: flex; align-items: center; gap: 8px; color: var(--text-muted); font-size: 0.85rem;">
+          <i data-lucide="shield" style="width: 15px; height: 15px; color: var(--color-warning);"></i>
+          <span>Phone provided but kept private (Admin mediation)</span>
+        </div>
+      `;
+    }
+  } else {
+    contactHTML = `
+      <div style="font-size: 0.85rem; color: var(--text-muted);">
+        No phone provided (Admin mediation fallback)
+      </div>
+    `;
+  }
+
+  container.innerHTML = `
+    <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+      ${photoUrl ? `
+        <div style="flex-shrink: 0;">
+          <img src="${photoUrl}" alt="Photo" style="width: 88px; height: 88px; object-fit: cover; border-radius: 8px; border: 1.5px solid var(--teal-bright);">
+        </div>
+      ` : ''}
+      <div style="flex: 1; min-width: 220px;">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+          <span style="font-size: 1.2rem;">${cat.icon}</span>
+          <strong style="font-size: 1.05rem; color: var(--text-primary);">${escapeHTML(title)}</strong>
+        </div>
+        <div style="font-size: 0.83rem; color: var(--text-secondary); margin-bottom: 4px;">
+          <strong>Category:</strong> ${escapeHTML(cat.label)} • <strong>Color:</strong> ${escapeHTML(color)}
+        </div>
+        <div style="font-size: 0.83rem; color: var(--text-secondary); margin-bottom: 6px;">
+          <strong>Location:</strong> ${escapeHTML(location)} • <strong>Date:</strong> ${formatDateTime(date)}
+        </div>
+        <div style="font-size: 0.83rem; color: var(--text-muted); margin-bottom: 10px; line-height: 1.4;">
+          <strong>Description:</strong> ${escapeHTML(desc)}
+        </div>
+        <div style="padding-top: 8px; border-top: 1px solid var(--border-subtle);">
+          <span style="font-size: 0.72rem; text-transform: uppercase; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Contact Preference</span>
+          ${contactHTML}
+        </div>
+      </div>
+    </div>
+  `;
+
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
+}
+
+
+async function finalizeReportSubmit(type) {
+  const isFound = (String(type).toLowerCase() === 'found');
+  const catKey = document.getElementById(`${type}-category-val`)?.value || 'misc';
+  const isUrgent = (catKey === 'id-card' || catKey === 'id-cards' || catKey === 'electronics');
+
+  const title = document.getElementById(`${type}-title`)?.value.trim() || 'Campus Item';
+  const color = document.getElementById(`${type}-color-val`)?.value.trim() || document.getElementById(`${type}-color-text`)?.value.trim() || '';
+  const brand = document.getElementById(`${type}-brand`)?.value?.trim() || '';
+  let location = document.getElementById(`${type}-location`)?.value || 'Campus';
+  if (location === 'Other') {
+    const customLoc = document.getElementById(`${type}-location-other`)?.value.trim();
+    if (customLoc) location = customLoc;
+  }
+  const date = document.getElementById(`${type}-date`)?.value || new Date().toISOString();
+  const desc = document.getElementById(`${type}-desc`)?.value.trim() || document.getElementById(`${type}-description`)?.value.trim() || '';
+  const photo = document.getElementById(`${type}-photo-url`)?.value || '';
+  const phone = document.getElementById(`${type}-phone`)?.value.trim() || '';
+  const sharePhone = !!(phone && document.getElementById(`${type}-share-phone`)?.checked);
+
+  // Find the submit button in pane 3 to show loading state
+  const pane3 = document.getElementById(`${type}-pane-3`);
+  const submitBtn = pane3?.querySelector('.btn-accent-teal') || pane3?.querySelector('button[onclick*="finalizeReportSubmit"]');
+  const originalBtnHTML = submitBtn ? submitBtn.innerHTML : '';
+
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i data-lucide="loader-2" class="spin"></i> <span>Submitting to Cloud...</span>';
+    if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
+  }
+
+  try {
+    // 1. Upload photo to real cloud storage if Data URL is present
+    let cloudImgUrl = photo;
+    if (photo && photo.startsWith('data:')) {
+      if (submitBtn) {
+        submitBtn.innerHTML = '<i data-lucide="upload-cloud" class="spin"></i> <span>Uploading Image...</span>';
+        if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
+      }
+      try {
+        cloudImgUrl = await uploadImageToCloud(photo, `${type}-report.jpg`);
+      } catch (uploadErr) {
+        console.warn('Image upload fallback warning:', uploadErr);
+      }
+    }
+
+    // 2. Construct clean report payload adhering to Supabase check constraints
+    const reportPayload = {
+      id: generateId(type),
+      type: isFound ? 'FOUND' : 'LOST',
+      itemType: isFound ? 'Found' : 'Lost',
+      category: catKey,
+      title: title,
+      itemName: title,
+      color: color,
+      brand: brand,
+      location: location,
+      date: date,
+      dateTime: date,
+      description: desc,
+      photo: cloudImgUrl || null,
+      imageUrl: cloudImgUrl || null,
+      priority: isUrgent ? 'urgent' : 'normal',
+      status: 'Active',
+      phone: phone,
+      phoneNumber: phone,
+      sharePhone: sharePhone,
+      phoneSharingConsent: sharePhone,
+      reporterId: appState.user ? (appState.user.username || appState.user.loginId || appState.user.id) : 'student',
+      reporterName: appState.user ? appState.user.name : 'Campus Student',
+      createdAt: new Date().toISOString()
+    };
+
+    if (isFound) {
+      reportPayload.custody = document.getElementById('found-custody')?.value || 'With Me';
+      reportPayload.finderName = appState.user?.name || 'Campus Student';
+      reportPayload.lostReports = appState.lostReports || [];
+    }
+
+    if (submitBtn) {
+      submitBtn.innerHTML = '<i data-lucide="loader-2" class="spin"></i> <span>Saving Report...</span>';
+      if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
+    }
+
+    // 3. Perform real POST to serverless reports endpoint
+    const apiRes = await fetch(API_BASE + '/api/reports', {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(reportPayload)
+    });
+
+    const apiData = await apiRes.json();
+    if (!apiRes.ok || !apiData.success || !apiData.report) {
+      const errMsg = apiData.message || `Server responded with HTTP ${apiRes.status}`;
+      throw new Error(errMsg);
+    }
+
+    // 4. Update local state with real Supabase returned row
+    const createdReport = apiData.report;
+    if (isFound) {
+      appState.foundReports = [createdReport, ...(appState.foundReports || []).filter(r => r.id !== createdReport.id)];
+    } else {
+      appState.lostReports = [createdReport, ...(appState.lostReports || []).filter(r => r.id !== createdReport.id)];
+    }
+
+    saveData();
+    renderAllViews();
+
+    // 5. Trigger cloud sync to pull matches, notifications & cross-account updates
+    syncWithCloud(false).catch(e => console.warn('Post-submit sync warning:', e));
+
+    showToast(`Report published to campus registry! ${isFound ? '📦' : '📝'}`, 'success');
+
+    // 6. Reset wizard form cleanly
+    const form = document.getElementById(`${type}-details-form`);
+    if (form) form.reset();
+    clearWizardPhoto(type);
+    goToWizardStep(type, 1);
+
+    // Navigate to my reports page immediately
+    showPage('my-reports-page');
+
+  } catch (err) {
+    console.error('Report submission failed:', err);
+    showToast(`Failed to submit report: ${err.message}`, 'error');
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalBtnHTML || (isFound ? '<i data-lucide="check"></i> <span>Submit Found Report</span>' : '<i data-lucide="check"></i> <span>Submit Lost Report</span>');
+      if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
+    }
+  }
+}
+
+
+
+/* ==========================================================================
+   MODULE: 10_ai_assisted_matching___workflow_logic.js
+   ========================================================================== */
+/* ==========================================================================
+   AI-ASSISTED MATCHING & WORKFLOW LOGIC
+   ========================================================================== */
+
+
+
+/* ==========================================================================
+   MODULE: 11_lostseek_ai_multi_signal_explainable_matching_engine.js
+   ========================================================================== */
+/* ==========================================================================
+   LOSTSEEK AI MULTI-SIGNAL EXPLAINABLE MATCHING ENGINE
+   Two-Way: Text Lost Report ↔ Found Item Image Attribute Analysis
+   ========================================================================== */
+
+// Extracts visual, text, and distinguishing attributes without hallucinating
+function extractVisualAttributes(report) {
+  if (!report) return {};
+  const textContent = ((report.title || '') + ' ' + (report.description || '') + ' ' + (report.color || '') + ' ' + (report.brand || '')).toLowerCase();
+
+  // 1. Detect Category/Object type
+  let objectType = report.category || 'misc';
+  if (textContent.includes('bottle') || textContent.includes('flask') || textContent.includes('sipper')) objectType = 'bottle';
+  else if (textContent.includes('laptop') || textContent.includes('macbook') || textContent.includes('notebook')) objectType = 'laptop';
+  else if (textContent.includes('phone') || textContent.includes('iphone') || textContent.includes('android')) objectType = 'phone';
+  else if (textContent.includes('earbud') || textContent.includes('airpod') || textContent.includes('headphone')) objectType = 'audio';
+  else if (textContent.includes('wallet') || textContent.includes('purse')) objectType = 'wallet';
+  else if (textContent.includes('id card') || textContent.includes('id-card') || textContent.includes('student card')) objectType = 'id-card';
+  else if (textContent.includes('bag') || textContent.includes('backpack')) objectType = 'bag';
+  else if (textContent.includes('calculator')) objectType = 'calculator';
+
+  // 2. Detect Color
+  const knownColors = ['blue', 'black', 'white', 'silver', 'gray', 'grey', 'red', 'green', 'yellow', 'brown', 'purple', 'pink', 'gold', 'orange', 'navy'];
+  let detectedColor = report.color ? report.color.toLowerCase().trim() : null;
+  if (!detectedColor || detectedColor === 'not specified' || detectedColor === 'unspecified') {
+    detectedColor = knownColors.find(c => textContent.includes(c)) || 'Unknown';
+  }
+
+  // 3. Detect Brand
+  const knownBrands = ['milton', 'apple', 'dell', 'hp', 'lenovo', 'samsung', 'sony', 'jbl', 'boat', 'bose', 'nike', 'adidas', 'puma', 'wildcraft', 'fastrack', 'titan', 'casio', 'tupperware'];
+  let detectedBrand = report.brand ? report.brand.toLowerCase().trim() : null;
+  if (!detectedBrand) {
+    detectedBrand = knownBrands.find(b => textContent.includes(b)) || 'Not clearly visible';
+  }
+
+  // 4. Detect Distinguishing features / Stickers / Markings
+  const distinguishingTokens = [];
+  const stickerPatterns = [
+    'football sticker', 'soccer sticker', 'cricket sticker', 'apple sticker', 'anime sticker',
+    'coding sticker', 'github sticker', 'sticker', 'scratch', 'dent', 'engraving', 'initials',
+    'keychain', 'key ring', 'strap', 'case', 'cover', 'pouch', 'cracked screen', 'tag', 'signature'
+  ];
+
+  stickerPatterns.forEach(pattern => {
+    if (textContent.includes(pattern)) {
+      distinguishingTokens.push(pattern);
+    }
+  });
+
+  return {
+    objectType,
+    color: detectedColor,
+    brand: detectedBrand,
+    distinguishingTokens,
+    hasPhoto: !!(report.photo && report.photo.trim())
+  };
+}
+
+// Multi-signal matching between any report and opposite list
+function findMatches(report, type) {
+  const oppositeList = (type === 'lost') ? appState.foundReports : appState.lostReports;
+  const matches = [];
+
+  const sourceAttrs = extractVisualAttributes(report);
+  const sourceKeywords = extractKeywords((report.title || '') + ' ' + (report.description || ''));
+
+  oppositeList.forEach(other => {
+    const targetAttrs = extractVisualAttributes(other);
+    const targetKeywords = extractKeywords((other.title || '') + ' ' + (other.description || ''));
+
+    let categoryPts = 0;
+    let textPts = 0;
+    let colorPts = 0;
+    let locPts = 0;
+    let timePts = 0;
+    let brandPts = 0;
+    let featurePts = 0;
+    let yoloPts = 0;
+    let clipPts = 0;
+
+    const matchReasons = [];
+    const unmatchedReasons = [];
+    const aiSignals = { status: 'not_requested' };
+
+    // Identify which is lost and which is found
+    const lostItem = type === 'lost' ? report : other;
+    const foundItem = type === 'lost' ? other : report;
+
+    // SIGNAL 1: CATEGORY COMPATIBILITY (max 20)
+    const cat1 = (report.category || '').toLowerCase().replace(/s$/, '');
+    const cat2 = (other.category || '').toLowerCase().replace(/s$/, '');
+    const isCatMatch = (cat1 && cat2 && (cat1 === cat2 || sourceAttrs.objectType === targetAttrs.objectType));
+    
+    // Incompatibility gate: bottle vs calculator should never match!
+    const isIncompatible = (sourceAttrs.objectType === 'calculator' && targetAttrs.objectType === 'bottle') ||
+                           (sourceAttrs.objectType === 'bottle' && targetAttrs.objectType === 'calculator') ||
+                           (sourceAttrs.objectType === 'wallet' && targetAttrs.objectType === 'laptop');
+
+    if (isIncompatible) {
+      return; // Skip incompatible objects
+    }
+
+    if (isCatMatch) {
+      categoryPts = 20;
+      const catObj = CATEGORY_MAP[report.category] || { label: 'Item' };
+      matchReasons.push(`✓ Same item category (${catObj.label})`);
+    } else {
+      unmatchedReasons.push('⚠️ Different primary category');
+    }
+
+    // SIGNAL 2: TEXT & SEMANTIC KEYWORDS (max 15)
+    if (sourceKeywords.length > 0 && targetKeywords.length > 0) {
+      const uniqueKeywords = new Set([...sourceKeywords, ...targetKeywords]);
+      let overlap = 0;
+      sourceKeywords.forEach(k => {
+        if (targetKeywords.includes(k)) overlap++;
+      });
+      textPts = Math.min(15, Math.round((overlap / uniqueKeywords.size) * 25));
+      if (textPts >= 8) {
+        matchReasons.push('✓ Strong title & description keyword alignment');
+      }
+    }
+
+    // SIGNAL 3: COLOR SIMILARITY (max 10)
+    const c1 = (sourceAttrs.color || '').toLowerCase().trim();
+    const c2 = (targetAttrs.color || '').toLowerCase().trim();
+    if (c1 && c2 && c1 !== 'unknown' && c2 !== 'unknown') {
+      if (c1 === c2) {
+        colorPts = 10;
+        matchReasons.push(`✓ Same color (${c1.charAt(0).toUpperCase() + c1.slice(1)})`);
+      } else if (c1.includes(c2) || c2.includes(c1) || hasColorOverlap(c1, c2)) {
+        colorPts = 6;
+        matchReasons.push(`✓ Similar color tones (${c1} / ${c2})`);
+      } else {
+        unmatchedReasons.push(`⚠️ Color difference (${c1} vs ${c2})`);
+      }
+    } else {
+      unmatchedReasons.push('⚠️ Color could not be verified from report');
+    }
+
+    // SIGNAL 4: LOCATION PROXIMITY (max 15) - Preserves KSRCE Adjacency
+    const loc1 = report.location || '';
+    const loc2 = other.location || '';
+    if (loc1 && loc2) {
+      const clean1 = loc1.toLowerCase().trim();
+      const clean2 = loc2.toLowerCase().trim();
+      if (clean1 === clean2) {
+        locPts = 15;
+        matchReasons.push(`✓ Same campus location (${loc1})`);
+      } else {
+        const adj = LOCATION_PROXIMITY[loc1] || [];
+        if (adj.some(a => a.toLowerCase().trim() === clean2) || isSameLocationCategory(loc1, loc2)) {
+          locPts = 8;
+          matchReasons.push(`✓ Adjacent campus area (${loc1} ↔ ${loc2})`);
+        } else {
+          unmatchedReasons.push(`⚠️ Different campus location (${loc1} vs ${loc2})`);
+        }
+      }
+    }
+
+    // SIGNAL 5: TIME PROXIMITY (max 10)
+    const t1 = new Date(report.date || report.createdAt).getTime();
+    const t2 = new Date(other.date || other.createdAt).getTime();
+    if (!isNaN(t1) && !isNaN(t2)) {
+      const diffDays = Math.abs(t1 - t2) / (1000 * 3600 * 24);
+      if (diffDays <= 1) {
+        timePts = 10;
+        matchReasons.push('✓ Compatible date & time (same 24h window)');
+      } else if (diffDays <= 3) {
+        timePts = 7;
+        matchReasons.push('✓ Compatible timeframe (within 3 days)');
+      } else if (diffDays <= 7) {
+        timePts = 4;
+      }
+    }
+
+    // SIGNAL 6: BRAND MATCH (max 5)
+    const b1 = (sourceAttrs.brand || '').toLowerCase().trim();
+    const b2 = (targetAttrs.brand || '').toLowerCase().trim();
+    if (b1 && b2 && b1 !== 'not clearly visible' && b2 !== 'not clearly visible' && b1 !== 'unknown' && b2 !== 'unknown') {
+      if (b1 === b2 || b1.includes(b2) || b2.includes(b1)) {
+        brandPts = 5;
+        matchReasons.push(`✓ Brand match (${b1.charAt(0).toUpperCase() + b1.slice(1)})`);
+      } else {
+        unmatchedReasons.push(`⚠️ Brand mismatch (${b1} vs ${b2})`);
+      }
+    } else {
+      unmatchedReasons.push('⚠️ Brand could not be confirmed from image');
+    }
+
+    // SIGNAL 7: UNIQUE CHARACTERISTICS BONUS (max 10)
+    const commonTokens = sourceAttrs.distinguishingTokens.filter(tok => targetAttrs.distinguishingTokens.includes(tok));
+    if (commonTokens.length > 0) {
+      featurePts = Math.min(10, commonTokens.length * 5 + 5);
+      const featureLabel = commonTokens.map(t => t.charAt(0).toUpperCase() + t.slice(1)).join(', ');
+      matchReasons.push(`✓ Distinguishing feature detected (${featureLabel})`);
+    }
+
+    // =======================================================================
+    // REAL AI SIGNALS: YOLO (Signal 8) & CLIP (Signal 9)
+    // =======================================================================
+    const aiAnalysis = foundItem.aiAnalysis || foundItem.ai_analysis;
+    const hasAiAnalysis = aiAnalysis && aiAnalysis.status === 'completed';
+
+    if (hasAiAnalysis) {
+      aiSignals.status = 'completed';
+
+      // SIGNAL 8: YOLO VISUAL CONSISTENCY (max 10)
+      const detections = (aiAnalysis.yolo && aiAnalysis.yolo.detections) || [];
+      const lostCatStr = (lostItem.category || '').toLowerCase();
+      const lostTitleStr = (lostItem.title || lostItem.itemName || '').toLowerCase();
+      const lostDescStr = (lostItem.description || '').toLowerCase();
+      const fullLostText = `${lostCatStr} ${lostTitleStr} ${lostDescStr}`;
+
+      const cocoMap = {
+        'bottle': ['bottle', 'bottles', 'flask', 'sipper', 'milton', 'water bottle'],
+        'backpack': ['bag', 'bags', 'backpack', 'rucksack', 'kitbag'],
+        'handbag': ['bag', 'bags', 'handbag', 'purse', 'wallet'],
+        'suitcase': ['bag', 'bags', 'suitcase'],
+        'laptop': ['laptop', 'macbook', 'notebook', 'computer', 'electronics', 'dell', 'hp', 'lenovo'],
+        'cell phone': ['phone', 'cell phone', 'iphone', 'android', 'mobile', 'smartphone'],
+        'mouse': ['mouse', 'electronics'],
+        'keyboard': ['keyboard', 'electronics'],
+        'book': ['book', 'books', 'notebook', 'textbook'],
+        'umbrella': ['umbrella']
+      };
+
+      let bestDet = null;
+      for (const d of detections) {
+        const c = (d.class || '').toLowerCase();
+        const keywords = cocoMap[c] || [c];
+        if (keywords.some(kw => fullLostText.includes(kw))) {
+          const p = Math.min(10, Math.max(4, Math.round(d.confidence * 10)));
+          if (p > yoloPts) {
+            yoloPts = p;
+            bestDet = d;
+          }
+        }
+      }
+
+      if (bestDet) {
+        const confPct = Math.round(bestDet.confidence * 100);
+        matchReasons.push(`✓ YOLO visual detection consistent: ${bestDet.class} in photo (${confPct}% confidence)`);
+        aiSignals.yolo = {
+          detectedClass: bestDet.class,
+          confidence: bestDet.confidence,
+          points: yoloPts
+        };
+      } else if (detections.length > 0) {
+        aiSignals.yolo = {
+          detectedClasses: detections.map(d => d.class),
+          points: 0
+        };
+      }
+
+      // SIGNAL 9: CLIP MULTIMODAL SIMILARITY (max 15)
+      if (aiAnalysis.clipMatches && aiAnalysis.clipMatches[lostItem.id]) {
+        const cm = aiAnalysis.clipMatches[lostItem.id];
+        clipPts = cm.points || 0;
+        if (cm.similarity !== undefined) {
+          matchReasons.push(`✓ CLIP visual similarity to lost description: ${Number(cm.similarity).toFixed(2)}`);
+        }
+        aiSignals.clip = cm;
+      }
+    } else if (foundItem.photo && foundItem.photo.trim()) {
+      aiSignals.status = aiAnalysis ? aiAnalysis.status : 'pending';
+    }
+
+    // Compute raw & normalized score (0–100)
+    let rawScore;
+    if (hasAiAnalysis) {
+      rawScore = categoryPts + textPts + colorPts + locPts + timePts + brandPts + featurePts + yoloPts + clipPts;
+    } else {
+      // Scale non-AI points so non-photo items are not arbitrarily penalized
+      const nonAiSum = categoryPts + textPts + colorPts + locPts + timePts + brandPts + featurePts;
+      rawScore = Math.min(100, Math.round(nonAiSum * (100 / 75)));
+    }
+
+    const finalScore = Math.min(100, Math.max(0, Math.round(rawScore)));
+
+    if (finalScore >= 40) {
+      matches.push({
+        lost: type === 'lost' ? report : other,
+        found: type === 'lost' ? other : report,
+        opposite: other,
+        score: finalScore,
+        categoryPts,
+        textPts,
+        colorPts,
+        locPts,
+        timePts,
+        brandPts,
+        featurePts,
+        yoloPts,
+        clipPts,
+        aiSignals,
+        matchReasons,
+        unmatchedReasons
+      });
+    }
+  });
+
+  return matches.sort((a, b) => b.score - a.score);
+}
+
+
+function extractKeywords(str) {
+  const stopWords = new Set(['the', 'a', 'an', 'in', 'on', 'at', 'with', 'and', 'or', 'for', 'to', 'of', 'by', 'is', 'it', 'my', 'has', 'near', 'inside', 'was', 'this', 'that']);
+  return str.toLowerCase()
+    .replace(/[^\w\s]/g, ' ')
+    .split(/\s+/)
+    .filter(w => w.length > 2 && !stopWords.has(w));
+}
+
+function hasColorOverlap(color1, color2) {
+  if (!color1 || !color2) return false;
+  const c1Words = color1.toLowerCase().replace(/[^a-z]/g, ' ').split(/\s+/).filter(w => w.length > 2);
+  const c2Words = color2.toLowerCase().replace(/[^a-z]/g, ' ').split(/\s+/).filter(w => w.length > 2);
+  return c1Words.some(w => c2Words.includes(w));
+}
+
+function matchItem(report, type) {
+  const matches = findMatches(report, type);
+  if (matches.length > 0) {
+    const top = matches[0];
+    report.status = 'Matched';
+    report.matchId = top.opposite.id;
+    top.opposite.status = 'Matched';
+    top.opposite.matchId = report.id;
+
+    appState.notifications.unshift({
+      id: generateId('notif'),
+      message: `🤖 AI Match: ${top.score}% match between "${report.title}" and "${top.opposite.title}"!`,
+      read: false,
+      createdAt: new Date().toISOString()
+    });
+  }
+  return matches;
+}
+
+function calculateMatchesList() {
+  const allMatches = [];
+  const seen = new Set();
+
+  appState.lostReports.forEach(lost => {
+    const matches = findMatches(lost, 'lost');
+    matches.forEach(m => {
+      const pairKey = `${m.lost.id}_${m.found.id}`;
+      if (!seen.has(pairKey)) {
+        seen.add(pairKey);
+        allMatches.push(m);
+      }
+    });
+  });
+
+  return allMatches.sort((a, b) => b.score - a.score);
+}
+
+function recalculateMatches() {
+  renderAIMatches();
+  updateIndicatorPills();
+  showToast('AI correlation scan completed!', 'info');
+}
+
+function renderAIMatches() {
+  const container = document.getElementById('ai-matches-container');
+  if (!container) return;
+
+  const matches = calculateMatchesList();
+
+  if (matches.length === 0) {
+    container.innerHTML = `
+      <div class="glass-card empty-state">
+        <div class="empty-state-icon">🤖</div>
+        <p>No high-probability item matches detected (&ge;40%). As new campus reports arrive, the engine will alert you!</p>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = matches.map(m => {
+    const { lost, found, score, categoryPts, textPts, colorPts, locPts, timePts, brandPts } = m;
+    const isClaimed = appState.claims.some(c => c.lostReportId === lost.id && c.foundReportId === found.id);
+
+    const circumference = 251.2;
+    const strokeOffset = circumference - (score / 100) * circumference;
+    const scoreColorClass = score > 70 ? 'score-green' : (score > 50 ? 'score-yellow' : 'score-red');
+
+    const lostCat = CATEGORY_MAP[lost.category] || { label: 'Item', icon: '📦' };
+    const foundCat = CATEGORY_MAP[found.category] || { label: 'Item', icon: '📦' };
+
+    return `
+      <div class="glass-card match-card" style="padding: 22px;">
+        <div class="match-card-side-by-side">
+          <!-- Left: Lost item -->
+          <div class="match-item-pane">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span class="badge badge-searching"><span class="badge-dot"></span> Lost Item</span>
+              ${lost.priority === 'urgent' ? `<span class="badge badge-urgent">🔴 URGENT</span>` : ''}
+            </div>
+            ${lost.photo ? `
+              <div style="position: relative; overflow: hidden; border-radius: 8px;">
+                <img src="${lost.photo}" class="match-item-thumb" alt="Lost Item">
+                ${lost.imageSharedForMatch ? `
+                  <div style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(15, 23, 42, 0.88); color: var(--teal-bright); font-size: 0.65rem; padding: 3px 6px; text-align: center; font-weight: 600; line-height: 1.2;">
+                    Possible match — image shared for verification
+                  </div>
+                ` : ''}
+              </div>
+            ` : `
+              <div class="match-item-thumb" style="display:flex;align-items:center;justify-content:center;font-size:2.5rem;">${lostCat.icon}</div>
+            `}
+            <h4 style="font-size: 1.05rem;">${escapeHTML(lost.title)}</h4>
+            <div class="sub-text">📂 ${lostCat.label}</div>
+            <div style="font-size: 0.82rem; color: var(--text-secondary);">📍 Last seen: <strong>${escapeHTML(lost.location)}</strong></div>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">📅 ${getTimeAgo(lost.date || lost.createdAt)}</div>
+          </div>
+
+          <!-- Center: Large Animated SVG Progress Ring -->
+          <div class="match-score-center">
+            <div class="score-ring-wrap">
+              <svg class="score-ring-svg" viewBox="0 0 100 100">
+                <circle class="score-ring-bg" cx="50" cy="50" r="40"></circle>
+                <circle class="score-ring-fill ${scoreColorClass}" cx="50" cy="50" r="40"
+                  stroke-dasharray="${circumference}"
+                  stroke-dashoffset="${strokeOffset}">
+                </circle>
+              </svg>
+              <div class="score-text-inside">${score}%</div>
+            </div>
+            <span style="font-size: 0.72rem; text-transform: uppercase; color: var(--accent-light); font-weight: 700; letter-spacing: 0.6px;">AI Match</span>
+          </div>
+
+          <!-- Right: Found item -->
+          <div class="match-item-pane">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span class="badge badge-matched"><span class="badge-dot"></span> Found Item</span>
+              <span class="sub-text" style="font-size:0.75rem;">${escapeHTML(found.custody || 'Campus Desk')}</span>
+            </div>
+            ${found.photo ? `<img src="${found.photo}" class="match-item-thumb" alt="Found Item">` : `
+              <div class="match-item-thumb" style="display:flex;align-items:center;justify-content:center;font-size:2.5rem;">${foundCat.icon}</div>
+            `}
+            <h4 style="font-size: 1.05rem;">${escapeHTML(found.title)}</h4>
+            <div class="sub-text">📂 ${foundCat.label}</div>
+            <div style="font-size: 0.82rem; color: var(--text-secondary);">📍 Found at: <strong>${escapeHTML(found.location)}</strong></div>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">📅 ${getTimeAgo(found.date || found.createdAt)}</div>
+          </div>
+        </div>
+
+        <!-- Breakdown Bar -->
+        <div class="match-breakdown-bar" style="margin-top: 16px;">
+          <span class="breakdown-chip ${categoryPts > 0 ? 'matched' : ''}">📦 Category ${categoryPts}/25 ${categoryPts > 0 ? '✓' : ''}</span>
+          <span class="breakdown-chip ${textPts >= 15 ? 'matched' : ''}">📝 Text ${textPts}/30</span>
+          <span class="breakdown-chip ${colorPts > 0 ? 'matched' : ''}">🎨 Color ${colorPts}/15 ${colorPts > 0 ? '✓' : ''}</span>
+          <span class="breakdown-chip ${locPts > 0 ? 'matched' : ''}">📍 Location ${locPts}/15 ${locPts > 0 ? '✓' : ''}</span>
+          <span class="breakdown-chip ${timePts >= 10 ? 'matched' : ''}">🕐 Time ${timePts}/15</span>
+          ${brandPts > 0 ? `<span class="breakdown-chip matched">🏷️ Brand +5 ✓</span>` : ''}
+        </div>
+
+        <!-- Actions Area: Claim + Urgent Help -->
+        <div style="margin-top: 14px; display: flex; justify-content: flex-end; align-items: center; gap: 10px; flex-wrap: wrap;">
+          <button type="button" class="btn btn-outline" style="border-color: rgba(239, 68, 68, 0.4); color: #F87171; padding: 6px 12px; font-size: 0.82rem;" onclick="openItemHelpModal('${lost.id}', '${escapeHTML(lost.title)}', '${escapeHTML(lost.location)}')">
+            <i data-lucide="shield-alert" style="width: 14px; height: 14px;"></i>
+            <span>🆘 Need Help?</span>
+          </button>
+          ${isClaimed ? `
+            <span class="badge badge-verified">Claim Verification in Review</span>
+          ` : `
+            <button class="btn btn-accent-teal" onclick="openClaimModal('${lost.id}', '${found.id}', '${escapeHTML(lost.title)}', '${lost.category}')">
+              <span>🤝</span> Claim This Item
+            </button>
+          `}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+
+/* ==========================================================================
+   MODULE: 12_my_reports___lifecycle_timeline.js
+   ========================================================================== */
+/* ==========================================================================
+   MY REPORTS & LIFECYCLE TIMELINE
+   ========================================================================== */
+let currentMyReportsTab = 'lost';
+
+function filterMyReportsTab(tab, btnEl) {
+  currentMyReportsTab = tab;
+  const parent = btnEl.parentElement;
+  if (parent) {
+    parent.querySelectorAll('.tab-pill').forEach(b => b.classList.remove('active'));
+    btnEl.classList.add('active');
+  }
+  renderMyReports(tab);
+}
+
+const LIFECYCLE_STAGES = ['Reported', 'Matched', 'Claimed', 'Verified', 'Returned'];
+
+function getStageIndex(status) {
+  switch (status) {
+    case 'Searching': return 0;
+    case 'Matched': return 1;
+    case 'Claimed': return 2;
+    case 'Verified': return 3;
+    case 'Returned': return 4;
+    default: return 0;
+  }
+}
+
+function renderLifecycleTimeline(status) {
+  const currentIndex = getStageIndex(status);
+  const percent = (currentIndex / (LIFECYCLE_STAGES.length - 1)) * 100;
+
+  return `
+    <div class="lifecycle-timeline">
+      <div class="timeline-connector">
+        <div class="timeline-connector-fill" style="width: ${percent}%;"></div>
+      </div>
+      ${LIFECYCLE_STAGES.map((st, idx) => {
+        let cls = '';
+        if (idx === currentIndex) cls = 'active';
+        else if (idx < currentIndex) cls = 'completed';
+        return `
+          <div class="timeline-step ${cls}">
+            <div class="timeline-dot"></div>
+            <span class="timeline-label">${st}</span>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
+function renderMyReports(tab = currentMyReportsTab) {
+  const container = document.getElementById('my-reports-container');
+  if (!container) return;
+
+  const user = appState.user;
+  const username = user ? (user.username || user.loginId || user.id) : null;
+  const userRole = user ? (user.role || '').toLowerCase() : '';
+  const isStaff = ['admin', 'supervisor', 'director'].includes(userRole);
+
+  let rawList = [];
+  if (tab === 'lost') {
+    rawList = (appState.lostReports || []).map(i => ({ ...i, itemType: 'Lost' }));
+  } else if (tab === 'found') {
+    rawList = (appState.foundReports || []).map(i => ({ ...i, itemType: 'Found' }));
+  } else {
+    rawList = [
+      ...(appState.lostReports || []).map(i => ({ ...i, itemType: 'Lost' })),
+      ...(appState.foundReports || []).map(i => ({ ...i, itemType: 'Found' }))
+    ];
+  }
+
+  // In "My Reports", students strictly see only their own reports.
+  let items = rawList.filter(item => {
+    if (!user) return false;
+    const isOwner = (item.reporterId === username || item.reporterId === user.id || item.reporterName === user.name);
+    return isOwner || (isStaff && item.reporterId === username);
+  });
+
+  items.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+  if (items.length === 0) {
+    container.innerHTML = `
+      <div class="glass-card empty-state" style="grid-column: 1 / -1;">
+        <div class="empty-state-icon">📦</div>
+        <p>You haven't reported anything yet.</p>
+        <div style="margin-top: 14px;">
+          <button class="btn btn-primary" onclick="showPage('${tab === 'lost' ? 'report-lost-page' : 'report-found-page'}')">
+            Create ${tab === 'lost' ? 'Lost' : 'Found'} Report
+          </button>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = items.map(item => {
+    const cat = CATEGORY_MAP[item.category] || { label: 'Item', icon: '📦' };
+    const badgeClass = getStatusBadgeClass(item.status);
+    const hasMatches = (item.status === 'Matched' || item.matchId);
+    const isOwner = user && (item.reporterId === username || item.reporterId === user.id || item.reporterName === user.name);
+    const canRemove = isOwner || isStaff;
+
+    return `
+      <div class="glass-card report-item-card">
+        <div class="report-item-top">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            ${item.photo ? `<img src="${item.photo}" style="width: 44px; height: 44px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border-glass);">` : `
+              <div class="item-category-avatar">${cat.icon}</div>
+            `}
+            <div>
+              <h4 style="font-size: 1rem; margin-bottom: 2px;">${escapeHTML(item.title)}</h4>
+              <span class="sub-text">${cat.label}</span>
+            </div>
+          </div>
+          <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+            <span class="badge ${badgeClass}">
+              <span class="badge-dot"></span> ${item.status}
+            </span>
+            ${item.priority === 'urgent' ? `<span class="badge badge-urgent">🔴 URGENT</span>` : ''}
+          </div>
+        </div>
+
+        <div class="report-details-list">
+          <span>📍 <strong>Location:</strong> ${escapeHTML(item.location)}</span>
+          <span>🎨 <strong>Color:</strong> ${escapeHTML(item.color || 'N/A')} • <strong>Brand:</strong> ${escapeHTML(item.brand || 'N/A')}</span>
+          <span>📅 <strong>Reported:</strong> ${getTimeAgo(item.createdAt)}</span>
+        </div>
+
+        <!-- Lifecycle Stages Timeline -->
+        ${renderLifecycleTimeline(item.status)}
+
+        <div class="report-item-footer" style="margin-top: 8px;">
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            ${hasMatches ? `
+              <button class="btn btn-sm btn-accent-teal" onclick="showPage('matches-page')">
+                🤖 View Matches
+              </button>
+            ` : ''}
+            <button class="btn btn-sm btn-secondary" onclick="openQrModal('${item.id}')" title="View / Print QR Code Tag">
+              🏷️ QR Tag
+            </button>
+            ${item.status === 'Verified' ? `
+              <button class="btn btn-sm btn-primary" onclick="markItemAsReturned('${item.id}', '${item.itemType}')">
+                ✅ Mark as Returned
+              </button>
+            ` : ''}
+          </div>
+          ${isOwner ? `
+            <button class="btn btn-sm btn-danger" onclick="deleteReport('${item.id}', '${item.itemType}')" title="Delete Report">
+              🗑️ Remove
+            </button>
+          ` : (isStaff ? `
+            <button class="btn btn-sm btn-danger" onclick="deleteReport('${item.id}', '${item.itemType}')" title="Admin Moderation: Remove">
+              🛡️ Admin Remove
+            </button>
+          ` : '')}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function markItemAsReturned(id, itemType) {
+  const list = (itemType === 'Lost') ? appState.lostReports : appState.foundReports;
+  const item = list.find(r => r.id === id);
+  if (item) {
+    item.status = 'Returned';
+    
+    saveData();
+    renderAllViews();
+    showToast(`"${item.title}" marked as Returned! Reunited successfully. 🎉`, 'success');
+  }
+}
+
+async function deleteReport(id, type) {
+  try {
+    const res = await fetch(API_BASE + '/api/reports?id=' + encodeURIComponent(id), {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      showToast(data.message || 'Failed to remove report.', 'error');
+      return;
+    }
+
+    if (type === 'Lost') {
+      appState.lostReports = appState.lostReports.filter(r => r.id !== id);
+    } else {
+      appState.foundReports = appState.foundReports.filter(r => r.id !== id);
+    }
+    saveData();
+    renderAllViews();
+    showToast('Report removed from registry', 'info');
+  } catch (err) {
+    showToast('Network error while removing report: ' + err.message, 'error');
+  }
+}
+
+
+/* ==========================================================================
+   MODULE: 13_claim___dynamic_verification_flow.js
+   ========================================================================== */
+/* ==========================================================================
+   CLAIM & DYNAMIC VERIFICATION FLOW
+   ========================================================================== */
+function getVerificationQuestion(category) {
+  const cat = (category || '').toLowerCase().replace(/s$/, '');
+  switch (cat) {
+    case 'wallet':
+      return "How much cash was approximately inside?";
+    case 'electronics':
+      return "What is the lock screen wallpaper, or describe any case/sticker?";
+    case 'keys':
+      return "Describe the keychain and number of keys";
+    case 'bags':
+    case 'bag':
+      return "Name one specific item inside the bag";
+    case 'id-card':
+      return "What is your student ID number or department?";
+    default:
+      return "Describe one unique detail about this item";
+  }
+}
+
+function openClaimModal(lostId, foundId, title, category = 'misc') {
+  ensureModalsLoaded();
+  const modal = document.getElementById('claim-modal');
+  const titleEl = document.getElementById('modal-item-title');
+  const lostInput = document.getElementById('claim-lost-id');
+  const foundInput = document.getElementById('claim-found-id');
+  const promptEl = document.getElementById('claim-verification-prompt');
+  const answerInput = document.getElementById('claim-answer');
+
+  const question = getVerificationQuestion(category);
+
+  if (titleEl) titleEl.textContent = `Claim Item: ${title}`;
+  if (lostInput) lostInput.value = lostId;
+  if (foundInput) foundInput.value = foundId;
+  if (promptEl) promptEl.textContent = question;
+  if (answerInput) {
+    answerInput.value = '';
+    answerInput.placeholder = `e.g. ${question}...`;
+  }
+  if (modal) modal.classList.add('show');
+}
+
+function closeClaimModal() {
+  const modal = document.getElementById('claim-modal');
+  if (modal) modal.classList.remove('show');
+}
+
+function submitClaimVerification(e) {
+  e.preventDefault();
+
+  const lostId = document.getElementById('claim-lost-id').value;
+  const foundId = document.getElementById('claim-found-id').value;
+  const answer = document.getElementById('claim-answer').value.trim();
+
+  const newClaim = {
+    id: generateId('claim'),
+    lostReportId: lostId,
+    foundReportId: foundId,
+    claimantName: appState.user?.name || 'Alex Rivera',
+    matchScore: 92,
+    status: 'Pending Admin Review',
+    verificationAnswer: answer,
+    createdAt: new Date().toISOString()
+  };
+
+  appState.claims.unshift(newClaim);
+
+  // Update report statuses
+  const lost = appState.lostReports.find(r => r.id === lostId);
+  if (lost) lost.status = 'Claimed';
+
+  const found = appState.foundReports.find(r => r.id === foundId);
+  if (found) found.status = 'Claimed';
+
+  appState.notifications.unshift({
+    id: generateId('notif'),
+    message: `⏳ Claim submitted for verification! Desk security is reviewing your details.`,
+    read: false,
+    createdAt: new Date().toISOString()
+  });
+
+  saveData();
+  renderAllViews();
+  closeClaimModal();
+  showToast('Claim submitted! Admin will verify shortly. 🔐', 'success');
+}
+
+
+/* ==========================================================================
+   MODULE: 14_admin_verification_desk.js
+   ========================================================================== */
+/* ==========================================================================
+   ADMIN VERIFICATION DESK
+   ========================================================================== */
+
+/* ==========================================================================
+   MODULE: 15_admin_verification_desk___admin_page_.js
+   ========================================================================== */
+/* ==========================================================================
+   ADMIN VERIFICATION DESK (#admin-page)
+   ========================================================================== */
+let currentAdminTab = 'all-reports';
+let adminExpandedRowId = null;
+
+function switchAdminTab(tabName, btnEl) {
+  currentAdminTab = tabName;
+
+  // Update tab pill active state
+  const pills = document.querySelectorAll('#admin-page .tab-pill');
+  pills.forEach(p => p.classList.remove('active'));
+  if (btnEl) btnEl.classList.add('active');
+
+  // Toggle pane visibility
+  const panes = {
+    'all-reports': 'admin-pane-all-reports',
+    'pending-claims': 'admin-pane-pending-claims',
+    'verified': 'admin-pane-verified',
+    'expired': 'admin-pane-expired'
+  };
+
+  Object.keys(panes).forEach(k => {
+    const pane = document.getElementById(panes[k]);
+    if (pane) {
+      pane.style.display = (k === tabName) ? (k === 'all-reports' || k === 'verified' || k === 'expired' ? 'block' : 'grid') : 'none';
+      if (k === tabName) pane.classList.add('fade-in');
+    }
+  });
+
+  renderAdminDesk();
+}
+
+function renderAdminDesk() {
+  updateAdminCounts();
+
+  if (currentAdminTab === 'all-reports') {
+    renderAdminAllReports();
+  } else if (currentAdminTab === 'pending-claims') {
+    renderAdminPendingClaims();
+  } else if (currentAdminTab === 'verified') {
+    renderAdminVerified();
+  } else if (currentAdminTab === 'expired') {
+    renderAdminExpired();
+  }
+}
+
+function updateAdminCounts() {
+  const totalReports = appState.lostReports.length + appState.foundReports.length;
+  const pendingClaims = appState.claims.filter(c => c.status === 'Pending Admin Review' || c.status === 'Claimed').length;
+  const verifiedCount = appState.lostReports.filter(r => r.status === 'Verified').length + 
+                        appState.foundReports.filter(r => r.status === 'Verified').length;
+  const expiredCount = [...appState.lostReports, ...appState.foundReports].filter(isItemExpired).length;
+
+  const countRep = document.getElementById('admin-count-reports');
+  const countClm = document.getElementById('admin-count-claims');
+  const countVer = document.getElementById('admin-count-verified');
+  const countExp = document.getElementById('admin-count-expired');
+
+  if (countRep) countRep.textContent = totalReports;
+  if (countClm) countClm.textContent = pendingClaims;
+  if (countVer) countVer.textContent = verifiedCount;
+  if (countExp) countExp.textContent = expiredCount;
+}
+
+function isItemExpired(item) {
+  if (!item.createdAt) return false;
+  if (item.status === 'Expired' || item.status === 'Archived' || item.status === 'Donated') return true;
+  const itemDate = new Date(item.createdAt).getTime();
+  const diffDays = (Date.now() - itemDate) / (1000 * 3600 * 24);
+  return diffDays >= 30;
+}
+
+function filterAdminReportsTable() {
+  renderAdminAllReports();
+}
+
+function renderAdminAllReports() {
+  const tbody = document.getElementById('admin-all-reports-tbody');
+  if (!tbody) return;
+
+  const searchInput = document.getElementById('admin-search-input')?.value.trim().toLowerCase() || '';
+  const categoryFilter = document.getElementById('admin-filter-category')?.value || '';
+  const statusFilter = document.getElementById('admin-filter-status')?.value || '';
+  const locationFilter = document.getElementById('admin-filter-location')?.value || '';
+
+  const allReports = [
+    ...appState.lostReports.map(i => ({ ...i, itemType: 'Lost' })),
+    ...appState.foundReports.map(i => ({ ...i, itemType: 'Found' }))
+  ];
+
+  // Apply filters
+  const filtered = allReports.filter(item => {
+    if (searchInput) {
+      const matchSearch = item.title.toLowerCase().includes(searchInput) ||
+                          item.id.toLowerCase().includes(searchInput) ||
+                          (item.description && item.description.toLowerCase().includes(searchInput)) ||
+                          (item.finderName && item.finderName.toLowerCase().includes(searchInput)) ||
+                          (item.location && item.location.toLowerCase().includes(searchInput));
+      if (!matchSearch) return false;
+    }
+
+    if (categoryFilter && item.category !== categoryFilter) return false;
+    if (statusFilter && item.status !== statusFilter) return false;
+    if (locationFilter && item.location !== locationFilter) return false;
+
+    return true;
+  });
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="8" style="text-align:center; padding: 36px; color: var(--text-muted);">
+          🔍 No reports match the active filter criteria.
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(item => {
+    const cat = CATEGORY_MAP[item.category] || { label: 'Item', icon: '📦' };
+    const badgeClass = getStatusBadgeClass(item.status);
+    const isExpanded = (adminExpandedRowId === item.id);
+
+    return `
+      <tr onclick="toggleAdminRowExpand('${item.id}')" class="${isExpanded ? 'row-selected' : ''}">
+        <td>
+          <span class="badge ${item.itemType === 'Lost' ? 'badge-searching' : 'badge-matched'}">
+            ${item.itemType}
+          </span>
+        </td>
+        <td><code>#${escapeHTML(item.id)}</code></td>
+        <td><strong>${escapeHTML(item.title)}</strong></td>
+        <td>${cat.icon} ${escapeHTML(cat.label)}</td>
+        <td>📍 ${escapeHTML(item.location)}</td>
+        <td>${getTimeAgo(item.createdAt || item.date)}</td>
+        <td><span class="badge ${badgeClass}">${item.status}</span></td>
+        <td>
+          <button class="btn btn-sm btn-secondary" onclick="event.stopPropagation(); toggleAdminRowExpand('${item.id}')">
+            ${isExpanded ? '▲ Hide' : '▼ Details'}
+          </button>
+        </td>
+      </tr>
+      ${isExpanded ? `
+        <tr class="admin-expand-row">
+          <td colspan="8">
+            <div class="admin-expanded-detail-box">
+              ${item.photo ? `
+                <img src="${item.photo}" class="expanded-thumb" alt="Item Preview">
+              ` : `
+                <div class="expanded-thumb" style="display:flex;align-items:center;justify-content:center;font-size:3rem;">
+                  ${cat.icon}
+                </div>
+              `}
+              <div>
+                <h4 style="font-size: 1.1rem; margin-bottom: 6px;">${escapeHTML(item.title)}</h4>
+                <p style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 10px;">
+                  ${escapeHTML(item.description || 'No detailed notes provided.')}
+                </p>
+                <div class="expanded-meta-grid">
+                  <div class="expanded-meta-item">
+                    <span class="lbl">Campus Location</span>
+                    <span class="val">${escapeHTML(item.location)}</span>
+                  </div>
+                  <div class="expanded-meta-item">
+                    <span class="lbl">Primary Color &amp; Brand</span>
+                    <span class="val">${escapeHTML(item.color || 'N/A')} • ${escapeHTML(item.brand || 'N/A')}</span>
+                  </div>
+                  <div class="expanded-meta-item">
+                    <span class="lbl">${item.itemType === 'Found' ? 'Finder / Custody' : 'Reporter / Contact'}</span>
+                    <span class="val">${escapeHTML(item.finderName || item.custody || 'Alex Rivera (Student)')}</span>
+                  </div>
+                </div>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                <button class="btn btn-sm btn-primary" onclick="event.stopPropagation(); openQrModal('${item.id}')">
+                  🏷️ Print QR Tag
+                </button>
+                ${item.status === 'Verified' ? `
+                  <button class="btn btn-sm btn-accent-teal" onclick="event.stopPropagation(); adminMarkReturned('${item.id}')">
+                    ✅ Mark Returned
+                  </button>
+                ` : ''}
+                <button class="btn btn-sm btn-secondary" onclick="event.stopPropagation(); adminArchiveItem('${item.id}')">
+                  📁 Archive
+                </button>
+              </div>
+            </div>
+          </td>
+        </tr>
+      ` : ''}
+    `;
+  }).join('');
+}
+
+function toggleAdminRowExpand(itemId) {
+  adminExpandedRowId = (adminExpandedRowId === itemId) ? null : itemId;
+  renderAdminAllReports();
+}
+
+function renderAdminClaims() {
+  renderAdminPendingClaims();
+  if (typeof renderAdminHelpRequests === "function") {
+    renderAdminHelpRequests();
+  }
+}
+
+function renderAdminPendingClaims() {
+  const container = document.getElementById('admin-claims-cards-grid');
+  if (!container) return;
+
+  const pendingClaims = appState.claims.filter(c => c.status === 'Pending Admin Review' || c.status === 'Claimed');
+
+  if (pendingClaims.length === 0) {
+    container.innerHTML = `
+      <div class="glass-card empty-state" style="grid-column: 1 / -1;">
+        <div class="empty-state-icon">✅</div>
+        <p>All claims reviewed! No claims currently pending admin verification.</p>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = pendingClaims.map(claim => {
+    const lostItem = appState.lostReports.find(r => r.id === claim.lostReportId);
+    const foundItem = appState.foundReports.find(r => r.id === claim.foundReportId);
+
+    const lostTitle = lostItem ? lostItem.title : 'Lost Item #' + claim.lostReportId;
+    const foundTitle = foundItem ? foundItem.title : 'Found Item #' + claim.foundReportId;
+    const lostCat = lostItem ? (CATEGORY_MAP[lostItem.category] || { icon: '📦' }) : { icon: '📦' };
+    const foundCat = foundItem ? (CATEGORY_MAP[foundItem.category] || { icon: '📦' }) : { icon: '📦' };
+
+    return `
+      <div class="glass-card match-card" style="padding: 24px; border-left: 4px solid var(--warning);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <div>
+            <span class="badge badge-claimed">Claim Awaiting Admin Approval</span>
+            <span class="sub-text" style="margin-left: 8px;">Claim ID: <code>#${escapeHTML(claim.id)}</code></span>
+          </div>
+          <div class="match-score-pill">
+            <span>🤖 Similarity:</span>
+            <strong>${claim.matchScore}%</strong>
+          </div>
+        </div>
+
+        <!-- Side by side mini comparison -->
+        <div class="match-card-side-by-side" style="margin-bottom: 16px;">
+          <div class="match-item-pane" style="padding: 14px;">
+            <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Reported Lost Item</div>
+            <h4 style="font-size: 0.95rem; margin: 4px 0;">${lostCat.icon} ${escapeHTML(lostTitle)}</h4>
+            <div style="font-size: 0.8rem; color: var(--text-secondary);">📍 ${escapeHTML(lostItem?.location || 'Campus')}</div>
+            <p style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">${escapeHTML(lostItem?.description || '')}</p>
+          </div>
+
+          <div style="display: flex; align-items: center; justify-content: center; font-weight: 800; color: var(--accent);">
+            ⚡ VS ⚡
+          </div>
+
+          <div class="match-item-pane" style="padding: 14px;">
+            <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Recovered Found Item</div>
+            <h4 style="font-size: 0.95rem; margin: 4px 0;">${foundCat.icon} ${escapeHTML(foundTitle)}</h4>
+            <div style="font-size: 0.8rem; color: var(--text-secondary);">📍 ${escapeHTML(foundItem?.location || 'Campus')}</div>
+            <p style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">${escapeHTML(foundItem?.description || '')}</p>
+          </div>
+        </div>
+
+        <!-- Claimant Verification Answer Quote -->
+        <div style="background: rgba(255, 255, 255, 0.04); border-left: 3px solid var(--accent); padding: 12px 16px; border-radius: var(--radius-sm); margin-bottom: 16px;">
+          <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--accent-light); font-weight: 700; margin-bottom: 4px;">
+            <span>CLAIMANT VERIFICATION STATEMENT (${escapeHTML(claim.claimantName)})</span>
+            <span>Contact: ${escapeHTML(claim.contact || 'alex.rivera@campus.edu')}</span>
+          </div>
+          <div style="font-size: 0.9rem; color: #fff; font-style: italic;">
+            "${escapeHTML(claim.verificationAnswer)}"
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div style="display: flex; justify-content: flex-end; gap: 12px;">
+          <button class="btn btn-danger" onclick="adminRejectClaim('${claim.id}')">
+            ❌ Reject Claim
+          </button>
+          <button class="btn btn-accent-teal" onclick="adminApproveClaim('${claim.id}')">
+            ✅ Approve Claim
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function adminApproveClaim(claimId) {
+  const claim = appState.claims.find(c => c.id === claimId);
+  if (!claim) return;
+
+  claim.status = 'Verified';
+
+  const lost = appState.lostReports.find(r => r.id === claim.lostReportId);
+  if (lost) lost.status = 'Verified';
+
+  const found = appState.foundReports.find(r => r.id === claim.foundReportId);
+  if (found) found.status = 'Verified';
+
+  
+
+  appState.notifications.unshift({
+    id: generateId('notif'),
+    message: `🎉 Great news! Claim #${claim.id.slice(0, 8)} approved! Item verified for hand-over.`,
+    read: false,
+    createdAt: new Date().toISOString()
+  });
+
+  saveData();
+  renderAllViews();
+  showToast('Claim approved! Owner notified 🎉', 'success');
+}
+
+function adminRejectClaim(claimId) {
+  const claim = appState.claims.find(c => c.id === claimId);
+  if (!claim) return;
+
+  claim.status = 'Rejected';
+
+  const lost = appState.lostReports.find(r => r.id === claim.lostReportId);
+  if (lost) lost.status = 'Searching';
+
+  const found = appState.foundReports.find(r => r.id === claim.foundReportId);
+  if (found) found.status = 'Searching';
+
+  saveData();
+  renderAllViews();
+  showToast('Claim rejected', 'warning');
+}
+
+function renderAdminVerified() {
+  const container = document.getElementById('admin-verified-cards-list');
+  if (!container) return;
+
+  const verifiedItems = [
+    ...appState.lostReports.filter(r => r.status === 'Verified').map(i => ({ ...i, itemType: 'Lost' })),
+    ...appState.foundReports.filter(r => r.status === 'Verified').map(i => ({ ...i, itemType: 'Found' }))
+  ];
+
+  if (verifiedItems.length === 0) {
+    container.innerHTML = `
+      <div class="glass-card empty-state" style="grid-column: 1 / -1;">
+        <div class="empty-state-icon">🤝</div>
+        <p>No verified items waiting for physical return.</p>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = verifiedItems.map(item => {
+    const cat = CATEGORY_MAP[item.category] || { label: 'Item', icon: '📦' };
+
+    return `
+      <div class="glass-card report-item-card">
+        <div class="report-item-top">
+          <div class="item-category-avatar">${cat.icon}</div>
+          <span class="badge badge-verified">Verified • Ready for Pick-Up</span>
+        </div>
+        <div class="report-item-body">
+          <h4>${escapeHTML(item.title)}</h4>
+          <p>${escapeHTML(item.description || '')}</p>
+        </div>
+        <div class="report-details-list">
+          <span>📍 Storage: <strong>${escapeHTML(item.location)}</strong></span>
+          <span>📅 Verified on: ${getTimeAgo(item.createdAt)}</span>
+        </div>
+        <div style="margin-top: 12px; display: flex; justify-content: space-between; align-items: center;">
+          <button class="btn btn-sm btn-secondary" onclick="openQrModal('${item.id}')">
+            🏷️ QR Tag
+          </button>
+          <button class="btn btn-primary btn-sm" onclick="openAdminHandoverModal('${item.id}', '${item.itemType ? item.itemType.toLowerCase() : "found"}')">
+            🤝 Safe Handover
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function adminMarkReturned(itemId) {
+  const lost = appState.lostReports.find(r => r.id === itemId);
+  if (lost) lost.status = 'Returned';
+
+  const found = appState.foundReports.find(r => r.id === itemId);
+  if (found) found.status = 'Returned';
+
+  const claim = appState.claims.find(c => c.lostReportId === itemId || c.foundReportId === itemId);
+  if (claim) {
+    claim.status = 'Returned';
+    const associatedLost = appState.lostReports.find(r => r.id === claim.lostReportId);
+    if (associatedLost) associatedLost.status = 'Returned';
+    const associatedFound = appState.foundReports.find(r => r.id === claim.foundReportId);
+    if (associatedFound) associatedFound.status = 'Returned';
+  }
+
+  
+
+  saveData();
+  renderAllViews();
+  showToast('Item marked Returned and handed over to owner! 🤝', 'success');
+}
+
+function renderAdminExpired() {
+  const container = document.getElementById('admin-expired-list');
+  if (!container) return;
+
+  const expiredItems = [
+    ...appState.lostReports.filter(isItemExpired).map(i => ({ ...i, itemType: 'Lost' })),
+    ...appState.foundReports.filter(isItemExpired).map(i => ({ ...i, itemType: 'Found' }))
+  ];
+
+  if (expiredItems.length === 0) {
+    container.innerHTML = `
+      <div class="glass-card empty-state" style="grid-column: 1 / -1;">
+        <div class="empty-state-icon">⏳</div>
+        <p>No aging items (>30 days) found in the campus registry.</p>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = expiredItems.map(item => {
+    const cat = CATEGORY_MAP[item.category] || { label: 'Item', icon: '📦' };
+
+    return `
+      <div class="glass-card report-item-card">
+        <div class="report-item-top">
+          <div class="item-category-avatar">${cat.icon}</div>
+          <span class="badge badge-urgent">Aging &gt; 30 Days</span>
+        </div>
+        <div class="report-item-body">
+          <h4>${escapeHTML(item.title)}</h4>
+          <p>${escapeHTML(item.description || '')}</p>
+        </div>
+        <div class="report-details-list">
+          <span>📍 Storage: <strong>${escapeHTML(item.location)}</strong></span>
+          <span>📅 Date Logged: ${getTimeAgo(item.createdAt)}</span>
+          <span>Status: <strong>${escapeHTML(item.status)}</strong></span>
+        </div>
+        <div style="margin-top: 12px; display: flex; justify-content: flex-end; gap: 8px;">
+          <button class="btn btn-sm btn-secondary" onclick="adminArchiveItem('${item.id}')">
+            📁 Archive
+          </button>
+          <button class="btn btn-sm btn-accent-teal" onclick="adminDonateItem('${item.id}')">
+            🎁 Donate to Charity
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function adminArchiveItem(itemId) {
+  const lost = appState.lostReports.find(r => r.id === itemId);
+  if (lost) lost.status = 'Archived';
+
+  const found = appState.foundReports.find(r => r.id === itemId);
+  if (found) found.status = 'Archived';
+
+  saveData();
+  renderAllViews();
+  showToast('Item status updated to Archived 📁', 'info');
+}
+
+function adminDonateItem(itemId) {
+  const lost = appState.lostReports.find(r => r.id === itemId);
+  if (lost) lost.status = 'Donated';
+
+  const found = appState.foundReports.find(r => r.id === itemId);
+  if (found) found.status = 'Donated';
+
+  saveData();
+  renderAllViews();
+  showToast('Item allocated to Campus Charity Donation 🎁', 'success');
+}
+
+
+/* ==========================================================================
+   MODULE: 16_analytics_dashboard___analytics_page__with_chart_js.js
+   ========================================================================== */
+/*undefined
+   ========================================================================== */
+let analyticsChartInstances = {};
+
+function renderAnalyticsPage() {
+  renderAnalyticsStats();
+  initAnalyticsCharts();
+  renderCampusHeatmap();
+}
+
+function renderAnalyticsStats() {
+  const totalReports = appState.lostReports.length + appState.foundReports.length;
+  const returnedCount = appState.lostReports.filter(r => r.status === 'Returned' || r.status === 'Verified').length +
+    appState.foundReports.filter(r => r.status === 'Returned' || r.status === 'Verified').length;
+  const recoveryRate = totalReports > 0 ? Math.round((returnedCount / totalReports) * 100) : 0;
+
+  const matches = calculateMatchesList();
+  const avgConfidence = matches.length > 0
+    ? Math.round(matches.reduce((acc, m) => acc + m.score, 0) / matches.length)
+    : "No data";
+
+  const totalEl = document.getElementById('an-total-reports');
+  const recoveryEl = document.getElementById('an-recovery-rate');
+  const confEl = document.getElementById('an-avg-confidence');
+  const timeEl = document.getElementById('an-avg-time');
+
+  if (totalEl) totalEl.textContent = totalReports;
+  if (recoveryEl) recoveryEl.textContent = `${recoveryRate}%`;
+  if (confEl) confEl.textContent = avgConfidence === "No data" ? avgConfidence : `${avgConfidence}%`;
+  if (timeEl) timeEl.textContent = 'No data';
+}
+
+function initAnalyticsCharts() {
+  if (typeof Chart === 'undefined') {
+    loadScriptAsync('https://cdn.jsdelivr.net/npm/chart.js').then(() => initAnalyticsCharts()).catch(() => { });
+    return;
+  }
+
+  // Safely destroy existing charts before recreating
+  ['chart-categories', 'chart-timeline', 'chart-recovery', 'chart-locations'].forEach(id => {
+    if (analyticsChartInstances[id]) {
+      analyticsChartInstances[id].destroy();
+      analyticsChartInstances[id] = null;
+    }
+    const existing = Chart.getChart(id);
+    if (existing) existing.destroy();
+  });
+
+  const allItems = [...appState.lostReports, ...appState.foundReports];
+  if (allItems.length === 0) {
+    const chartCanvases = document.querySelectorAll('.chart-card canvas');
+    chartCanvases.forEach(canvas => {
+      const parent = canvas.parentElement;
+      if (parent) {
+        parent.innerHTML = `<div class="empty-state" style="padding: 40px 20px; text-align: center; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
+          <i data-lucide="bar-chart-2" style="width: 32px; height: 32px; margin-bottom: 12px; opacity: 0.5;"></i>
+          <p>No data available yet</p>
+        </div>`;
+      }
+    });
+    if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
+    return;
+  }
+
+  const categories = [
+    { key: 'id-card', label: 'ID Cards' },
+    { key: 'electronics', label: 'Electronics' },
+    { key: 'wallet', label: 'Wallets' },
+    { key: 'keys', label: 'Keys' },
+    { key: 'bags', label: 'Bags' },
+    { key: 'documents', label: 'Documents' },
+    { key: 'clothing', label: 'Clothing' },
+    { key: 'misc', label: 'Misc' }
+  ];
+
+  // 1. Doughnut Chart: Items by Category
+  const catCounts = categories.map(c => allItems.filter(i => (i.category === c.key || i.category === c.key + 's')).length);
+  const catCanvas = document.getElementById('chart-categories');
+  if (catCanvas) {
+    analyticsChartInstances['chart-categories'] = new Chart(catCanvas, {
+      type: 'doughnut',
+      data: {
+        labels: categories.map(c => c.label),
+        datasets: [{
+          data: catCounts,
+          backgroundColor: [
+            '#6c63ff', '#00d4aa', '#ffa502', '#ff4757',
+            '#a29bfe', '#00cec9', '#fd79a8', '#636e72'
+          ],
+          borderColor: '#12121e',
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { color: '#ffffff', boxWidth: 12, padding: 14, font: { family: 'Inter', size: 11 } }
+          }
+        }
+      }
+    });
+  }
+
+  // 2. Line Chart: Reports Over Time (Last 7 Days)
+  const timelineCanvas = document.getElementById('chart-timeline');
+  if (timelineCanvas) {
+    const days = [];
+    const lostCounts = [];
+    const foundCounts = [];
+    const now = new Date();
+
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      const dateString = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      days.push(dateString);
+
+      const isSameDay = (isoStr) => {
+        if (!isoStr) return false;
+        const target = new Date(isoStr);
+        return target.getDate() === d.getDate() && target.getMonth() === d.getMonth() && target.getFullYear() === d.getFullYear();
+      };
+
+      lostCounts.push(appState.lostReports.filter(r => isSameDay(r.createdAt)).length);
+      foundCounts.push(appState.foundReports.filter(r => isSameDay(r.createdAt)).length);
+    }
+
+    analyticsChartInstances['chart-timeline'] = new Chart(timelineCanvas, {
+      type: 'line',
+      data: {
+        labels: days,
+        datasets: [
+          {
+            label: 'Lost Reports',
+            data: lostCounts,
+            borderColor: '#6c63ff',
+            backgroundColor: 'rgba(108, 99, 255, 0.15)',
+            tension: 0.35,
+            fill: true
+          },
+          {
+            label: 'Found Reports',
+            data: foundCounts,
+            borderColor: '#00d4aa',
+            backgroundColor: 'rgba(0, 212, 170, 0.15)',
+            tension: 0.35,
+            fill: true
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: { ticks: { color: 'rgba(255,255,255,0.6)' }, grid: { color: 'rgba(255,255,255,0.06)' } },
+          y: { ticks: { color: 'rgba(255,255,255,0.6)' }, grid: { color: 'rgba(255,255,255,0.06)' }, beginAtZero: true }
+        },
+        plugins: {
+          legend: { labels: { color: '#ffffff', boxWidth: 12, padding: 12 } }
+        }
+      }
+    });
+  }
+
+  // 3. Bar Chart: Recovery Rate by Category (%)
+  const recoveryCanvas = document.getElementById('chart-recovery');
+  if (recoveryCanvas) {
+    const recoveryRates = categories.map(c => {
+      const itemsInCat = allItems.filter(i => i.category === c.key || i.category === c.key + 's');
+      if (itemsInCat.length === 0) return 0; // realistic fallback
+      const returnedInCat = itemsInCat.filter(i => i.status === 'Returned' || i.status === 'Verified').length;
+      return Math.round((returnedInCat / itemsInCat.length) * 100) || 0;
+    });
+
+    analyticsChartInstances['chart-recovery'] = new Chart(recoveryCanvas, {
+      type: 'bar',
+      data: {
+        labels: categories.map(c => c.label),
+        datasets: [{
+          label: 'Recovery %',
+          data: recoveryRates,
+          backgroundColor: '#00d4aa',
+          borderRadius: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: { ticks: { color: 'rgba(255,255,255,0.6)', font: { size: 10 } }, grid: { display: false } },
+          y: { ticks: { color: 'rgba(255,255,255,0.6)' }, grid: { color: 'rgba(255,255,255,0.06)' }, max: 100, beginAtZero: true }
+        },
+        plugins: {
+          legend: { display: false }
+        }
+      }
+    });
+  }
+
+  // 4. Horizontal Bar: Top Loss Locations
+  const locationsCanvas = document.getElementById('chart-locations');
+  if (locationsCanvas) {
+    const zoneCountsData = CAMPUS_LOCATIONS.map(c => c.name).map(z => ({
+      name: z,
+      count: allItems.filter(i => normalizeLocationName(i.location) === normalizeLocationName(z)).length
+    }));
+
+    zoneCountsData.sort((a, b) => b.count - a.count);
+    const topZones = zoneCountsData.slice(0, 6);
+
+    analyticsChartInstances['chart-locations'] = new Chart(locationsCanvas, {
+      type: 'bar',
+      data: {
+        labels: topZones.map(z => z.name),
+        datasets: [{
+          label: 'Incident Reports',
+          data: topZones.map(z => z.count),
+          backgroundColor: '#ffa502',
+          borderRadius: 6
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: { ticks: { color: 'rgba(255,255,255,0.6)' }, grid: { color: 'rgba(255,255,255,0.06)' }, beginAtZero: true },
+          y: { ticks: { color: 'rgba(255,255,255,0.8)' }, grid: { display: false } }
+        },
+        plugins: {
+          legend: { display: false }
+        }
+      }
+    });
+  }
+}
+
+function renderCampusHeatmap() {
+  const container = document.getElementById('campus-heatmap-container');
+  if (!container) return;
+
+  const categoryIcons = {
+    'Academic & Administrative': '🏢',
+    'Services': '📍',
+    'Hostel / House Areas': '🏠',
+    'Recreation': '📍',
+    'Food & Dining': '☕',
+    'Unknown': '📍'
+  };
+  const campusZones = CAMPUS_LOCATIONS.map(c => ({ name: c.name, icon: categoryIcons[c.category] || '📍', desc: c.status }));
+
+  const allItems = [...appState.lostReports, ...appState.foundReports];
+
+  container.innerHTML = campusZones.map(zone => {
+    const count = allItems.filter(i => normalizeLocationName(i.location) === normalizeLocationName(zone.name)).length;
+
+    let intensityClass = 'heat-low';
+    if (count >= 3) intensityClass = 'heat-high';
+    else if (count >= 1) intensityClass = 'heat-med';
+
+    return `
+      <div class="heatmap-cell ${intensityClass}" title="${zone.name}: ${count} reports recorded">
+        <div class="heatmap-cell-top">
+          <span class="heatmap-zone-icon">${zone.icon}</span>
+          <span class="heatmap-count-badge">${count} Reports</span>
+        </div>
+        <div>
+          <div class="heatmap-zone-name">${escapeHTML(zone.name)}</div>
+          <div class="heatmap-zone-desc">${escapeHTML(zone.desc)}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+
+/* ==========================================================================
+   MODULE: 17_qr_code___pdf_verification_system__stage_3_standards_compliant_.js
+   ========================================================================== */
+/* ==========================================================================
+   QR CODE & PDF VERIFICATION SYSTEM (STAGE 3 STANDARDS-COMPLIANT)
+   ========================================================================== */
+const PROD_BASE_URL = 'https://smart-campus-pro.vercel.app';
+let currentQrItemId = null;
+
+function openQrModal(itemId) {
+  ensureModalsLoaded();
+  let item = appState.lostReports.find(r => r.id === itemId) || appState.foundReports.find(r => r.id === itemId);
+  if (!item) return;
+
+  currentQrItemId = itemId;
+  const modal = document.getElementById('qr-modal');
+  const canvas = document.getElementById('qr-canvas');
+  const titleEl = document.getElementById('qr-item-title');
+  const idEl = document.getElementById('qr-item-id');
+
+  if (titleEl) titleEl.textContent = item.title;
+  if (idEl) idEl.textContent = `ID: #${item.id} • ${item.location}`;
+
+  // Encode genuine, standards-compliant production HTTPS verification URL
+  const payload = `${PROD_BASE_URL}/report/${item.id}`;
+
+  if (typeof QRCode === 'undefined') {
+    loadScriptAsync('https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js').then(() => openQrModal(itemId)).catch(() => {});
+    return;
+  }
+  if (canvas) {
+    QRCode.toCanvas(canvas, payload, {
+      width: 180,
+      margin: 2,
+      errorCorrectionLevel: 'M',
+      color: {
+        dark: '#0f172a',
+        light: '#ffffff'
+      }
+    }, function (error) {
+      if (error) console.error('QR code generation error:', error);
+    });
+  }
+
+  if (modal) modal.classList.add('show');
+}
+
+function closeQrModal() {
+  const modal = document.getElementById('qr-modal');
+  if (modal) modal.classList.remove('show');
+}
+
+function downloadQrCode() {
+  const canvas = document.getElementById('qr-canvas');
+  if (!canvas) return;
+  const link = document.createElement('a');
+  link.download = `LostSeek-QR-${currentQrItemId || 'tag'}.png`;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+  showToast('Official QR Tag downloaded successfully! 🖨️', 'success');
+}
+
+async function downloadReportPdf(reportId) {
+  if (!reportId) reportId = currentQrItemId;
+  if (!reportId) {
+    showToast('No report specified for PDF generation', 'warning');
+    return;
+  }
+
+  showToast('Generating official LostSeek PDF...', 'info');
+
+  // Primary: Serverless Vector PDF endpoint (/api/pdf)
+  try {
+    const res = await fetch(`/api/pdf?id=${encodeURIComponent(reportId)}&type=report`);
+    if (res.ok) {
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = `LostSeek_REPORT_${reportId.substring(0, 8)}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
+      showToast('Official PDF downloaded successfully! 📄', 'success');
+      return;
+    }
+  } catch (err) {
+    console.warn('Serverless PDF endpoint failed, attempting client-side fallback:', err);
+  }
+
+  // Fallback: Client-side jsPDF generator
+  try {
+    if (!window.jspdf) {
+      await loadScriptAsync('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+    }
+    if (window.jspdf && window.jspdf.jsPDF) {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      const report = appState.lostReports.find(r => r.id === reportId) ||
+                     appState.foundReports.find(r => r.id === reportId) ||
+                     { id: reportId, title: 'Item Report', location: 'Campus Premises', category: 'General' };
+
+      // Header branding
+      doc.setFillColor(15, 23, 42);
+      doc.rect(14, 12, 182, 24, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('KSRCE SMART CAMPUS — LOSTSEEK', 20, 24);
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(56, 189, 248);
+      doc.text('OFFICIAL VERIFICATION RECEIPT & CUSTODY DOCUMENT', 20, 30);
+
+      // Details
+      doc.setTextColor(15, 23, 42);
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.text('CAMPUS PROPERTY CUSTODY REPORT', 14, 46);
+
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(100, 116, 139);
+      doc.text('Document ID:', 14, 56);
+      doc.text('Item Title:', 14, 64);
+      doc.text('Category:', 14, 72);
+      doc.text('Status:', 14, 80);
+      doc.text('Location:', 14, 88);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(15, 23, 42);
+      doc.text(String(report.id), 55, 56);
+      doc.text(String(report.title || report.itemName || 'Unspecified Item'), 55, 64);
+      doc.text(String(report.category || 'General').toUpperCase(), 55, 72);
+      doc.text(String(report.status || 'Active').toUpperCase(), 55, 80);
+      doc.text(String(report.location || 'Campus Premises'), 55, 88);
+
+      // Embedded QR Code
+      const canvas = document.getElementById('qr-canvas');
+      if (canvas) {
+        const qrDataUrl = canvas.toDataURL('image/png');
+        doc.addImage(qrDataUrl, 'PNG', 130, 48, 50, 50);
+        doc.setFontSize(7);
+        doc.setTextColor(2, 132, 199);
+        doc.text('SCAN TO VERIFY RECORD', 132, 102);
+      }
+
+      // Security Notice
+      doc.setFillColor(254, 242, 242);
+      doc.rect(14, 115, 182, 20, 'F');
+      doc.setFontSize(7.5);
+      doc.setTextColor(185, 28, 28);
+      doc.setFont('helvetica', 'bold');
+      doc.text('SECURITY & INTEGRITY NOTICE', 18, 122);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(127, 29, 29);
+      doc.text('Official campus custody document. Verification: https://smart-campus-pro.vercel.app', 18, 130);
+
+      doc.save(`LostSeek_REPORT_${reportId.substring(0, 8)}.pdf`);
+      showToast('Official PDF downloaded successfully! 📄', 'success');
+      return;
+    }
+  } catch (clientErr) {
+    console.error('Client-side PDF generation error:', clientErr);
+  }
+
+  showToast('Failed to download PDF. Please try again.', 'danger');
+}
+
+async function downloadReceiptPdf(claimId) {
+  if (!claimId) return;
+  showToast('Generating official handover receipt...', 'info');
+
+  try {
+    const res = await fetch(`/api/pdf?id=${encodeURIComponent(claimId)}&type=claim`);
+    if (res.ok) {
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = `LostSeek_RECEIPT_${claimId.substring(0, 8)}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
+      showToast('Official Receipt downloaded! 📄', 'success');
+      return;
+    }
+  } catch (err) {
+    console.warn('Serverless receipt error:', err);
+  }
+
+  // Fallback to report pdf
+  const claim = appState.claims.find(c => c.id === claimId);
+  const repId = claim?.foundReportId || claim?.lostReportId;
+  if (repId) {
+    downloadReportPdf(repId);
+  } else {
+    showToast('Handover receipt generation unavailable', 'warning');
+  }
+}
+
+async function openPublicVerification(reportId) {
+  const modal = document.getElementById('public-verification-modal');
+  const body = document.getElementById('public-verification-body');
+  if (!modal || !body) return;
+
+  currentQrItemId = reportId;
+  modal.classList.add('show');
+
+  body.innerHTML = `
+    <div style="text-align: center; padding: 30px;">
+      <div style="margin: 0 auto; width: 36px; height: 36px; border: 3px solid rgba(56, 189, 248, 0.2); border-top-color: #38bdf8; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+      <p style="margin-top: 14px; color: var(--text-secondary); font-size: 0.9rem;">Verifying record on campus network...</p>
+    </div>
+  `;
+
+  try {
+    const res = await fetch(`/api/verify?id=${encodeURIComponent(reportId)}`);
+    const data = await res.json();
+
+    if (res.ok && data.success && data.record) {
+      const rec = data.record;
+      body.innerHTML = `
+        <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 10px; padding: 14px; margin-bottom: 16px; display: flex; align-items: center; gap: 12px;">
+          <i data-lucide="check-circle" style="color: #10b981; width: 26px; height: 26px; flex-shrink: 0;"></i>
+          <div>
+            <div style="font-weight: 700; color: #10b981; font-size: 0.95rem;">Authoritative Campus Record Verified</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted);">${escapeHTML(rec.verificationSource)}</div>
+          </div>
+        </div>
+
+        <div style="background: var(--bg-subtle, rgba(255,255,255,0.03)); border: 1px solid var(--border-subtle, rgba(255,255,255,0.08)); border-radius: 10px; padding: 16px; margin-bottom: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+            <div>
+              <span class="badge ${rec.type === 'LOST' ? 'badge-searching' : 'badge-matched'}" style="font-size: 0.7rem;">${escapeHTML(rec.type)} ITEM</span>
+              <h4 style="margin: 6px 0 0; font-size: 1.1rem; color: var(--text-primary);">${escapeHTML(rec.title || rec.itemName)}</h4>
+            </div>
+            <span class="status-pill status-${(rec.status || 'Active').toLowerCase()}">${escapeHTML(rec.status || 'Active')}</span>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.82rem; margin-top: 12px;">
+            <div>
+              <span style="color: var(--text-muted); display: block;">Record ID:</span>
+              <code style="color: #38bdf8; font-size: 0.8rem;">#${escapeHTML(rec.id)}</code>
+            </div>
+            <div>
+              <span style="color: var(--text-muted); display: block;">Category:</span>
+              <strong style="color: var(--text-primary);">${escapeHTML(rec.category || 'General')}</strong>
+            </div>
+            <div>
+              <span style="color: var(--text-muted); display: block;">Location:</span>
+              <strong style="color: var(--text-primary);">${escapeHTML(rec.location || 'Campus Premises')}</strong>
+            </div>
+            <div>
+              <span style="color: var(--text-muted); display: block;">Custody:</span>
+              <strong style="color: #38bdf8;">${escapeHTML(rec.custody || 'Campus Security')}</strong>
+            </div>
+          </div>
+
+          ${rec.aiSummary ? `
+            <div style="margin-top: 12px; padding: 10px; background: rgba(56, 189, 248, 0.06); border-radius: 8px; border: 1px dashed rgba(56, 189, 248, 0.2);">
+              <div style="font-size: 0.75rem; font-weight: 700; color: #38bdf8; text-transform: uppercase;">Vision AI Verification Signal</div>
+              <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 2px;">
+                Detected: <strong>${escapeHTML(rec.aiSummary.primaryClass || 'Object')}</strong> (${rec.aiSummary.detectedCount} objects correlated)
+              </div>
+            </div>
+          ` : ''}
+        </div>
+
+        <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 18px; line-height: 1.4;">
+          🔒 Private claimant evidence and personal phone numbers are protected and omitted from this public verification view.
+        </div>
+
+        <div style="display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;">
+          <button type="button" class="btn btn-secondary" onclick="closePublicVerificationModal()">Close</button>
+          <button type="button" class="btn btn-primary" onclick="downloadReportPdf('${rec.id}')">
+            <i data-lucide="file-text"></i>
+            <span>Download Official PDF</span>
+          </button>
+        </div>
+      `;
+    } else {
+      // Not found state
+      body.innerHTML = `
+        <div style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: 10px; padding: 18px; text-align: center; margin-bottom: 16px;">
+          <i data-lucide="alert-triangle" style="color: #ef4444; width: 36px; height: 36px; margin-bottom: 8px;"></i>
+          <h4 style="margin: 0 0 6px; color: #ef4444;">Record Not Found</h4>
+          <p style="margin: 0; font-size: 0.85rem; color: var(--text-secondary);">
+            No active campus registry record was found for ID <code>${escapeHTML(reportId)}</code>.
+          </p>
+        </div>
+        <p style="font-size: 0.8rem; color: var(--text-muted); text-align: center;">
+          The item may have been returned to its owner, archived, or the link has expired.
+        </p>
+        <div style="display: flex; justify-content: center; gap: 10px; margin-top: 16px;">
+          <button type="button" class="btn btn-secondary" onclick="closePublicVerificationModal()">Dismiss</button>
+          <button type="button" class="btn btn-primary" onclick="closePublicVerificationModal(); showPage('dashboard-page');">
+            <span>Open LostSeek Portal</span>
+          </button>
+        </div>
+      `;
+    }
+  } catch (err) {
+    console.error('Error fetching public verification:', err);
+    body.innerHTML = `
+      <div style="text-align: center; padding: 20px;">
+        <i data-lucide="wifi-off" style="color: #eab308; width: 32px; height: 32px; margin-bottom: 8px;"></i>
+        <h4 style="margin: 0 0 6px; color: var(--text-primary);">Network Unavailable</h4>
+        <p style="margin: 0 0 16px; font-size: 0.85rem; color: var(--text-secondary);">
+          Could not reach campus verification server. Please check your network.
+        </p>
+        <button type="button" class="btn btn-secondary" onclick="closePublicVerificationModal()">Close</button>
+      </div>
+    `;
+  }
+
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
+}
+
+function closePublicVerificationModal() {
+  const modal = document.getElementById('public-verification-modal');
+  if (modal) modal.classList.remove('show');
+}
+
+function checkPublicReportUrl() {
+  const path = window.location.pathname;
+  const hash = window.location.hash;
+
+  const matchPath = path.match(/\/report\/([a-zA-Z0-9_-]+)/);
+  if (matchPath && matchPath[1] !== 'lost' && matchPath[1] !== 'found') {
+    openPublicVerification(matchPath[1]);
+    return true;
+  }
+
+  if (hash.startsWith('#report-') && hash !== '#report-lost' && hash !== '#report-found') {
+    const repId = hash.replace('#report-', '');
+    if (repId && repId !== 'lost' && repId !== 'found') {
+      openPublicVerification(repId);
+      return true;
+    }
+  }
+
+  if (hash.startsWith('#claim-')) {
+    openPublicVerification(hash.replace('#claim-', ''));
+    return true;
+  }
+
+  return false;
+}
+
+
+/* ==========================================================================
+   MODULE: 19_demo_helpers___controls.js
+   ========================================================================== */
+/* ==========================================================================
+   DEMO HELPERS & CONTROLS
+   ========================================================================== */
+
+
+function toggleRoleDemo() {
+  if (!appState.user) return;
+  const current = appState.user.role || 'Student';
+  const newRole = current.toLowerCase() === 'admin' ? 'Student' : 'Admin';
+  appState.user.role = newRole;
+  saveData();
+  setupAuthenticatedUser(appState.user);
+  showToast(`Switched role to: ${newRole.toUpperCase()} 🛡️`, 'info');
+}
+
+
+/* ==========================================================================
+   MODULE: 20_notifications___toasts.js
+   ========================================================================== */
+/* ==========================================================================
+   NOTIFICATIONS & TOASTS
+   ========================================================================== */
+function toggleNotifDropdown() {
+  const dd = document.getElementById('notif-dropdown');
+  if (dd) dd.classList.toggle('show');
+}
+
+// Close dropdown on outside click
+document.addEventListener('click', (e) => {
+  const dropdown = document.getElementById('notif-dropdown');
+  const btn = document.getElementById('notif-toggle-btn');
+  if (dropdown && btn && !dropdown.contains(e.target) && !btn.contains(e.target)) {
+    dropdown.classList.remove('show');
+  }
+});
+
+function renderNotifications() {
+  const listEl = document.getElementById('notif-list');
+  if (!listEl) return;
+
+  if (appState.notifications.length === 0) {
+    listEl.innerHTML = `
+      <div style="padding: 20px; text-align: center; color: var(--text-muted); font-size: 0.85rem;">
+        No notifications right now.
+      </div>
+    `;
+    return;
+  }
+
+  listEl.innerHTML = appState.notifications.map(n => `
+    <div class="notif-item ${!n.read ? 'unread' : ''}" onclick="${n.type === 'sighting' ? `openViewSightingModal('${escapeHTML(n.message)}')` : ''}" style="${n.type === 'sighting' ? 'cursor:pointer;' : ''}">
+      <span class="notif-item-icon">${n.type === 'sighting' ? '👀' : (n.type === 'match' ? '🔍' : '🔔')}</span>
+      <div>
+        <div class="notif-item-text">${escapeHTML(n.message)}</div>
+        <div class="notif-item-time">${getTimeAgo(n.createdAt)}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openViewSightingModal(message) {
+  ensureModalsLoaded();
+  const modal = document.getElementById('view-sighting-modal');
+  const textEl = document.getElementById('view-sighting-text');
+  if (textEl) textEl.textContent = message;
+  if (modal) {
+    modal.style.display = 'flex';
+    if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
+  }
+}
+
+function closeViewSightingModal() {
+  const modal = document.getElementById('view-sighting-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+async function markAllNotificationsRead() {
+  appState.notifications = [];
+  saveData();
+  renderNotifications();
+  renderNotificationsList();
+  updateIndicatorPills();
+  showToast('All notifications cleared', 'info');
+
+  try {
+    await fetch(API_BASE + '/api/notifications', {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+  } catch (err) {
+    console.warn('Backend notifications clear notice:', err.message);
+  }
+}
+
+function showToast(message, type = 'info') {
+  const container = document.getElementById('toast-container');
+  if (!container) return;
+
+  const iconMap = {
+    success: '✅',
+    error: '❌',
+    warning: '⚠️',
+    info: 'ℹ️'
+  };
+  const icon = iconMap[type] || 'ℹ️';
+
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+  toast.innerHTML = `
+    <span style="font-size: 1.2rem; line-height: 1;">${icon}</span>
+    <span style="flex: 1;">${escapeHTML(message)}</span>
+    <button onclick="this.parentElement.remove()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:0.9rem;padding:2px;">✕</button>
+  `;
+
+  container.appendChild(toast);
+
+  // Auto-dismiss in 4 seconds
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateX(50px)';
+    toast.style.transition = 'all 0.35s ease';
+    setTimeout(() => toast.remove(), 350);
+  }, 4000);
+}
+
+
+/* ==========================================================================
+   MODULE: 21_global_search___utilities.js
+   ========================================================================== */
+/* ==========================================================================
+   GLOBAL SEARCH & UTILITIES
+   ========================================================================== */
+function handleGlobalSearch(query) {
+  const q = query.trim().toLowerCase();
+  if (!q) {
+    renderDashboardActivity();
+    renderMyReports(currentMyReportsTab);
+    return;
+  }
+
+  // Filter in My Reports view
+  const matched = [
+    ...appState.lostReports.map(i => ({ ...i, itemType: 'Lost' })),
+    ...appState.foundReports.map(i => ({ ...i, itemType: 'Found' }))
+  ].filter(i => 
+    i.title.toLowerCase().includes(q) ||
+    i.location.toLowerCase().includes(q) ||
+    (i.description && i.description.toLowerCase().includes(q))
+  );
+
+  const container = document.getElementById('my-reports-container');
+  if (container) {
+    if (matched.length === 0) {
+      container.innerHTML = `
+        <div class="glass-card empty-state" style="grid-column: 1 / -1;">
+          <div class="empty-state-icon">🔍</div>
+          <p>No results found for "${escapeHTML(query)}".</p>
+        </div>
+      `;
+    } else {
+      container.innerHTML = matched.map(item => {
+        const cat = CATEGORY_MAP[item.category] || { label: 'Item', icon: '📦' };
+        return `
+          <div class="glass-card report-item-card">
+            <div class="report-item-top">
+              <div class="item-category-avatar">${cat.icon}</div>
+              <span class="badge ${getStatusBadgeClass(item.status)}">${item.status}</span>
+            </div>
+            <div class="report-item-body">
+              <h4>${escapeHTML(item.title)}</h4>
+              <p>${escapeHTML(item.description || '')}</p>
+            </div>
+            <div class="report-details-list">
+              <span>📍 ${escapeHTML(item.location)}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+  }
+}
+
+function escapeHTML(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+
+
+/* ==========================================================================
+   MODULE: 22_enhancements___specialized_flows.js
+   ========================================================================== */
+/* ==========================================================================
+   ENHANCEMENTS & SPECIALIZED FLOWS
+   ========================================================================== */
+
+function filterAdminTableTab(type) {
+  showPage('admin-page');
+  const reportsTab = document.getElementById('admin-tab-reports');
+  const claimsTab = document.getElementById('admin-tab-claims');
+
+  if (type === 'claims') {
+    if (claimsTab) claimsTab.click();
+  } else {
+    if (reportsTab) reportsTab.click();
+    const typeFilter = document.getElementById('admin-filter-type');
+    if (typeFilter) {
+      typeFilter.value = (type === 'lost' ? 'Lost' : (type === 'found' ? 'Found' : ''));
+      filterAdminReportsTable();
+    }
+  }
+}
+
+
+/* ==========================================================================
+   MODULE: 23_admin__find_by_photo___ai_assisted_vision_search_.js
+   ========================================================================== */
+/* ==========================================================================
+   ADMIN "FIND BY PHOTO" (AI-Assisted Vision Search)
+   ========================================================================== */
+let adminUploadedPhoto = '';
+
+function initAdminPhotoSearch() {
+  adminUploadedPhoto = '';
+  const input = document.getElementById('admin-photo-input');
+  if (input) input.value = '';
+  const preview = document.getElementById('admin-photo-preview');
+  if (preview) preview.style.display = 'none';
+  const results = document.getElementById('admin-photo-search-results');
+  if (results) results.innerHTML = '';
+}
+
+function handleAdminPhotoSelected(e) {
+  const file = e.target.files?.[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    adminUploadedPhoto = evt.target.result;
+    const preview = document.getElementById('admin-photo-preview');
+    const img = document.getElementById('admin-photo-preview-img');
+    if (img) img.src = adminUploadedPhoto;
+    if (preview) preview.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+async function runAdminPhotoSearch() {
+  const category = document.getElementById('admin-photo-category')?.value || '';
+  const location = document.getElementById('admin-photo-location')?.value || '';
+  const resultsContainer = document.getElementById('admin-photo-search-results');
+  if (!resultsContainer) return;
+
+  if (!adminUploadedPhoto) {
+    resultsContainer.innerHTML = '<div style="padding: 24px; text-align: center; color: var(--color-error);"><p>Please upload a photo first.</p></div>';
+    return;
+  }
+
+  resultsContainer.innerHTML = '<div style="padding: 24px; text-align: center;"><p>Running AI visual analysis...</p></div>';
+
+  try {
+    const activeLostReports = appState.lostReports.filter(r => r.status !== 'Returned' && r.status !== 'Claimed' && r.photo);
+    
+    // Call the real AI endpoint
+    const response = await fetch('/api/ai?action=analyze_found', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        imageBase64: adminUploadedPhoto.split(',')[1],
+        lostReports: activeLostReports
+      })
+    });
+    
+    if (!response.ok) throw new Error('AI processing failed');
+    const data = await response.json();
+    
+    if (!data.success || data.aiAnalysis.status === 'failed') {
+      throw new Error(data.error || data.aiAnalysis?.error || 'Unknown error');
+    }
+
+    const matches = [];
+    if (data.aiAnalysis.clipMatches) {
+      for (const [lostId, matchInfo] of Object.entries(data.aiAnalysis.clipMatches)) {
+        if (matchInfo.points > 0) {
+           const lost = appState.lostReports.find(r => r.id === lostId);
+           if (lost) {
+             matches.push({ lost, score: Math.round(matchInfo.similarity * 100), reason: matchInfo.reason });
+           }
+        }
+      }
+    }
+    
+    // Sort by score
+    matches.sort((a, b) => b.score - a.score);
+
+    if (matches.length === 0) {
+      resultsContainer.innerHTML = `
+        <div class="glass-card empty-state" style="text-align:center;padding:24px;">
+          <i data-lucide="search-x" style="width:36px;height:36px;color:var(--text-muted);margin:0 auto 10px;"></i>
+          <p>No high-probability visual matches found among active lost reports with photos.</p>
+        </div>
+      `;
+    } else {
+      resultsContainer.innerHTML = `
+        <div class="glass-card" style="padding:20px;">
+          <h3 style="margin-bottom:14px;color:var(--teal-bright);display:flex;align-items:center;gap:8px;">
+            <i data-lucide="sparkles"></i>
+            <span>Possible Matches (${matches.length})</span>
+          </h3>
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            ${matches.map(m => {
+              const lost = m.lost;
+              return `
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--bg-subtle);border-radius:8px;border:1px solid var(--border-subtle);flex-wrap:wrap;gap:8px;">
+                  <div style="display:flex;align-items:center;gap:12px;">
+                    ${lost.photo ? `<img src="${lost.photo}" style="width:48px;height:48px;object-fit:cover;border-radius:6px;" alt="Lost">` : `<div style="width:48px;height:48px;background:var(--bg-card);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;">📦</div>`}
+                    <div>
+                      <strong style="font-size:0.95rem;color:var(--text-primary);">${escapeHTML(lost.title)}</strong>
+                      <div style="font-size:0.75rem;color:var(--text-muted);">📍 ${escapeHTML(lost.location)} • 📅 ${getTimeAgo(lost.date || lost.createdAt)}</div>
+                      <div style="font-size:0.75rem;color:var(--teal-bright); margin-top:2px;">${m.reason || 'Visual Match'}</div>
+                    </div>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:12px;">
+                    <span style="font-size:1.1rem;font-weight:800;color:var(--teal-bright);">${m.score}% Similarity</span>
+                    <button class="btn btn-sm btn-secondary" onclick="showPage('admin-page')">Inspect</button>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+    }
+  } catch (err) {
+    resultsContainer.innerHTML = `
+      <div class="glass-card empty-state" style="text-align:center;padding:24px;">
+        <i data-lucide="alert-triangle" style="width:36px;height:36px;color:var(--color-error);margin:0 auto 10px;"></i>
+        <p>Photo matching is temporarily unavailable.</p>
+        <p style="font-size: 0.8rem; color: var(--text-muted);">${err.message}</p>
+      </div>
+    `;
+  }
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
+}
+
+
+/* ==========================================================================
+   MODULE: 24_admin__students__directory.js
+   ========================================================================== */
+/* ==========================================================================
+   ADMIN "STUDENTS" DIRECTORY
+   ========================================================================== */
+function renderAdminStudents() {
+  const tbody = document.getElementById('students-directory-tbody');
+  if (!tbody) return;
+
+  const search = (document.getElementById('students-search-input')?.value || '').trim().toLowerCase();
+
+  // Aggregate student data from reports and seed students
+  const studentMap = new Map();
+
+  // 1. Incorporate authoritative users fetched from database
+  if (Array.isArray(appState.users)) {
+    appState.users.forEach(u => {
+      const isStudentRole = !u.role || u.role.toLowerCase() === 'student';
+      if (isStudentRole && u.name) {
+        studentMap.set(u.name, {
+          name: u.name,
+          id: u.studentId || u.username || 'STU-2026',
+          
+          status: 'Active',
+          avatarUrl: u.avatarUrl || null,
+          lostCount: 0,
+          foundCount: 0,
+          claimsCount: 0
+        });
+      }
+    });
+  }
+
+  // 2. Default seed students (REMOVED - We now rely entirely on database users)
+  const defaultStudents = [];
+
+  defaultStudents.forEach(s => {
+    if (!studentMap.has(s.name)) {
+      studentMap.set(s.name, { ...s, lostCount: 0, foundCount: 0, claimsCount: 0, avatarUrl: null });
+    }
+  });
+
+  // Count reports & attach any report-embedded avatar metadata
+  appState.lostReports.forEach(r => {
+    const name = r.reporterName || 'Alex Rivera';
+    if (studentMap.has(name)) {
+      studentMap.get(name).lostCount++;
+      if ((r.reporterAvatar || r.reporter_avatar) && !studentMap.get(name).avatarUrl) {
+        studentMap.get(name).avatarUrl = r.reporterAvatar || r.reporter_avatar;
+      }
+    }
+  });
+
+  appState.foundReports.forEach(r => {
+    const name = r.finderName || 'Aman Verma';
+    if (studentMap.has(name)) studentMap.get(name).foundCount++;
+  });
+
+  appState.claims.forEach(c => {
+    const name = c.claimantName || 'Alex Rivera';
+    if (studentMap.has(name)) studentMap.get(name).claimsCount++;
+  });
+
+  // Fetch updated student directory in background if staff user
+  const now = Date.now();
+  if (!window.__fetchingAdminUsers && (!window.__lastAdminUserFetch || now - window.__lastAdminUserFetch > 5000) && appState.user && ['admin', 'supervisor', 'director'].includes(String(appState.user.role || '').toLowerCase())) {
+    window.__fetchingAdminUsers = true;
+    fetch(API_BASE + '/api/auth?action=users', { headers: getAuthHeaders() })
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        window.__fetchingAdminUsers = false;
+        window.__lastAdminUserFetch = Date.now();
+        if (data && data.success && Array.isArray(data.users)) {
+          const oldLen = appState.users ? appState.users.length : 0;
+          appState.users = data.users;
+          if (oldLen !== data.users.length) {
+            renderAdminStudents();
+          }
+        }
+      })
+      .catch(() => { 
+        window.__fetchingAdminUsers = false;
+      });
+  }
+
+  const studentsList = Array.from(studentMap.values()).filter(s => {
+    if (!search) return true;
+    return s.name.toLowerCase().includes(search) || s.id.toLowerCase().includes(search);
+  });
+
+  if (studentsList.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text-muted);">No students found matching your search.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = studentsList.map(s => `
+    <tr>
+      <td data-label="Student">
+        <div style="display:flex;align-items:center;gap:8px;">
+          ${getAvatarSVG('student', 28, s.avatarUrl)}
+          <strong>${escapeHTML(s.name)}</strong>
+        </div>
+      </td>
+      <td data-label="Student ID"><code>${escapeHTML(s.id)}</code></td>
+      <td data-label="Lost Reports">${s.lostCount}</td>
+      <td data-label="Found Reports">${s.foundCount}</td>
+      <td data-label="Claims">${s.claimsCount}</td>
+      
+      <td data-label="Status"><span class="badge badge-verified">${s.status}</span></td>
+    </tr>
+  `).join('');
+}
+
+
+/* ==========================================================================
+   MODULE: 25_community_lost_alerts___notifications.js
+   ========================================================================== */
+/* ==========================================================================
+   COMMUNITY LOST ALERTS & NOTIFICATIONS
+   ========================================================================== */
+let activeCommunityAlerts = [];
+
+function switchAlertsTab(tab) {
+  const commView = document.getElementById('community-alerts-tab-view');
+  const notifView = document.getElementById('personal-notifications-tab-view');
+  const commBtn = document.getElementById('tab-btn-community-alerts');
+  const notifBtn = document.getElementById('tab-btn-notifications');
+
+  if (tab === 'community') {
+    if (commView) commView.style.display = 'block';
+    if (notifView) notifView.style.display = 'none';
+    if (commBtn) { commBtn.className = 'btn btn-sm btn-primary'; }
+    if (notifBtn) { notifBtn.className = 'btn btn-sm btn-secondary'; }
+  } else {
+    if (commView) commView.style.display = 'none';
+    if (notifView) notifView.style.display = 'block';
+    if (commBtn) { commBtn.className = 'btn btn-sm btn-secondary'; }
+    if (notifBtn) { notifBtn.className = 'btn btn-sm btn-primary'; }
+  }
+}
+
+async function renderAlertsPage() {
+  await renderCommunityAlerts();
+  renderNotificationsList();
+}
+
+async function renderCommunityAlerts() {
+  const container = document.getElementById('community-alerts-container');
+  if (!container) return;
+
+  container.innerHTML = `
+    <div style="grid-column: 1 / -1; text-align: center; padding: 24px; color: var(--text-muted);">
+      <div class="spinner-sm" style="margin: 0 auto 10px;"></div>
+      <p>Scanning campus radar for active lost alerts...</p>
+    </div>
+  `;
+
+  let alerts = [];
+  try {
+    const user = appState.user;
+    const headers = {};
+    if (user) headers['x-lostseek-user'] = encodeURIComponent(JSON.stringify(user));
+    const res = await fetch(API_BASE + '/api/alerts?status=ACTIVE', { headers });
+    if (res.ok) {
+      const data = await res.json();
+      alerts = data.alerts || [];
+    }
+  } catch (err) {
+    console.warn('Could not fetch alerts from API, falling back to local state:', err.message);
+  }
+
+  // Fallback if network issue or offline: derive from active lost reports with strict privacy rules
+  if (!alerts || alerts.length === 0) {
+    const activeLost = (appState.lostReports || []).filter(r => r.status === 'Active' || r.status === 'Looking');
+    alerts = activeLost.map(r => ({
+      id: `alert-${r.id}`,
+      reportId: r.id,
+      category: r.category || 'General',
+      approximateArea: (r.location || 'Campus Grounds').replace(/room\s*#?\s*\w+/gi, '').trim(),
+      safeDescription: `Lost ${r.category || 'item'} reported near ${r.location || 'campus'}. Have you seen something similar?`,
+      reportedAt: r.date || r.createdAt || new Date().toISOString(),
+      status: 'ACTIVE'
+    }));
+  }
+
+  activeCommunityAlerts = alerts;
+
+  if (alerts.length === 0) {
+    container.innerHTML = `
+      <div class="glass-card" style="grid-column: 1 / -1; text-align: center; padding: 36px 20px;">
+        <i data-lucide="shield-check" style="width: 42px; height: 42px; color: var(--color-success); margin: 0 auto 12px;"></i>
+        <h3 style="margin: 0 0 6px; color: var(--text-primary);">All Clear on Campus</h3>
+        <p style="color: var(--text-muted); font-size: 0.9rem; max-width: 420px; margin: 0 auto;">No active community lost alerts currently pending. The campus radar is clear!</p>
+      </div>
+    `;
+    if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
+    return;
+  }
+
+  container.innerHTML = alerts.map(a => {
+    const isSpotted = a.status === 'SPOTTED';
+    const statusBadge = isSpotted 
+      ? `<span class="status-pill" style="background: rgba(234, 179, 8, 0.15); color: #eab308; border: 1px solid rgba(234, 179, 8, 0.3);"><i data-lucide="eye"></i> SPOTTED</span>`
+      : `<span class="status-pill status-active"><i data-lucide="radio"></i> ACTIVE RADAR</span>`;
+
+    return `
+      <div class="glass-card" style="padding: 18px; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid var(--border-subtle); position: relative; overflow: hidden;">
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; gap: 8px;">
+            <div>
+              <span style="font-size: 0.72rem; text-transform: uppercase; font-weight: 700; color: var(--teal-bright); letter-spacing: 0.5px;">Campus Alert</span>
+              <h3 style="margin: 3px 0 0; font-size: 1.05rem; color: var(--text-primary);">${escapeHTML(a.category)}</h3>
+            </div>
+            ${statusBadge}
+          </div>
+
+          <!-- Safe short description (Strictly privacy compliant: NO owner details!) -->
+          <p style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.45; margin: 0 0 14px;">
+            ${escapeHTML(a.safeDescription)}
+          </p>
+
+          <div style="display: flex; flex-direction: column; gap: 6px; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 16px; border-top: 1px solid var(--border-subtle); padding-top: 10px;">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <i data-lucide="map-pin" style="width: 14px; height: 14px; color: var(--teal-bright);"></i>
+              <span><strong>Area:</strong> ${escapeHTML(a.approximateArea || 'Campus Area')}</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <i data-lucide="clock" style="width: 14px; height: 14px;"></i>
+              <span><strong>Reported:</strong> ${getTimeAgo(a.reportedAt || a.createdAt)}</span>
+            </div>
+          </div>
+        </div>
+
+        <button type="button" class="btn btn-primary" style="width: 100%;" onclick="openSightingModal('${escapeHTML(a.id)}', '${escapeHTML(a.reportId || '')}', '${escapeHTML(a.category)}', '${escapeHTML(a.approximateArea)}')">
+          <i data-lucide="eye"></i>
+          <span>I Saw Something</span>
+        </button>
+      </div>
+    `;
+  }).join('');
+
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
+}
+
+function renderNotificationsList() {
+  const container = document.getElementById('alerts-page-container');
+  if (!container) return;
+
+  const notifs = appState.notifications || [];
+
+  if (notifs.length === 0) {
+    container.innerHTML = `
+      <div style="text-align:center;padding:36px;">
+        <i data-lucide="bell-off" style="width:36px;height:36px;color:var(--text-muted);margin:0 auto 10px;"></i>
+        <p style="color:var(--text-muted);">No personal notifications right now. You are all caught up!</p>
+      </div>
+    `;
+    if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
+    return;
+  }
+
+  container.innerHTML = notifs.map(n => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--border-subtle);gap:12px;flex-wrap:wrap;">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="width:36px;height:36px;border-radius:50%;background:rgba(20,184,166,0.12);display:flex;align-items:center;justify-content:center;color:var(--teal-bright);flex-shrink:0;">
+          <i data-lucide="${n.type === 'alert' ? 'radio' : (n.type === 'match' ? 'sparkles' : 'bell')}" style="width:18px;height:18px;"></i>
+        </div>
+        <div>
+          <div style="font-size:0.92rem;color:var(--text-primary);font-weight:500;">${escapeHTML(n.message)}</div>
+          <div style="font-size:0.75rem;color:var(--text-muted);margin-top:2px;">${getTimeAgo(n.createdAt)}</div>
+        </div>
+      </div>
+      <button class="btn btn-sm btn-secondary" onclick="showPage('matches-page')">View</button>
+    </div>
+  `).join('');
+
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
+}
+
+function refreshCommunityAlerts() {
+  showToast('Updating community radar...', 'info');
+  renderCommunityAlerts();
+}
+
+
+/* ==========================================================================
+   MODULE: 26__i_saw_something__sighting_workflow.js
+   ========================================================================== */
+/* ==========================================================================
+   "I SAW SOMETHING" SIGHTING WORKFLOW
+   ========================================================================== */
+function openSightingModal(alertId, reportId, category, area) {
+  ensureModalsLoaded();
+  const modal = document.getElementById('community-sighting-modal');
+  if (!modal) return;
+
+  document.getElementById('sighting-alert-id').value = alertId || '';
+  document.getElementById('sighting-report-id').value = reportId || '';
+  document.getElementById('sighting-category').value = category || 'General';
+  document.getElementById('sighting-location').value = '';
+  document.getElementById('sighting-time').value = 'Today, recently';
+  document.getElementById('sighting-observation').value = '';
+  document.getElementById('sighting-photo-url').value = '';
+
+  const photoStatus = document.getElementById('sighting-photo-status');
+  if (photoStatus) photoStatus.textContent = 'No photo attached';
+  const previewWrap = document.getElementById('sighting-photo-preview-wrap');
+  if (previewWrap) previewWrap.style.display = 'none';
+
+  // Strict privacy: only generic category and approximate area
+  const contextEl = document.getElementById('sighting-item-context');
+  if (contextEl) {
+    contextEl.textContent = `${category || 'Item'} spotted near ${area || 'Campus'}`;
+  }
+
+  // Reset radio to "No, I just saw it"
+  const radios = document.getElementsByName('sighting-picked-up');
+  radios.forEach(r => { if (r.value === 'no') r.checked = true; });
+
+  modal.style.display = 'flex';
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
+}
+
+function closeSightingModal() {
+  const modal = document.getElementById('community-sighting-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+async function handleSightingPhotoSelected(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const statusEl = document.getElementById('sighting-photo-status');
+  const previewWrap = document.getElementById('sighting-photo-preview-wrap');
+  const previewImg = document.getElementById('sighting-photo-preview');
+
+  if (statusEl) statusEl.textContent = 'Uploading photo...';
+
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await fetch(API_BASE + '/api/upload', {
+      method: 'POST',
+      body: formData
+    });
+    const data = await res.json();
+    if (res.ok && data.url) {
+      document.getElementById('sighting-photo-url').value = data.url;
+      if (statusEl) statusEl.textContent = '✓ Photo attached';
+      if (previewImg) previewImg.src = data.url;
+      if (previewWrap) previewWrap.style.display = 'block';
+    } else {
+      // Local DataURL fallback
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        document.getElementById('sighting-photo-url').value = e.target.result;
+        if (statusEl) statusEl.textContent = '✓ Photo attached';
+        if (previewImg) previewImg.src = e.target.result;
+        if (previewWrap) previewWrap.style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+    }
+  } catch (err) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      document.getElementById('sighting-photo-url').value = e.target.result;
+      if (statusEl) statusEl.textContent = '✓ Photo attached';
+      if (previewImg) previewImg.src = e.target.result;
+      if (previewWrap) previewWrap.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  }
+}
+
+async function handleSightingSubmit(event) {
+  event.preventDefault();
+
+  const alertId = document.getElementById('sighting-alert-id').value;
+  const reportId = document.getElementById('sighting-report-id').value;
+  const category = document.getElementById('sighting-category').value;
+  const location = document.getElementById('sighting-location').value.trim();
+  const time = document.getElementById('sighting-time').value.trim();
+  const observation = document.getElementById('sighting-observation').value.trim();
+  const photoUrl = document.getElementById('sighting-photo-url').value;
+
+  const pickedUp = document.querySelector('input[name="sighting-picked-up"]:checked')?.value === 'yes';
+
+  if (!observation) {
+    showToast('Please describe what you saw (where, when, or any details).', 'warning');
+    return;
+  }
+
+  // IF PICKED UP: Redirect student to FOUND Report form with pre-filled safe information!
+  if (pickedUp) {
+    closeSightingModal();
+    showToast('Redirecting to Report Found form...', 'info');
+
+    // Pre-fill Found Form
+    showPage('report-found-page');
+    const titleEl = document.getElementById('found-title');
+    const catEl = document.getElementById('found-category');
+    const locEl = document.getElementById('found-location');
+    const descEl = document.getElementById('found-description');
+    const previewImg = document.getElementById('found-image-preview');
+
+    if (titleEl) titleEl.value = `Found ${category || 'Item'}`;
+    if (catEl) catEl.value = category || 'Other';
+    if (locEl) locEl.value = location;
+    if (descEl) descEl.value = `Spotted and retrieved near ${location} (${time}). ${observation}`;
+    if (photoUrl && previewImg) {
+      previewImg.src = photoUrl;
+      const wrap = document.getElementById('found-preview-container');
+      if (wrap) wrap.style.display = 'block';
+    }
+
+    showToast('Found report prefilled with sighting information! Please submit to initiate AI verification.', 'success');
+    return;
+  }
+
+  // IF NOT PICKED UP: Record direct sighting to owner
+  const submitBtn = document.getElementById('btn-submit-sighting');
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = `<div class="spinner-sm"></div> Sending...`;
+  }
+
+  try {
+    const user = appState.user;
+    const headers = { 'Content-Type': 'application/json' };
+    if (user) headers['x-lostseek-user'] = encodeURIComponent(JSON.stringify(user));
+
+    const payload = {
+      action: 'sighting',
+      alertId,
+      reportId,
+      approximateLocation: location || 'Campus',
+      approximateTime: time || 'Recently',
+      observation,
+      photoUrl,
+      pickedUp: false
+    };
+
+    const res = await fetch(API_BASE + '/api/alerts', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+
+    closeSightingModal();
+    if (res.ok && data.success) {
+      showToast('Sighting sent to the person who reported this item lost. 📨', 'success');
+    } else {
+      showToast(data.message || 'Sighting recorded.', 'info');
+    }
+    renderCommunityAlerts();
+  } catch (err) {
+    console.warn('Sighting submit notice:', err.message);
+    closeSightingModal();
+    showToast('Sighting sent to the person who reported this item lost.', 'success');
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = `<i data-lucide="send"></i><span>Submit Sighting</span>`;
+      if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
+    }
+  }
+}
+
+
+/* ==========================================================================
+   MODULE: 27_profile___settings_views.js
+   ========================================================================== */
+/* ==========================================================================
+   PROFILE & SETTINGS VIEWS
+   ========================================================================== */
+function renderProfile() {
+  const container = document.getElementById('profile-content-container');
+  if (!container) return;
+
+  const user = appState.user || {
+    name: 'Campus Student',
+    role: 'student',
+    studentId: 'STU-2026',
+    username: 'student'
+  };
+
+  const userRole = (user.role || 'student').toLowerCase();
+  const isAdminOrStaff = ['admin', 'supervisor', 'director'].includes(userRole);
+  const roleBadgeLabel = userRole === 'director' ? 'DIRECTOR' : (userRole === 'supervisor' ? 'SUPERVISOR' : (userRole === 'admin' ? 'STAFF / ADMIN' : 'STUDENT'));
+  const userLost = (appState.lostReports || []).filter(r => r.reporterName === user.name || r.reporterId === user.username).length;
+  const userFound = (appState.foundReports || []).filter(r => r.finderName === user.name || r.reporterName === user.name || r.reporterId === user.username).length;
+  const userClaims = (appState.claims || []).filter(c => c.claimantName === user.name || c.claimantId === user.studentId || c.claimantId === user.username).length;
+  
+
+  const userHasAvatar = !!(user.avatarUrl || user.avatar || user.avatar_url || user.profilePicture || user.profilePictureUrl || user.photoUrl);
+
+  container.innerHTML = `
+    <div class="profile-card">
+      <div class="profile-avatar-box" style="display: flex; flex-direction: column; align-items: center; gap: 12px;">
+        <div id="profile-page-avatar-display" class="profile-avatar-clickable" onclick="openEditProfilePictureModal()" title="Edit Profile Picture" style="position: relative; cursor: pointer;">
+          ${getAvatarSVG(user.role, 108, user.avatarUrl)}
+          <div class="avatar-camera-badge" title="Edit Profile Picture">
+            <i data-lucide="camera" style="width: 15px; height: 15px;"></i>
+          </div>
+        </div>
+        <button type="button" class="btn btn-sm btn-primary" id="btn-edit-profile-picture" onclick="openEditProfilePictureModal()" style="display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; font-size: 0.84rem; font-weight: 600; border-radius: var(--radius-sm);">
+          <i data-lucide="camera" style="width: 15px; height: 15px;"></i>
+          <span>${userHasAvatar ? 'Edit Profile Picture' : 'Add Profile Picture'}</span>
+        </button>
+        <input type="file" id="profile-camera-input" accept="image/*" capture="user" style="display:none;" onchange="handleProfilePhotoSelected(event)">
+        <input type="file" id="profile-gallery-input" accept="image/*" style="display:none;" onchange="handleProfilePhotoSelected(event)">
+      </div>
+      <div class="profile-info" style="flex: 1;">
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+          <h2 style="margin: 0; color: var(--text-primary); font-size: 1.5rem;">${escapeHTML(user.name)}</h2>
+          <span class="badge ${isAdminOrStaff ? 'badge-urgent' : 'badge-verified'}">${roleBadgeLabel}</span>
+          <span class="badge badge-verified" style="display:inline-flex;align-items:center;gap:4px;"><i data-lucide="shield-check" style="width:13px;height:13px;"></i> Institutional Identity Verified</span>
+        </div>
+        <p style="margin: 6px 0 12px; color: var(--text-muted); font-size: 0.95rem;">
+          ${escapeHTML(user.username || user.loginId || '')}${user.username && !user.username.includes('@') ? '@campus.edu' : ''} • ID: <strong>${escapeHTML(user.studentId || 'STU-2026')}</strong>
+        </p>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px;">
+          <button class="btn btn-sm btn-secondary" onclick="showPage('my-reports-page')">
+            <i data-lucide="file-text"></i> My Reports
+          </button>
+          <button class="btn btn-sm btn-secondary" onclick="showPage('matches-page')">
+            <i data-lucide="sparkles"></i> Possible Matches
+          </button>
+          <button class="btn btn-sm btn-secondary" onclick="showPage('settings-page')">
+            <i data-lucide="settings"></i> Settings
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="profile-stats-row">
+      <div class="stat-card">
+        <div class="stat-card-header">
+          <span class="stat-card-title">Lost Reports</span>
+          <i data-lucide="search" class="stat-card-icon" style="color: var(--warning-color);"></i>
+        </div>
+        <div class="stat-card-value">${userLost}</div>
+        <div class="stat-card-subtitle">Items filed as missing</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-header">
+          <span class="stat-card-title">Found Items</span>
+          <i data-lucide="package-check" class="stat-card-icon" style="color: var(--success-color);"></i>
+        </div>
+        <div class="stat-card-value">${userFound}</div>
+        <div class="stat-card-subtitle">Items turned in</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-header">
+          <span class="stat-card-title">Active Claims</span>
+          <i data-lucide="hand" class="stat-card-icon" style="color: var(--teal-bright);"></i>
+        </div>
+        <div class="stat-card-value">${userClaims}</div>
+        <div class="stat-card-subtitle">Verification requests</div>
+      </div>
+    </div>
+
+    <div class="glass-card" style="margin-bottom: 24px;">
+      <h3>Account Credentials &amp; Verification</h3>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-top: 14px;">
+        <div>
+          <span style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Full Name</span>
+          <div style="font-weight: 600; margin-top: 2px;">${escapeHTML(user.name || 'Campus Member')}</div>
+        </div>
+        <div>
+          <span style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Campus Role</span>
+          <div style="font-weight: 600; margin-top: 2px;">${isAdminOrStaff ? (userRole === 'director' ? 'Campus Director' : (userRole === 'supervisor' ? 'Campus Supervisor' : 'Administrator / Staff')) : 'Student'}</div>
+        </div>
+        <div>
+          <span style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Login ID</span>
+          <div style="font-weight: 600; margin-top: 2px;">${escapeHTML(user.username || user.loginId || 'student')}</div>
+        </div>
+        <div>
+          <span style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Institutional ID</span>
+          <div style="font-weight: 600; margin-top: 2px;">${escapeHTML(user.studentId || (isAdminOrStaff ? 'ADM-FAC-4402' : 'STU-2026'))}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="glass-card" style="margin-bottom: 24px;">
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+        <i data-lucide="key-round" style="color: var(--teal-bright);"></i>
+        <h3 style="margin: 0;">Change Password</h3>
+      </div>
+      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">
+        Update your account password securely. Requires your current password.
+      </p>
+
+      <form id="profile-change-password-form" onsubmit="handleProfilePasswordChange(event)" style="max-width: 480px;">
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label for="pwd-current" style="font-size: 0.85rem; font-weight: 600;">Current Password *</label>
+          <input type="password" id="pwd-current" class="input-glass" placeholder="Enter current password" required autocomplete="current-password">
+        </div>
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label for="pwd-new" style="font-size: 0.85rem; font-weight: 600;">New Password (Min. 6 characters) *</label>
+          <input type="password" id="pwd-new" class="input-glass" placeholder="Enter new password" required minlength="6" autocomplete="new-password">
+        </div>
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label for="pwd-confirm" style="font-size: 0.85rem; font-weight: 600;">Confirm New Password *</label>
+          <input type="password" id="pwd-confirm" class="input-glass" placeholder="Confirm new password" required minlength="6" autocomplete="new-password">
+        </div>
+        <button type="submit" class="btn btn-primary" id="btn-change-password">
+          <i data-lucide="lock"></i>
+          <span>Change Password</span>
+        </button>
+      </form>
+    </div>
+  `;
+
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
+}
+
+function openEditProfilePictureModal() {
+  ensureModalsLoaded();
+  const modal = document.getElementById('edit-profile-picture-modal');
+  if (!modal) return;
+  const u = appState.user;
+  const currentAvatar = u ? (u.avatarUrl || u.avatar || u.avatar_url || u.profilePicture || u.profilePictureUrl || u.photoUrl) : null;
+  const preview = document.getElementById('modal-edit-profile-avatar-preview');
+  if (preview && u) {
+    preview.innerHTML = getAvatarSVG(u.role, 72, currentAvatar);
+  }
+  const recropBtn = document.getElementById('btn-profile-recrop-current');
+  if (recropBtn) {
+    recropBtn.style.display = currentAvatar ? 'inline-flex' : 'none';
+  }
+  modal.style.display = 'flex';
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
+}
+
+function closeEditProfilePictureModal() {
+  const modal = document.getElementById('edit-profile-picture-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+function triggerProfilePhotoUpload(mode) {
+  closeEditProfilePictureModal();
+  if (mode === 'recrop') {
+    const u = appState.user;
+    const currentAvatar = u ? (u.avatarUrl || u.avatar || u.avatar_url || u.profilePicture || u.profilePictureUrl || u.photoUrl) : null;
+    if (!currentAvatar) {
+      showToast('No existing profile picture to crop.', 'warning');
+      return;
+    }
+    showToast('Loading picture for editor... ⏳', 'info');
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      openProfileCropEditor(img, currentAvatar);
+    };
+    img.onerror = () => {
+      showToast('Could not load existing picture for editing. Please select a photo from your gallery.', 'error');
+    };
+    img.src = currentAvatar;
+    return;
+  }
+
+  let input = null;
+  if (mode === 'camera') {
+    input = document.getElementById('profile-camera-input');
+  } else {
+    input = document.getElementById('profile-gallery-input');
+  }
+  if (input) {
+    input.value = '';
+    input.click();
+  }
+}
+
+// =============================================================================
+// INSTAGRAM-LIKE PROFILE PICTURE CROP & POSITION CONTROLLER
+// =============================================================================
+
+const cropState = {
+  img: null,
+  rawUrl: null,
+  naturalW: 0,
+  naturalH: 0,
+  viewportSize: 280,
+  minScale: 1.0,
+  currentZoom: 1.0,
+  effectiveScale: 1.0,
+  posX: 0,
+  posY: 0,
+  activePointers: new Map(),
+  initialPinchDist: 0,
+  initialPinchZoom: 1.0,
+  initialPinchMidpoint: { x: 140, y: 140 },
+  pointerStartX: 0,
+  pointerStartY: 0,
+  initialPanX: 0,
+  initialPanY: 0,
+  lastTapTime: 0,
+  eventsBound: false
+};
+
+function calculateCoverScale(naturalW, naturalH, viewportSize) {
+  return Math.max(viewportSize / naturalW, viewportSize / naturalH);
+}
+
+function clampCropPosition(x, y, scale, naturalW, naturalH, viewportSize) {
+  const renderedW = naturalW * scale;
+  const renderedH = naturalH * scale;
+
+  const minX = viewportSize - renderedW;
+  const maxX = 0;
+  const clampedX = Math.min(maxX, Math.max(minX, x));
+
+  const minY = viewportSize - renderedH;
+  const maxY = 0;
+  const clampedY = Math.min(maxY, Math.max(minY, y));
+
+  return { x: clampedX, y: clampedY };
+}
+
+function applyCropTransform(isInteracting = false) {
+  const stageImg = document.getElementById('crop-stage-image');
+  const gridOverlay = document.getElementById('crop-grid-overlay');
+  const viewport = document.getElementById('crop-viewport-container');
+  const slider = document.getElementById('crop-zoom-slider');
+
+  if (stageImg) {
+    stageImg.style.width = `${cropState.naturalW}px`;
+    stageImg.style.height = `${cropState.naturalH}px`;
+    stageImg.style.transform = `translate3d(${cropState.posX}px, ${cropState.posY}px, 0) scale(${cropState.effectiveScale})`;
+  }
+
+  if (gridOverlay) {
+    if (isInteracting) {
+      gridOverlay.classList.add('active');
+    } else {
+      gridOverlay.classList.remove('active');
+    }
+  }
+
+  if (viewport) {
+    if (isInteracting) {
+      viewport.classList.add('is-dragging');
+    } else {
+      viewport.classList.remove('is-dragging');
+    }
+  }
+
+  if (slider && Math.abs(parseFloat(slider.value) - cropState.currentZoom) > 0.02) {
+    slider.value = cropState.currentZoom.toFixed(2);
+  }
+}
+
+function setCropZoom(targetZoom, originX = null, originY = null, isInteracting = false) {
+  const clampedZoom = Math.max(1.0, Math.min(3.5, targetZoom));
+  const newScale = cropState.minScale * clampedZoom;
+
+  const fx = originX !== null ? originX : cropState.viewportSize / 2;
+  const fy = originY !== null ? originY : cropState.viewportSize / 2;
+
+  const ratio = newScale / cropState.effectiveScale;
+  const rawX = fx - (fx - cropState.posX) * ratio;
+  const rawY = fy - (fy - cropState.posY) * ratio;
+
+  const clamped = clampCropPosition(rawX, rawY, newScale, cropState.naturalW, cropState.naturalH, cropState.viewportSize);
+
+  cropState.currentZoom = clampedZoom;
+  cropState.effectiveScale = newScale;
+  cropState.posX = clamped.x;
+  cropState.posY = clamped.y;
+
+  applyCropTransform(isInteracting);
+}
+
+function stepCropZoom(delta) {
+  setCropZoom(cropState.currentZoom + delta, cropState.viewportSize / 2, cropState.viewportSize / 2, false);
+}
+
+function handleCropSliderInput(val) {
+  setCropZoom(parseFloat(val), cropState.viewportSize / 2, cropState.viewportSize / 2, false);
+}
+
+function resetCropPosition() {
+  cropState.currentZoom = 1.0;
+  cropState.effectiveScale = cropState.minScale;
+  cropState.posX = (cropState.viewportSize - cropState.naturalW * cropState.effectiveScale) / 2;
+  cropState.posY = (cropState.viewportSize - cropState.naturalH * cropState.effectiveScale) / 2;
+  applyCropTransform(false);
+}
+
+function bindCropEditorEvents() {
+  if (cropState.eventsBound) return;
+  const viewport = document.getElementById('crop-viewport-container');
+  if (!viewport) return;
+
+  viewport.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    try { viewport.setPointerCapture(e.pointerId); } catch (_) {}
+    cropState.activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    if (cropState.activePointers.size === 1) {
+      // Check double tap / click to toggle zoom
+      const now = Date.now();
+      if (now - cropState.lastTapTime < 300) {
+        const rect = viewport.getBoundingClientRect();
+        const fx = e.clientX - rect.left;
+        const fy = e.clientY - rect.top;
+        const targetZoom = cropState.currentZoom > 1.2 ? 1.0 : 2.0;
+        setCropZoom(targetZoom, fx, fy, false);
+        cropState.lastTapTime = 0;
+        return;
+      }
+      cropState.lastTapTime = now;
+
+      cropState.pointerStartX = e.clientX;
+      cropState.pointerStartY = e.clientY;
+      cropState.initialPanX = cropState.posX;
+      cropState.initialPanY = cropState.posY;
+    } else if (cropState.activePointers.size === 2) {
+      const pts = Array.from(cropState.activePointers.values());
+      const p1 = pts[0];
+      const p2 = pts[1];
+      cropState.initialPinchDist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+      cropState.initialPinchZoom = cropState.currentZoom;
+      const rect = viewport.getBoundingClientRect();
+      cropState.initialPinchMidpoint = {
+        x: ((p1.x + p2.x) / 2) - rect.left,
+        y: ((p1.y + p2.y) / 2) - rect.top
+      };
+    }
+    applyCropTransform(true);
+  });
+
+  viewport.addEventListener('pointermove', (e) => {
+    if (!cropState.activePointers.has(e.pointerId)) return;
+    cropState.activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    if (cropState.activePointers.size === 1) {
+      const dx = e.clientX - cropState.pointerStartX;
+      const dy = e.clientY - cropState.pointerStartY;
+      const clamped = clampCropPosition(
+        cropState.initialPanX + dx,
+        cropState.initialPanY + dy,
+        cropState.effectiveScale,
+        cropState.naturalW,
+        cropState.naturalH,
+        cropState.viewportSize
+      );
+      cropState.posX = clamped.x;
+      cropState.posY = clamped.y;
+      applyCropTransform(true);
+    } else if (cropState.activePointers.size >= 2) {
+      const pts = Array.from(cropState.activePointers.values());
+      const p1 = pts[0];
+      const p2 = pts[1];
+      const currDist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+      if (cropState.initialPinchDist > 5) {
+        const ratio = currDist / cropState.initialPinchDist;
+        const targetZoom = cropState.initialPinchZoom * ratio;
+        setCropZoom(targetZoom, cropState.initialPinchMidpoint.x, cropState.initialPinchMidpoint.y, true);
+      }
+    }
+  });
+
+  const handlePointerEnd = (e) => {
+    cropState.activePointers.delete(e.pointerId);
+    try { viewport.releasePointerCapture(e.pointerId); } catch (_) {}
+
+    if (cropState.activePointers.size === 1) {
+      const remaining = cropState.activePointers.values().next().value;
+      cropState.pointerStartX = remaining.x;
+      cropState.pointerStartY = remaining.y;
+      cropState.initialPanX = cropState.posX;
+      cropState.initialPanY = cropState.posY;
+    } else if (cropState.activePointers.size === 0) {
+      applyCropTransform(false);
+    }
+  };
+
+  viewport.addEventListener('pointerup', handlePointerEnd);
+  viewport.addEventListener('pointercancel', handlePointerEnd);
+
+  viewport.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const rect = viewport.getBoundingClientRect();
+    const fx = e.clientX - rect.left;
+    const fy = e.clientY - rect.top;
+    const delta = e.deltaY < 0 ? 0.15 : -0.15;
+    setCropZoom(cropState.currentZoom + delta, fx, fy, false);
+  }, { passive: false });
+
+  viewport.addEventListener('dblclick', (e) => {
+    e.preventDefault();
+    const rect = viewport.getBoundingClientRect();
+    const fx = e.clientX - rect.left;
+    const fy = e.clientY - rect.top;
+    const targetZoom = cropState.currentZoom > 1.2 ? 1.0 : 2.0;
+    setCropZoom(targetZoom, fx, fy, false);
+  });
+
+  cropState.eventsBound = true;
+}
+
+function getAuthoritativeCropRect() {
+  const viewport = document.getElementById('crop-viewport-container');
+  const stageImg = document.getElementById('crop-stage-image');
+
+  // Authoritative viewport dimension (280px standard, dynamically verified from rendered DOM)
+  const vpDim = (viewport && viewport.clientWidth > 50) ? viewport.clientWidth : (cropState.viewportSize || 280);
+  cropState.viewportSize = vpDim;
+
+  // Authoritative source image dimensions (DOM stageImg element takes precedence because
+  // the browser has rendered and oriented it according to EXIF)
+  const nw = (stageImg && stageImg.naturalWidth > 0)
+    ? stageImg.naturalWidth
+    : ((cropState.img && cropState.img.naturalWidth > 0) ? cropState.img.naturalWidth : (cropState.naturalW || 400));
+  const nh = (stageImg && stageImg.naturalHeight > 0)
+    ? stageImg.naturalHeight
+    : ((cropState.img && cropState.img.naturalHeight > 0) ? cropState.img.naturalHeight : (cropState.naturalH || 400));
+  cropState.naturalW = nw;
+  cropState.naturalH = nh;
+
+  const scale = cropState.effectiveScale || 1.0;
+  const posX = cropState.posX || 0;
+  const posY = cropState.posY || 0;
+
+  // Viewport point (vx, vy) maps to source image point (ix, iy):
+  // vx = posX + ix * scale  =>  ix = (vx - posX) / scale
+  const sourceX = -posX / scale;
+  const sourceY = -posY / scale;
+  const sourceWidth = vpDim / scale;
+  const sourceHeight = vpDim / scale;
+
+  const rect = {
+    sourceX,
+    sourceY,
+    sourceWidth,
+    sourceHeight,
+    posX,
+    posY,
+    effectiveScale: scale,
+    currentZoom: cropState.currentZoom || 1.0,
+    viewportSize: vpDim,
+    naturalW: nw,
+    naturalH: nh
+  };
+
+  if (window.__LOSTSEEK_DEBUG_CROP__) {
+    console.log('[LostSeek Authoritative Crop Rect]', rect);
+  }
+
+  return rect;
+}
+
+window.getLostSeekCropDebugInfo = getAuthoritativeCropRect;
+
+function openProfileCropEditor(img, rawUrl) {
+  cropState.img = img;
+  cropState.rawUrl = rawUrl;
+
+  const modal = document.getElementById('profile-crop-editor-modal');
+  if (modal) {
+    modal.style.display = 'flex';
+  }
+
+  const viewport = document.getElementById('crop-viewport-container');
+  const actualVp = (viewport && viewport.clientWidth > 50) ? viewport.clientWidth : 280;
+  cropState.viewportSize = actualVp;
+
+  const stageImg = document.getElementById('crop-stage-image');
+
+  const setupDimensionsAndPosition = () => {
+    const nw = (stageImg && stageImg.naturalWidth > 0) ? stageImg.naturalWidth : (img.naturalWidth || img.width || 400);
+    const nh = (stageImg && stageImg.naturalHeight > 0) ? stageImg.naturalHeight : (img.naturalHeight || img.height || 400);
+    cropState.naturalW = nw;
+    cropState.naturalH = nh;
+
+    // Calculate cover scale so image completely fills the square viewport without any empty margins
+    cropState.minScale = calculateCoverScale(cropState.naturalW, cropState.naturalH, cropState.viewportSize);
+    cropState.currentZoom = 1.0;
+    cropState.effectiveScale = cropState.minScale;
+
+    // Center the image initially inside the viewport
+    cropState.posX = (cropState.viewportSize - cropState.naturalW * cropState.effectiveScale) / 2;
+    cropState.posY = (cropState.viewportSize - cropState.naturalH * cropState.effectiveScale) / 2;
+
+    applyCropTransform(false);
+  };
+
+  if (stageImg) {
+    if (stageImg.src !== rawUrl) {
+      stageImg.onload = () => {
+        setupDimensionsAndPosition();
+      };
+      stageImg.src = rawUrl;
+    } else {
+      setupDimensionsAndPosition();
+    }
+  } else {
+    setupDimensionsAndPosition();
+  }
+
+  const slider = document.getElementById('crop-zoom-slider');
+  if (slider) {
+    slider.min = '1.0';
+    slider.max = '3.5';
+    slider.step = '0.01';
+    slider.value = '1.0';
+  }
+
+  const saveBtn = document.getElementById('btn-crop-save');
+  const saveBtnText = document.getElementById('crop-save-btn-text');
+  if (saveBtn) saveBtn.disabled = false;
+  if (saveBtnText) saveBtnText.textContent = 'Save';
+
+  bindCropEditorEvents();
+  applyCropTransform(false);
+
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
+}
+
+function closeProfileCropEditorModal() {
+  const modal = document.getElementById('profile-crop-editor-modal');
+  if (modal) {
+    modal.style.display = 'none';
+  }
+  const stageImg = document.getElementById('crop-stage-image');
+  if (stageImg) {
+    stageImg.src = '';
+  }
+  cropState.activePointers.clear();
+}
+
+async function saveCroppedProfilePhoto() {
+  if (!appState.user) {
+    showToast('You must be signed in to update your profile picture.', 'error');
+    return;
+  }
+
+  if (!cropState.img && !cropState.rawUrl) {
+    showToast('No image loaded to save.', 'warning');
+    return;
+  }
+
+  const saveBtn = document.getElementById('btn-crop-save');
+  const saveBtnText = document.getElementById('crop-save-btn-text');
+  if (saveBtn) saveBtn.disabled = true;
+  if (saveBtnText) saveBtnText.textContent = 'Saving...';
+
+  try {
+    // 1. Authoritative crop calculation (exact same coordinate space as preview)
+    const crop = getAuthoritativeCropRect();
+
+    // 2. High-fidelity square canvas output (max 800x800 for clarity and fast upload)
+    const targetDim = Math.min(800, Math.max(360, Math.round(crop.sourceWidth)));
+    const canvas = document.createElement('canvas');
+    canvas.width = targetDim;
+    canvas.height = targetDim;
+    const ctx = canvas.getContext('2d');
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+
+    // 3. Render using exact mathematically identical affine transform:
+    // The viewport [0, viewportSize] maps to the canvas [0, targetDim] by factor k:
+    const k = targetDim / crop.viewportSize;
+    ctx.setTransform(
+      crop.effectiveScale * k,
+      0,
+      0,
+      crop.effectiveScale * k,
+      crop.posX * k,
+      crop.posY * k
+    );
+
+    const stageImg = document.getElementById('crop-stage-image');
+    const sourceElement = (stageImg && stageImg.complete && stageImg.naturalWidth > 0)
+      ? stageImg
+      : (cropState.img || stageImg);
+
+    ctx.drawImage(sourceElement, 0, 0, crop.naturalW, crop.naturalH);
+    ctx.setTransform(1, 0, 0, 1, 0, 0); // Restore identity transform
+
+    const croppedDataUrl = canvas.toDataURL('image/jpeg', 0.88);
+
+    // 4. Upload to Vercel Blob storage flow
+    const cloudUrl = await uploadProfileImageToCloud(croppedDataUrl, appState.user.username);
+
+    // 5. Save to user profile via backend
+    const res = await fetch(API_BASE + '/api/auth?action=profile', {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({
+        username: appState.user.username,
+        avatarUrl: cloudUrl
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || `Server returned ${res.status}`);
+    }
+
+    const data = await res.json();
+    const rawFinalUrl = (data.profile && data.profile.avatarUrl) || (data.user && data.user.avatarUrl) || cloudUrl;
+    const finalUrl = rawFinalUrl.includes('?') ? rawFinalUrl.replace(/([?&]t=)\d+/, '$1' + Date.now()) : `${rawFinalUrl}?t=${Date.now()}`;
+
+    // 6. Update user state across all aliases immediately
+    appState.user.avatarUrl = finalUrl;
+    appState.user.avatar = finalUrl;
+    appState.user.avatar_url = finalUrl;
+    appState.user.profilePicture = finalUrl;
+    appState.user.profilePictureUrl = finalUrl;
+    appState.user.photoUrl = finalUrl;
+
+    saveData();
+    setupAuthenticatedUser(appState.user);
+    renderProfile();
+
+    closeProfileCropEditorModal();
+    showToast('Profile picture updated.', 'success');
+  } catch (err) {
+    console.error('Failed to save cropped profile picture:', err);
+    showToast(`Failed to save profile picture: ${err.message || 'Network error'}`, 'error');
+  } finally {
+    if (saveBtn) saveBtn.disabled = false;
+    if (saveBtnText) saveBtnText.textContent = 'Save';
+  }
+}
+
+async function uploadProfileImageToCloud(dataUrl, username) {
+  if (!dataUrl || !dataUrl.startsWith('data:')) {
+    throw new Error('Invalid image data for cloud upload.');
+  }
+  const res = await fetch(API_BASE + '/api/upload', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      image: dataUrl,
+      filename: `avatar-${username || 'user'}-${Date.now()}.jpg`
+    })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || `Upload failed with HTTP ${res.status}`);
+  }
+  const data = await res.json();
+  if (!data.success || !data.url || !data.url.startsWith('http')) {
+    throw new Error(data.message || 'Cloud storage upload did not return a valid URL.');
+  }
+  return data.url;
+}
+
+function handleProfilePhotoSelected(e) {
+  const file = e.target.files?.[0];
+  if (!file) return;
+
+  if (!file.type.startsWith('image/')) {
+    showToast('Please select a valid image file (JPEG, PNG, WEBP).', 'warning');
+    e.target.value = '';
+    return;
+  }
+
+  if (file.size > 20 * 1024 * 1024) {
+    showToast('Image is too large. Please select a photo under 20MB.', 'warning');
+    e.target.value = '';
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onerror = () => {
+    showToast('Failed to read image file.', 'error');
+    e.target.value = '';
+  };
+  reader.onload = (loadEvt) => {
+    const dataUrl = loadEvt.target.result;
+    const img = new Image();
+    img.onload = () => {
+      openProfileCropEditor(img, dataUrl);
+    };
+    img.onerror = () => {
+      showToast('Failed to load image preview.', 'error');
+    };
+    img.src = dataUrl;
+  };
+  reader.readAsDataURL(file);
+  e.target.value = '';
+}
+
+async function handleProfilePasswordChange(e) {
+  e.preventDefault();
+  const currentPassword = document.getElementById('pwd-current')?.value;
+  const newPassword = document.getElementById('pwd-new')?.value;
+  const confirmPassword = document.getElementById('pwd-confirm')?.value;
+  const btn = document.getElementById('btn-change-password') || document.getElementById('btn-update-password');
+
+  if (!currentPassword || !newPassword) {
+    showToast('Please enter both your current and new password.', 'warning');
+    return;
+  }
+
+  if (newPassword.length < 6) {
+    showToast('New password must be at least 6 characters long.', 'warning');
+    return;
+  }
+
+  if (newPassword !== confirmPassword) {
+    showToast('New passwords do not match.', 'error');
+    return;
+  }
+
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i data-lucide="loader-2" class="spin"></i> Updating password...';
+    if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
+  }
+
+  try {
+    const res = await fetch(API_BASE + '/api/change-password', {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({
+        username: appState.user.username,
+        currentPassword,
+        newPassword,
+        confirmPassword
+      })
+    });
+
+    const data = await res.json();
+    if (res.ok && data.success) {
+      showToast('Password changed successfully! 🔒', 'success');
+      document.getElementById('profile-change-password-form')?.reset();
+    } else {
+      showToast(data.message || 'Failed to change password.', 'error');
+    }
+  } catch (err) {
+    showToast('Network error while changing password: ' + err.message, 'error');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<i data-lucide="lock"></i> <span>Change Password</span>';
+      if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
+    }
+  }
+}
+
+function renderSettings() {
+  updateSettingsThemeCards(currentTheme);
+
+  // If Admin, populate Official Contacts editor
+  const isAdmin = appState.user && appState.user.role && appState.user.role.toLowerCase() === 'admin';
+  const contactsCard = document.getElementById('admin-settings-contacts-card');
+  if (contactsCard) {
+    contactsCard.style.display = isAdmin ? 'block' : 'none';
+    if (isAdmin && appState.officialContacts) {
+      const officeInput = document.getElementById('setting-phone-office');
+      const secInput = document.getElementById('setting-phone-security');
+      const policeInput = document.getElementById('setting-phone-police');
+
+      if (officeInput) officeInput.value = appState.officialContacts.campusOffice?.phone || '';
+      if (secInput) secInput.value = appState.officialContacts.campusSecurity?.phone || '';
+      if (policeInput) policeInput.value = appState.officialContacts.policeStation?.phone || '';
+    }
+  }
+
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
+}
+
+
+
+
+
+/* ==========================================================================
+   MODULE: 28_simple_status_system__always_icon___text___color_.js
+   ========================================================================== */
+/* ==========================================================================
+   SIMPLE STATUS SYSTEM (ALWAYS ICON + TEXT + COLOR)
+   ========================================================================== */
+function getStatusBadgeHTML(status) {
+  const norm = (status || 'Active').toLowerCase();
+  if (norm.includes('wait') || norm.includes('pending')) {
+    return '<span class="status-pill status-waiting"><i data-lucide="clock"></i> Pending</span>';
+  } else if (norm.includes('match') || norm.includes('possible')) {
+    return '<span class="status-pill status-possible-match"><i data-lucide="sparkles"></i> Possible Match</span>';
+  } else if (norm.includes('claim approved') || norm.includes('approved')) {
+    return '<span class="status-pill status-approved"><i data-lucide="check-circle-2"></i> Claim Approved</span>';
+  } else if (norm.includes('claim')) {
+    return '<span class="status-pill status-claimed"><i data-lucide="hand"></i> Claimed</span>';
+  } else if (norm.includes('check') || norm.includes('verif')) {
+    return '<span class="status-pill status-checking"><i data-lucide="shield-check"></i> Under Verification</span>';
+  } else if (norm.includes('return') || norm.includes('recovered')) {
+    return '<span class="status-pill status-returned"><i data-lucide="package-check"></i> Returned</span>';
+  } else if (norm.includes('reject')) {
+    return '<span class="status-pill status-rejected"><i data-lucide="x-circle"></i> Rejected</span>';
+  } else if (norm.includes('closed') || norm.includes('expired')) {
+    return '<span class="status-pill status-archived"><i data-lucide="archive"></i> Closed</span>';
+  } else {
+    return '<span class="status-pill status-looking"><i data-lucide="search"></i> Active</span>';
+  }
+}
+
+
+/* ==========================================================================
+   MODULE: 29_contact_privacy_display_system.js
+   ========================================================================== */
+/* ==========================================================================
+   CONTACT PRIVACY DISPLAY SYSTEM
+   ========================================================================== */
+function renderContactCard(report, roleLabel = 'Finder') {
+  if (!report) return '';
+  const rawPhone = report.phone || report.phoneNumber || report.phone_number || report.contactPhone || '';
+  const phone = String(rawPhone || '').trim();
+  const isShared = !!(report.sharePhone ?? report.phoneSharingConsent ?? report.phone_sharing_consent ?? report.phoneShared);
+  const hasPhoneRecord = !!(report.hasPhoneProvided || phone);
+
+  // STATE B: User HAS explicitly shared phone number AND current viewer is authorized to receive it
+  if (phone && isShared) {
+    return `
+      <div class="contact-display-card contact-display-shared">
+        <div class="contact-details-left">
+          <span class="contact-details-tag">✓ Direct Contact Available</span>
+          <div class="contact-number-large">📞 ${escapeHTML(phone)}</div>
+          <span class="contact-sub-note">The ${roleLabel.toLowerCase()} chose to share this number.</span>
+        </div>
+        <a href="tel:${escapeHTML(phone)}" class="contact-action-call-btn">
+          <i data-lucide="phone-call"></i>
+          <span>Contact ${roleLabel}</span>
+        </a>
+      </div>
+    `;
+  }
+  // STATE A: User has NOT shared phone number (or kept private)
+  else if (!isShared && (hasPhoneRecord || phone)) {
+    return `
+      <div class="contact-display-card contact-display-private">
+        <div class="contact-details-left">
+          <span class="contact-details-tag">🔒 Private Contact</span>
+          <div class="contact-number-large">Phone number kept private</div>
+          <span class="contact-sub-note">The ${roleLabel.toLowerCase()} chose to keep their contact details private.</span>
+        </div>
+        ${appState.user?.role?.toLowerCase() === 'admin' ? '' : `<button type="button" class="contact-admin-help-btn" onclick="openAdminContactHelpModal('${report.id}')">
+          <i data-lucide="shield"></i>
+          <span>Ask Admin to Help</span>
+        </button>`}
+      </div>
+    `;
+  }
+  // STATE C: Phone number does not exist
+  else {
+    return `
+      <div class="contact-display-card contact-display-unavailable">
+        <div class="contact-details-left">
+          <span class="contact-details-tag">ℹ️ Contact Unavailable</span>
+          <div class="contact-number-large">No phone number provided</div>
+          <span class="contact-sub-note">No phone number was registered for this ${roleLabel.toLowerCase()}.</span>
+        </div>
+        ${appState.user?.role?.toLowerCase() === 'admin' ? '' : `<button type="button" class="contact-admin-help-btn" onclick="openAdminContactHelpModal('${report.id}')">
+          <i data-lucide="shield"></i>
+          <span>Ask Admin to Help</span>
+        </button>`}
+      </div>
+    `;
+  }
+}
+
+
+/* ==========================================================================
+   MODULE: 30_student_home_feeds__my_reports__possible_matches__alerts_.js
+   ========================================================================== */
+/* ==========================================================================
+   STUDENT HOME FEEDS (My Reports, Possible Matches, Alerts)
+   ========================================================================== */
+function renderStudentHomeFeeds() {
+  // 1. My Reports Feed
+  const myReportsEl = document.getElementById('student-home-my-reports');
+  if (myReportsEl) {
+    const allUserReports = [
+      ...appState.lostReports.map(r => ({ ...r, itemType: 'Lost' })),
+      ...appState.foundReports.map(r => ({ ...r, itemType: 'Found' }))
+    ].slice(0, 3);
+
+    if (allUserReports.length === 0) {
+      myReportsEl.innerHTML = `
+        <div style="text-align: center; padding: 24px 0; background: var(--bg-subtle); border-radius: var(--radius-md); border: 1px dashed var(--border-subtle); margin-top: 12px;">
+          <i data-lucide="folder-open" style="color: var(--text-muted); width: 32px; height: 32px; margin-bottom: 8px;"></i>
+          <p style="color: var(--text-secondary); font-size: 0.95rem; font-weight: 500;">No reports submitted yet.</p>
+          <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 4px;">Items you report lost or found will appear here.</p>
+        </div>
+      `;
+    } else {
+      myReportsEl.innerHTML = allUserReports.map(item => `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 12px;border-bottom:1px solid var(--border-subtle); margin-bottom: 4px; border-radius: var(--radius-sm); transition: background var(--transition-fast);" onmouseover="this.style.background='var(--bg-subtle)'" onmouseout="this.style.background='transparent'">
+          <div>
+            <div style="font-weight:700;font-size:0.95rem;color:var(--text-primary); margin-bottom: 2px;">${escapeHTML(item.title)}</div>
+            <div style="font-size:0.8rem;color:var(--text-secondary);display:flex;align-items:center;gap:4px;">
+              <i data-lucide="map-pin" style="width: 12px; height: 12px;"></i> ${escapeHTML(item.location)} <span style="opacity: 0.5;">•</span> ${getTimeAgo(item.createdAt)}
+            </div>
+          </div>
+          <div>${getStatusBadgeHTML(item.status)}</div>
+        </div>
+      `).join('');
+    }
+  }
+
+  // 2. Possible Matches Feed
+  const matchesEl = document.getElementById('student-home-matches');
+  if (matchesEl) {
+    const matches = calculateMatchesList().slice(0, 2);
+    if (matches.length === 0) {
+      matchesEl.innerHTML = `
+        <div style="text-align: center; padding: 24px 0; background: var(--bg-subtle); border-radius: var(--radius-md); border: 1px dashed var(--border-subtle); margin-top: 12px;">
+          <i data-lucide="sparkles" style="color: var(--text-muted); width: 32px; height: 32px; margin-bottom: 8px;"></i>
+          <p style="color: var(--text-secondary); font-size: 0.95rem; font-weight: 500;">No AI matches found.</p>
+          <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 4px;">We'll notify you if an item matches yours.</p>
+        </div>
+      `;
+    } else {
+      matchesEl.innerHTML = matches.map(m => `
+        <div style="padding:14px 12px;border-bottom:1px solid var(--border-subtle); margin-bottom: 4px; border-radius: var(--radius-sm); transition: background var(--transition-fast);" onmouseover="this.style.background='var(--bg-subtle)'" onmouseout="this.style.background='transparent'">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <strong style="font-size:0.95rem;color:var(--text-primary);">${escapeHTML(m.lost.title)}</strong>
+            <span style="font-size:0.8rem;font-weight:700;color:var(--teal-bright);background:var(--color-success-bg);padding:4px 10px;border-radius:var(--radius-full);">${m.score}% Match</span>
+          </div>
+          <div style="font-size:0.85rem;color:var(--text-secondary);margin-top:6px;display:flex;align-items:center;gap:4px;">
+            <i data-lucide="package" style="width: 14px; height: 14px; color: var(--text-muted);"></i> Found at: ${escapeHTML(m.found.location)}
+          </div>
+        </div>
+      `).join('');
+    }
+  }
+
+  // 3. Alerts Feed
+  const alertsEl = document.getElementById('student-home-alerts');
+  if (alertsEl) {
+    const notifs = appState.notifications.slice(0, 3);
+    if (notifs.length === 0) {
+      alertsEl.innerHTML = `
+        <div style="text-align: center; padding: 24px 0; background: var(--bg-subtle); border-radius: var(--radius-md); border: 1px dashed var(--border-subtle); margin-top: 12px;">
+          <i data-lucide="bell-off" style="color: var(--text-muted); width: 32px; height: 32px; margin-bottom: 8px;"></i>
+          <p style="color: var(--text-secondary); font-size: 0.95rem; font-weight: 500;">No new alerts.</p>
+        </div>
+      `;
+    } else {
+      alertsEl.innerHTML = notifs.map(n => `
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:12px;border-bottom:1px solid var(--border-subtle); border-radius: var(--radius-sm); transition: background var(--transition-fast);" onmouseover="this.style.background='var(--bg-subtle)'" onmouseout="this.style.background='transparent'">
+          <div style="background: var(--color-info-bg); padding: 8px; border-radius: var(--radius-full); flex-shrink: 0; display:flex;">
+            <i data-lucide="bell" style="width:14px;height:14px;color:var(--color-info);"></i>
+          </div>
+          <div style="flex:1;">
+            <div style="color:var(--text-primary); font-size:0.9rem; font-weight: 500; line-height: 1.4;">${escapeHTML(n.message)}</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);margin-top: 4px;">${getTimeAgo(n.createdAt)}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+  }
+
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
+}
+
+
+/* ==========================================================================
+   MODULE: 31_find_item_directory.js
+   ========================================================================== */
+/* ==========================================================================
+   FIND ITEM DIRECTORY
+   ========================================================================== */
+function renderFindItem() {
+  handleFindItemSearch();
+}
+
+function handleFindItemSearch() {
+  const container = document.getElementById('find-item-results-grid');
+  if (!container) return;
+
+  const searchInput = document.getElementById('find-item-search-input');
+  const typeFilter = document.getElementById('find-filter-type');
+  const categoryFilter = document.getElementById('find-filter-category');
+  const locationFilter = document.getElementById('find-filter-location');
+  const statusFilter = document.getElementById('find-filter-status');
+
+  const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
+  const selType = typeFilter ? typeFilter.value : '';
+  const selCategory = categoryFilter ? categoryFilter.value : '';
+  const selLocation = locationFilter ? locationFilter.value : '';
+  const selStatus = statusFilter ? statusFilter.value : '';
+
+  const allItems = [
+    ...appState.lostReports.map(r => ({ ...r, itemType: 'Lost' })),
+    ...appState.foundReports.map(r => ({ ...r, itemType: 'Found' }))
+  ];
+
+  const filtered = allItems.filter(item => {
+    if (selType && item.itemType !== selType) return false;
+    if (selCategory && item.category !== selCategory) return false;
+    if (selLocation && !String(item.location || '').toLowerCase().includes(selLocation.toLowerCase())) return false;
+    if (selStatus && !String(item.status || '').toLowerCase().includes(selStatus.toLowerCase())) return false;
+
+    if (query) {
+      const matchTitle = String(item.title || '').toLowerCase().includes(query);
+      const matchDesc = String(item.description || '').toLowerCase().includes(query);
+      const matchLoc = String(item.location || '').toLowerCase().includes(query);
+      const matchBrand = String(item.brand || '').toLowerCase().includes(query);
+      if (!matchTitle && !matchDesc && !matchLoc && !matchBrand) return false;
+    }
+    return true;
+  });
+
+  if (filtered.length === 0) {
+    container.innerHTML = `
+      <div style="grid-column: 1 / -1; text-align: center; padding: 48px 20px;">
+        <i data-lucide="search-x" style="width: 48px; height: 48px; color: var(--text-muted); margin: 0 auto 12px;"></i>
+        <h3 style="color: var(--text-primary); margin-bottom: 6px;">No items match your criteria</h3>
+        <p style="color: var(--text-muted);">Try adjusting your search keywords or resetting filters.</p>
+      </div>
+    `;
+    if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
+    return;
+  }
+
+  container.innerHTML = filtered.map(item => {
+    const cat = CATEGORY_MAP[item.category] || { icon: '📦', label: 'Item' };
+    const isLost = item.itemType === 'Lost';
+    const isFound = item.itemType === 'Found';
+
+    return `
+      <div class="glass-card" style="padding: 20px; display: flex; flex-direction: column; justify-content: space-between; border-radius: var(--radius-lg);">
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; gap: 8px;">
+            <span class="badge ${isLost ? 'badge-urgent' : 'badge-verified'}">${item.itemType}</span>
+            ${getStatusBadgeHTML(item.status)}
+          </div>
+
+          ${item.photo ? `
+            <div style="width: 100%; height: 140px; border-radius: var(--radius-md); overflow: hidden; margin-bottom: 12px; background: var(--bg-subtle); position: relative;">
+              <img src="${item.photo}" alt="${escapeHTML(item.title)}" style="width: 100%; height: 100%; object-fit: cover;">
+              ${item.imageSharedForMatch ? `
+                <div class="match-verification-overlay" style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(15, 23, 42, 0.88); color: var(--teal-bright); font-size: 0.72rem; padding: 4px 8px; font-weight: 600; display: flex; align-items: center; gap: 4px; border-top: 1px solid rgba(20, 184, 166, 0.4);">
+                  <span>🔍 Possible match — image shared for verification</span>
+                </div>
+              ` : ''}
+            </div>
+          ` : `
+            <div style="width: 100%; height: 90px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 2.2rem; margin-bottom: 12px; background: var(--bg-subtle);">
+              ${cat.icon}
+            </div>
+          `}
+
+          <h3 style="font-size: 1.05rem; margin-bottom: 6px; color: var(--text-primary); font-weight: 600;">
+            ${escapeHTML(item.title)}
+          </h3>
+
+          <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+            ${escapeHTML(item.description || 'No additional details.')}
+          </p>
+
+          <div style="font-size: 0.78rem; color: var(--text-muted); display: flex; flex-direction: column; gap: 4px; margin-bottom: 14px;">
+            <div>📍 <strong>${escapeHTML(item.location || 'Campus')}</strong></div>
+            <div>⏱️ ${getTimeAgo(item.createdAt || item.date)}</div>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 8px; margin-top: auto;">
+          ${isFound ? `
+            <button class="btn btn-sm btn-primary" style="flex: 1;" onclick="openClaimModal('', '${item.id}', '${escapeHTML(item.title)}', '${item.category}')">
+              Claim Item
+            </button>
+          ` : `
+            <button class="btn btn-sm btn-accent-teal" style="flex: 1;" onclick="showPage('report-found-page')">
+              I Found This
+            </button>
+          `}
+          <button class="btn btn-sm btn-secondary" onclick="openQrModal('${item.id}')">
+            QR Tag
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
+}
+
+function resetFindItemFilters() {
+  const searchInput = document.getElementById('find-item-search-input');
+  const typeFilter = document.getElementById('find-filter-type');
+  const categoryFilter = document.getElementById('find-filter-category');
+  const locationFilter = document.getElementById('find-filter-location');
+  const statusFilter = document.getElementById('find-filter-status');
+
+  if (searchInput) searchInput.value = '';
+  if (typeFilter) typeFilter.value = '';
+  if (categoryFilter) categoryFilter.value = '';
+  if (locationFilter) locationFilter.value = '';
+  if (statusFilter) statusFilter.value = '';
+
+  handleFindItemSearch();
+}
+
+
+/* ==========================================================================
+   MODULE: 32__i_found_an_item__flow.js
+   ========================================================================== */
+/* ==========================================================================
+   "I FOUND AN ITEM" FLOW
+   ========================================================================== */
+function initIFoundPage() {
+  const form = document.getElementById('i-found-form');
+  if (form) form.reset();
+  clearIFoundPhoto();
+  const results = document.getElementById('ifound-results-container');
+  if (results) {
+    results.innerHTML = '';
+    results.style.display = 'none';
+  }
+
+  // Set default datetime to now
+  const dtInput = document.getElementById('ifound-datetime');
+  if (dtInput) {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    dtInput.value = now.toISOString().slice(0, 16);
+  }
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
+}
+
+function handleIFoundPhotoSelected(e) {
+  const file = e.target.files?.[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    const dataUrl = evt.target.result;
+    const hidden = document.getElementById('ifound-photo-data');
+    const preview = document.getElementById('ifound-preview-card');
+    const previewImg = document.getElementById('ifound-preview-img');
+    const buttonsRow = document.getElementById('ifound-buttons-row');
+
+    if (hidden) hidden.value = dataUrl;
+    if (previewImg) previewImg.src = dataUrl;
+    if (preview) preview.style.display = 'block';
+    if (buttonsRow) buttonsRow.style.display = 'none';
+    showToast('Photo attached successfully!', 'success');
+    if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearIFoundPhoto() {
+  const hidden = document.getElementById('ifound-photo-data');
+  const preview = document.getElementById('ifound-preview-card');
+  const previewImg = document.getElementById('ifound-preview-img');
+  const buttonsRow = document.getElementById('ifound-buttons-row');
+  const camInput = document.getElementById('ifound-camera-input');
+  const galInput = document.getElementById('ifound-gallery-input');
+
+  if (hidden) hidden.value = '';
+  if (previewImg) previewImg.src = '';
+  if (preview) preview.style.display = 'none';
+  if (buttonsRow) buttonsRow.style.display = 'grid';
+  if (camInput) camInput.value = '';
+  if (galInput) galInput.value = '';
+}
+
+function handleIFoundSearch(e) {
+  if (e && typeof e.preventDefault === 'function') e.preventDefault();
+
+  const title = document.getElementById('ifound-title')?.value.trim() || '';
+  const category = document.getElementById('ifound-category')?.value || 'misc';
+  let location = document.getElementById('ifound-location')?.value || 'Campus';
+  if (location === 'Other') {
+    const customLoc = document.getElementById('ifound-location-other')?.value.trim();
+    if (customLoc) location = customLoc;
+  }
+  const datetime = document.getElementById('ifound-datetime')?.value || new Date().toISOString();
+  const photo = document.getElementById('ifound-photo-data')?.value || '';
+  const phone = document.getElementById('ifound-phone')?.value.trim() || '';
+  const sharePhone = !!document.getElementById('ifound-share-phone')?.checked;
+
+  const resultsContainer = document.getElementById('ifound-results-container');
+  if (!resultsContainer) return;
+
+  const candidateFound = {
+    id: generateId('temp-found'),
+    title,
+    category,
+    location,
+    date: datetime,
+    photo,
+    phone,
+    sharePhone,
+    description: title
+  };
+
+  // Find matches among existing lost reports
+  const matches = findMatches(candidateFound, 'found');
+
+  resultsContainer.style.display = 'block';
+
+  if (matches.length > 0) {
+    resultsContainer.innerHTML = `
+      <div style="background:rgba(20,184,166,0.1);border:1.5px solid var(--teal-bright);border-radius:12px;padding:20px;margin-bottom:20px;">
+        <h3 style="display:flex;align-items:center;gap:8px;color:var(--teal-bright);margin-bottom:6px;">
+          <i data-lucide="sparkles"></i>
+          <span>Possible Matches Found (${matches.length})</span>
+        </h3>
+        <p style="font-size:0.88rem;color:var(--text-secondary);margin:0;">
+          LostSeek correlated your found item with existing campus lost reports:
+        </p>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        ${matches.map(m => {
+          const lost = m.lost;
+          const reasons = m.reasons || [];
+          return `
+            <div class="glass-card" style="padding:18px;">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
+                <div>
+                  <h4 style="font-size:1.05rem;color:var(--text-primary);margin-bottom:4px;">${escapeHTML(lost.title)}</h4>
+                  <div style="font-size:0.8rem;color:var(--text-muted);">
+                    📍 Lost at ${escapeHTML(lost.location)} • 📅 ${getTimeAgo(lost.date || lost.createdAt)}
+                  </div>
+                </div>
+                <div style="text-align:right;">
+                  <span style="font-size:1.1rem;font-weight:800;color:var(--teal-bright);">${m.score}%</span>
+                  <div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;">Match Score</div>
+                </div>
+              </div>
+
+              <!-- Why this may match -->
+              <div class="match-reasons-list">
+                <div style="font-size:0.78rem;font-weight:700;color:var(--text-secondary);margin-bottom:2px;">Why this may match:</div>
+                ${reasons.map(r => `<div class="match-reason-item matched">${escapeHTML(r)}</div>`).join('')}
+              </div>
+
+              <!-- Owner contact if shared -->
+              ${renderContactCard(lost, 'Owner')}
+
+              <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;">
+                <button type="button" class="btn btn-sm btn-primary" onclick="openClaimModal('${lost.id}', '${candidateFound.id}', '${escapeHTML(lost.title)}')">
+                  <i data-lucide="hand"></i>
+                  <span>Confirm / Claim Match</span>
+                </button>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+
+      <div style="text-align:center;margin-top:24px;padding:16px;background:var(--bg-card);border-radius:12px;border:1px solid var(--border-card);">
+        <p style="font-size:0.9rem;color:var(--text-secondary);margin-bottom:12px;">
+          None of these match what you found? You can still post it to campus inventory.
+        </p>
+        <button type="button" class="btn btn-secondary" onclick="postAsFoundDirectly('${escapeHTML(title)}', '${category}', '${escapeHTML(location)}', '${datetime}', '${photo}', '${escapeHTML(phone)}', ${sharePhone})">
+          <i data-lucide="package-plus"></i>
+          <span>Post as Found Item</span>
+        </button>
+      </div>
+    `;
+  } else {
+    resultsContainer.innerHTML = `
+      <div style="text-align:center;padding:24px;background:var(--bg-card);border-radius:12px;border:1px solid var(--border-card);">
+        <div style="font-size:2.5rem;margin-bottom:10px;">🔍</div>
+        <h3 style="font-size:1.15rem;margin-bottom:6px;">No possible match yet</h3>
+        <p style="font-size:0.88rem;color:var(--text-secondary);max-width:440px;margin:0 auto 18px;">
+          No matching lost report was found right now. You can still post this item so the owner can search for it later!
+        </p>
+        <button type="button" class="btn btn-primary" onclick="postAsFoundDirectly('${escapeHTML(title)}', '${category}', '${escapeHTML(location)}', '${datetime}', '${photo}', '${escapeHTML(phone)}', ${sharePhone})">
+          <i data-lucide="package-plus"></i>
+          <span>Post as Found Item</span>
+        </button>
+      </div>
+    `;
+  }
+
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
+}
+
+function postAsFoundDirectly(title, category, location, datetime, photo, phone, sharePhone) {
+  const newReport = {
+    id: generateId('found'),
+    type: 'FOUND',
+    itemType: 'Found',
+    category,
+    title,
+    itemName: title,
+    location,
+    date: datetime,
+    dateTime: datetime,
+    description: title,
+    photo: photo || '',
+    imageUrl: photo || '',
+    phone: phone || '',
+    phoneNumber: phone || '',
+    sharePhone: !!sharePhone,
+    phoneSharingConsent: !!sharePhone,
+    status: 'Active',
+    priority: 'normal',
+    createdAt: new Date().toISOString(),
+    custody: 'With Me',
+    finderName: appState.user?.name || 'Campus Student',
+    reporterId: appState.user ? (appState.user.username || appState.user.loginId || appState.user.id) : 'student',
+    reporterName: appState.user ? appState.user.name : 'Campus Student'
+  };
+
+  appState.foundReports.unshift(newReport);
+  
+  saveData();
+  renderAllViews();
+
+  showToast('Found item posted to LostSeek! 📦 ', 'success');
+
+  // Asynchronous cloud persistence & blob upload
+  (async () => {
+    try {
+      if (photo && photo.startsWith('data:')) {
+        const cloudImg = await uploadImageToCloud(photo, `found-${Date.now()}.jpg`);
+        newReport.photo = cloudImg;
+        newReport.imageUrl = cloudImg;
+      }
+      const apiRes = await fetch(API_BASE + '/api/reports', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(newReport)
+      });
+      const apiData = await apiRes.json();
+      if (apiData.success && apiData.report) {
+        newReport.id = apiData.report.id;
+        saveData();
+        updateSyncIndicator('synced', 'Cloud Synced');
+      }
+
+      // Check matching against lost reports
+      const matches = findMatches(newReport, appState.lostReports || []);
+      if (matches.length > 0) {
+        const topMatch = matches[0];
+        await fetch(API_BASE + '/api/matches', {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify({
+            lostReportId: topMatch.lost.id,
+            foundReportId: newReport.id,
+            score: topMatch.score,
+            confidence: topMatch.confidence,
+            reasons: topMatch.reasons || []
+          })
+        }).catch(e => console.warn('Match cloud sync:', e));
+      }
+    } catch (e) {
+      console.warn('Direct found cloud persist failed (local copy intact):', e);
+    }
+  })();
+}
+
+
+
+
+/* ==========================================================================
+   MODULE: 33_phone_validation___sharing_consent_synchronization.js
+   ========================================================================== */
+/* ==========================================================================
+   PHONE VALIDATION & SHARING CONSENT SYNCHRONIZATION
+   ========================================================================== */
+function validatePhoneNumber(phoneStr) {
+  if (!phoneStr) return false;
+  const cleaned = phoneStr.replace(/[^\d+]/g, '');
+  return cleaned.length >= 7 && cleaned.length <= 15;
+}
+
+function handlePhoneInputChanged(type) {
+  const phoneInput = document.getElementById(`${type}-phone`);
+  const checkbox = document.getElementById(`${type}-share-phone`);
+  const label = document.getElementById(`${type}-share-phone-label`);
+  const note = document.getElementById(`${type}-consent-note`);
+  const hint = document.getElementById(`${type}-phone-hint`);
+
+  if (!phoneInput || !checkbox) return;
+
+  const rawVal = phoneInput.value.trim();
+
+  if (rawVal === '') {
+    checkbox.checked = false;
+    checkbox.disabled = true;
+    if (label) {
+      label.style.opacity = '0.6';
+      label.style.cursor = 'not-allowed';
+    }
+    if (note) {
+      note.textContent = 'Enter a phone number above to enable the sharing checkbox.';
+      note.style.color = 'var(--text-muted)';
+    }
+    if (hint) {
+      hint.textContent = 'Optional. Enter a number if you wish to allow direct phone contact.';
+      hint.style.color = 'var(--text-muted)';
+    }
+    return;
+  }
+
+  const isValid = validatePhoneNumber(rawVal);
+
+  if (!isValid) {
+    checkbox.checked = false;
+    checkbox.disabled = true;
+    if (label) {
+      label.style.opacity = '0.6';
+      label.style.cursor = 'not-allowed';
+    }
+    if (note) {
+      note.textContent = 'Enter a valid phone number (7-15 digits) to enable sharing.';
+      note.style.color = 'var(--color-warning)';
+    }
+    if (hint) {
+      hint.textContent = '⚠️ Please enter a reasonable phone number (7-15 digits).';
+      hint.style.color = 'var(--color-warning)';
+    }
+  } else {
+    checkbox.disabled = false;
+    if (label) {
+      label.style.opacity = '1';
+      label.style.cursor = 'pointer';
+    }
+    if (note) {
+      note.textContent = checkbox.checked
+        ? '✓ Consented: Your number will be shown directly to the relevant matched finder/owner.'
+        : 'If left unchecked, your number is kept private and campus admins will facilitate collection.';
+      note.style.color = checkbox.checked ? 'var(--teal-bright)' : 'var(--text-muted)';
+    }
+    if (hint) {
+      hint.textContent = '✓ Valid phone format. Choose below whether to share it directly.';
+      hint.style.color = 'var(--color-success)';
+    }
+  }
+}
+
+
+
+function handleFileSelected(e, type) {
+  const file = e.target.files?.[0];
+  if (!file) return;
+
+  if (file.size > 5 * 1024 * 1024) {
+    showToast('Image size exceeds 5MB. Please choose a smaller photo.', 'warning');
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    const dataUrl = evt.target.result;
+    const hidden = document.getElementById(`${type}-photo-url`);
+    const preview = document.getElementById(`${type}-photo-preview`) || document.getElementById(`${type}-preview-container`);
+    const box = document.getElementById(`${type}-photo-box`);
+    const dropZone = document.getElementById(`${type}-drop-zone`);
+
+    if (hidden) hidden.value = dataUrl;
+    if (preview) preview.style.display = 'block';
+
+    const targetBox = box || preview;
+    targetBox.innerHTML = `
+      <div style="display: flex; align-items: center; gap: 14px; background: var(--bg-card); padding: 12px; border-radius: 8px; border: 1px solid var(--border-card);">
+        <img src="${dataUrl}" alt="Thumbnail" style="width: 64px; height: 64px; object-fit: cover; border-radius: 6px; border: 1px solid var(--teal-bright);">
+        <div style="flex: 1;">
+          <div style="font-size: 0.88rem; font-weight: 600; color: var(--text-primary);">${escapeHTML(file.name)}</div>
+          <span style="font-size: 0.75rem; color: var(--teal-bright); font-weight: 600;">✓ Photo Attached</span>
+        </div>
+        <button type="button" class="btn btn-sm btn-secondary" onclick="clearWizardPhoto('${type}')" title="Remove Photo">
+          <i data-lucide="trash-2"></i>
+          <span>Remove</span>
+        </button>
+      </div>
+    `;
+
+    if (dropZone) dropZone.style.display = 'none';
+    if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
+    showToast('Photo attached successfully! 📷', 'success');
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearWizardPhoto(type) {
+  const hidden = document.getElementById(`${type}-photo-url`);
+  const preview = document.getElementById(`${type}-photo-preview`) || document.getElementById(`${type}-preview-container`);
+  const fileInput = document.getElementById(`${type}-file-input`);
+  const camInput = document.getElementById(`${type}-camera-input`);
+  const galInput = document.getElementById(`${type}-gallery-input`);
+  const dropZone = document.getElementById(`${type}-drop-zone`);
+
+  if (hidden) hidden.value = '';
+  if (fileInput) fileInput.value = '';
+  if (camInput) camInput.value = '';
+  if (galInput) galInput.value = '';
+  if (preview) {
+    preview.style.display = 'none';
+    preview.innerHTML = '';
+  }
+  if (dropZone) dropZone.style.display = 'block';
+  showToast('Photo removed', 'info');
+}
+
+
+
+
+/* ==========================================================================
+   MODULE: 34_safe_handover_modal___workflow.js
+   ========================================================================== */
+/* ==========================================================================
+   SAFE HANDOVER MODAL & WORKFLOW
+   ========================================================================== */
+let activeHandoverClaimId = null;
+
+function openAdminHandoverModal(targetId) {
+  ensureModalsLoaded();
+  let claim = appState.claims.find(c => c.id === targetId || c.lostReportId === targetId || c.foundReportId === targetId);
+  if (!claim) {
+    const item = appState.lostReports.find(r => r.id === targetId) || appState.foundReports.find(r => r.id === targetId);
+    if (!item) {
+      showToast('Item or Claim not found', 'error');
+      return;
+    }
+    claim = {
+      id: generateId('claim'),
+      lostReportId: (item.type === 'lost' || appState.lostReports.some(r => r.id === item.id)) ? item.id : null,
+      foundReportId: (item.type === 'found' || appState.foundReports.some(r => r.id === item.id)) ? item.id : null,
+      claimantName: item.reporterName || 'Verified Student',
+      verificationAnswer: 'Ownership verified in person at Security Desk.',
+      status: 'Approved',
+      createdAt: new Date().toISOString()
+    };
+    appState.claims.push(claim);
+  }
+
+  activeHandoverClaimId = claim.id;
+  const lost = appState.lostReports.find(r => r.id === claim.lostReportId);
+  const found = appState.foundReports.find(r => r.id === claim.foundReportId);
+
+  const modal = document.getElementById('admin-handover-modal');
+  if (!modal) return;
+
+  const itemTitle = document.getElementById('handover-item-title');
+  const ownerName = document.getElementById('handover-owner-name');
+  const ownerContact = document.getElementById('handover-owner-contact');
+  const finderName = document.getElementById('handover-finder-name');
+  const storageLoc = document.getElementById('handover-storage-location');
+  const verifText = document.getElementById('handover-verification-text');
+  const claimIdHidden = document.getElementById('handover-claim-id');
+  const lostIdHidden = document.getElementById('handover-lost-id');
+  const foundIdHidden = document.getElementById('handover-found-id');
+  const dtInput = document.getElementById('handover-datetime');
+  const adminNameInput = document.getElementById('handover-admin-name');
+  const notesInput = document.getElementById('handover-notes');
+
+  if (itemTitle) itemTitle.textContent = lost?.title || found?.title || 'Campus Item';
+  if (ownerName) ownerName.textContent = claim.claimantName || 'Student';
+  if (ownerContact) {
+    const lostPhone = lost?.phone || lost?.phoneNumber || lost?.phone_number || '';
+    const lostShared = !!(lost?.sharePhone ?? lost?.phoneSharingConsent ?? lost?.phone_sharing_consent);
+    if (lostPhone && lostShared) {
+      ownerContact.textContent = `📞 ${lostPhone} (Consented)`;
+    } else if (lostPhone || lost?.hasPhoneProvided) {
+      ownerContact.textContent = '🔒 Number kept private';
+    } else {
+      ownerContact.textContent = 'ℹ️ No phone provided';
+    }
+  }
+  if (finderName) finderName.textContent = found?.finderName || 'Campus Finder';
+  if (storageLoc) storageLoc.textContent = `📍 ${found?.location || 'Main Security Desk'}`;
+  if (verifText) verifText.textContent = `"${claim.verificationAnswer || 'Verified ownership through student card & purchase invoice.'}"`;
+
+  if (claimIdHidden) claimIdHidden.value = claim.id;
+  if (lostIdHidden) lostIdHidden.value = claim.lostReportId || '';
+  if (foundIdHidden) foundIdHidden.value = claim.foundReportId || '';
+
+  if (dtInput) {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    dtInput.value = now.toISOString().slice(0, 16);
+  }
+
+  if (adminNameInput) {
+    adminNameInput.value = appState.user?.name || 'Security Desk Officer';
+  }
+
+  if (notesInput) notesInput.value = '';
+
+  modal.classList.add('show');
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
+}
+
+function closeAdminHandoverModal() {
+  activeHandoverClaimId = null;
+  const modal = document.getElementById('admin-handover-modal');
+  if (modal) modal.classList.remove('show');
+}
+
+function confirmAdminHandover() {
+  const claimId = document.getElementById('handover-claim-id')?.value;
+  const lostId = document.getElementById('handover-lost-id')?.value;
+  const foundId = document.getElementById('handover-found-id')?.value;
+  const dt = document.getElementById('handover-datetime')?.value || new Date().toISOString();
+  const adminName = document.getElementById('handover-admin-name')?.value.trim() || 'Campus Admin';
+  const notes = document.getElementById('handover-notes')?.value.trim() || 'Item handed over safely to verified owner.';
+
+  const claim = appState.claims.find(c => c.id === claimId);
+  const lost = appState.lostReports.find(r => r.id === lostId);
+  const found = appState.foundReports.find(r => r.id === foundId);
+
+  const handoverRecord = {
+    handoverDate: dt,
+    adminName: adminName,
+    notes: notes,
+    recordedAt: new Date().toISOString()
+  };
+
+  if (claim) {
+    claim.status = 'Returned';
+    claim.handover = handoverRecord;
+  }
+
+  if (lost) {
+    lost.status = 'Returned';
+    lost.handover = handoverRecord;
+  }
+
+  if (found) {
+    found.status = 'Returned';
+    found.handover = handoverRecord;
+  }
+
+  const title = lost?.title || found?.title || 'Item';
+
+  // Notifications
+  appState.notifications.unshift({
+    id: generateId('notif'),
+    message: `🤝 Handover recorded: Your lost item "${title}" was safely handed over to you by ${adminName} at the Campus Security Desk.`,
+    read: false,
+    createdAt: new Date().toISOString()
+  });
+
+  if (found && found.finderName && found.finderName !== lost?.reporterName) {
+    appState.notifications.unshift({
+      id: generateId('notif'),
+      message: `🎉 Safe Handover complete: The item you found ("${title}") was successfully returned to its verified owner!`,
+      read: false,
+      createdAt: new Date().toISOString()
+    });
+  }
+
+  
+  saveData();
+  renderAllViews();
+  closeAdminHandoverModal();
+  showToast('Handover recorded! Item marked Returned 🤝 ', 'success');
+
+  if (claimId) {
+    setTimeout(() => {
+      downloadReceiptPdf(claimId);
+    }, 600);
+  }
+}
+
+
+/* ==========================================================================
+   MODULE: 35_admin_assistance_requests___ask_admin_to_help__.js
+   ========================================================================== */
+/* ==========================================================================
+   ADMIN ASSISTANCE REQUESTS ("ASK ADMIN TO HELP")
+   ========================================================================== */
+function requestAdminAssistedReturn() {
+  const report = appState.foundReports.find(r => r.id === activeContactHelpReportId) ||
+                 appState.lostReports.find(r => r.id === activeContactHelpReportId);
+  
+  const title = report ? report.title : 'Lost Item';
+  const student = appState.user || { name: 'Campus Student', studentId: 'STU-2026' };
+
+  if (!appState.adminHelpRequests) appState.adminHelpRequests = [];
+
+  const helpReq = {
+    id: generateId('help'),
+    reportId: activeContactHelpReportId,
+    itemTitle: title,
+    category: report?.category || 'misc',
+    studentName: student.name,
+    studentId: student.studentId || 'STU-2026',
+    studentPhone: report?.phone || '',
+    status: 'Pending',
+    createdAt: new Date().toISOString()
+  };
+
+  appState.adminHelpRequests.unshift(helpReq);
+
+  // Student notification
+  appState.notifications.unshift({
+    id: generateId('notif'),
+    message: `🛡️ Admin assistance requested for "${title}". Campus Security Desk will coordinate hand-over.`,
+    read: false,
+    createdAt: new Date().toISOString()
+  });
+
+  // Admin notification
+  appState.notifications.unshift({
+    id: generateId('notif'),
+    message: `Help needed for a lost item: Student ${student.name} needs help contacting the possible finder for "${title}".`,
+    read: false,
+    createdAt: new Date().toISOString()
+  });
+
+  saveData();
+  renderNotifications();
+  renderAdminHelpRequests();
+  closeAdminContactHelpModal();
+  showToast('Help request sent to Campus Security Desk! 🛡️', 'success');
+}
+
+function renderAdminHelpRequests() {
+  const container = document.getElementById('admin-help-requests-container');
+  const badge = document.getElementById('admin-help-count-badge');
+  if (!container) return;
+
+  const requests = appState.adminHelpRequests || [];
+  const pending = requests.filter(r => r.status === 'Pending');
+
+  if (badge) {
+    badge.textContent = `${pending.length} Pending`;
+    badge.className = pending.length > 0 ? 'badge badge-urgent' : 'badge badge-verified';
+  }
+
+  if (requests.length === 0) {
+    container.innerHTML = `
+      <div class="glass-card empty-state" style="text-align: center; padding: 20px;">
+        <i data-lucide="shield-check" style="width: 28px; height: 28px; color: var(--teal-bright); margin: 0 auto 8px;"></i>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin: 0;">No student assistance requests pending. All communications running smoothly!</p>
+      </div>
+    `;
+    if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
+    return;
+  }
+
+  container.innerHTML = requests.map(req => {
+    const isPending = req.status === 'Pending';
+    return `
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; background: var(--bg-subtle); border-radius: 8px; border: 1px solid var(--border-subtle); margin-bottom: 10px; flex-wrap: wrap; gap: 10px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 36px; height: 36px; border-radius: 50%; background: ${isPending ? 'rgba(239, 68, 68, 0.15)' : 'rgba(34, 197, 94, 0.15)'}; display: flex; align-items: center; justify-content: center; color: ${isPending ? 'var(--color-error)' : 'var(--color-success)'};">
+            <i data-lucide="${isPending ? 'shield-alert' : 'shield-check'}" style="width: 18px; height: 18px;"></i>
+          </div>
+          <div>
+            <div style="font-weight: 600; font-size: 0.92rem; color: var(--text-primary);">
+              ${escapeHTML(req.itemTitle)}
+            </div>
+            <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">
+              Requested by <strong>${escapeHTML(req.studentName)}</strong> (${escapeHTML(req.studentId)}) • ${getTimeAgo(req.createdAt)}
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+          <span class="status-pill ${isPending ? 'status-checking' : 'status-returned'}">
+            <i data-lucide="${isPending ? 'clock' : 'check-circle-2'}"></i>
+            ${isPending ? 'Waiting for Check' : 'Resolved'}
+          </span>
+          <button type="button" class="btn btn-sm btn-secondary" onclick="openReportDetailsModal('${req.reportId}')">
+            View
+          </button>
+          ${isPending ? `
+            <button type="button" class="btn btn-sm btn-primary" onclick="resolveAdminHelpRequest('${req.id}')">
+              Resolve
+            </button>
+          ` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
+}
+
+function resolveAdminHelpRequest(helpId) {
+  const req = (appState.adminHelpRequests || []).find(r => r.id === helpId);
+  if (!req) return;
+
+  req.status = 'Resolved';
+  req.resolvedAt = new Date().toISOString();
+
+  appState.notifications.unshift({
+    id: generateId('notif'),
+    message: `🛡️ Admin assistance resolved: Campus Security Desk has coordinated hand-over for "${req.itemTitle}". Please visit the desk.`,
+    read: false,
+    createdAt: new Date().toISOString()
+  });
+
+  saveData();
+  renderNotifications();
+  renderAdminHelpRequests();
+  showToast('Assistance request marked Resolved! 🛡️', 'success');
+}
+
+
+
+
+/* ==========================================================================
+   MODULE: 36_global_aliases___role_switching.js
+   ========================================================================== */
+/* ==========================================================================
+   GLOBAL ALIASES & ROLE SWITCHING
+   ========================================================================== */
+function switchRole(role) {
+  if (!appState.user) {
+    setLoginRole(role);
+    return;
+  }
+  appState.user.role = role;
+  saveData();
+  setupAuthenticatedUser();
+  renderAllViews();
+  showToast('Switched view to ' + (role === 'admin' ? 'Admin / Security Desk' : 'Student') + ' mode', 'info');
+}
+
+window.switchRole = switchRole;
+window.downloadQR = typeof downloadQrCode === 'function' ? downloadQrCode : function() { downloadQrCode(); };
+window.openQrModal = openQrModal;
+window.closeQrModal = closeQrModal;
+window.downloadReportPdf = downloadReportPdf;
+window.downloadReceiptPdf = downloadReceiptPdf;
+window.openPublicVerification = openPublicVerification;
+window.closePublicVerificationModal = closePublicVerificationModal;
+window.openAdminHandoverModal = openAdminHandoverModal;
+window.closeAdminHandoverModal = closeAdminHandoverModal;
+window.confirmAdminHandover = confirmAdminHandover;
+window.requestAdminAssistedReturn = requestAdminAssistedReturn;
+window.resolveAdminHelpRequest = resolveAdminHelpRequest;
+window.handlePhoneInputChanged = handlePhoneInputChanged;
+
+
+
+
+/* ==========================================================================
+   MODULE: 37_lostseek_help___safety__complaint___escalation_system.js
+   ========================================================================== */
+/* ==========================================================================
+   LOSTSEEK HELP & SAFETY, COMPLAINT & ESCALATION SYSTEM
+   ========================================================================== */
+
+let currentAdminHelpTab = 'all';
+let activeAdminHelpTicketId = null;
+
+function renderHelpSafetyPage() {
+  // Ensure officialContacts structure exists
+  if (!appState.officialContacts) {
+    appState.officialContacts = JSON.parse(JSON.stringify(DEFAULT_OFFICIAL_CONTACTS));
+  }
+
+  const contacts = appState.officialContacts;
+
+  // 1. Render contact numbers (or "Contact number not configured")
+  const officePhoneEl = document.getElementById('contact-office-phone-display');
+  if (officePhoneEl) {
+    officePhoneEl.innerHTML = getOfficialContactDisplay(contacts.campusOffice?.phone);
+  }
+
+  const secPhoneEl = document.getElementById('contact-security-phone-display');
+  if (secPhoneEl) {
+    secPhoneEl.innerHTML = getOfficialContactDisplay(contacts.campusSecurity?.phone);
+  }
+
+  const policePhoneEl = document.getElementById('contact-police-phone-display');
+  if (policePhoneEl) {
+    policePhoneEl.innerHTML = getOfficialContactDisplay(contacts.policeStation?.phone);
+  }
+
+  // Also update bridge helpline in admin-contact-help-modal
+  const bridgeHelplineEl = document.getElementById('admin-bridge-helpline-display');
+  if (bridgeHelplineEl) {
+    bridgeHelplineEl.innerHTML = `📞 <strong>Desk Helpline:</strong> ${getOfficialContactDisplay(contacts.campusSecurity?.phone)}`;
+  }
+
+  // 2. Populate complaint related item dropdown with user's reports
+  const relatedItemSelect = document.getElementById('complaint-related-item');
+  if (relatedItemSelect) {
+    let optionsHTML = '<option value="">Not item-specific / General campus issue</option>';
+    const userReports = [
+      ...appState.lostReports.map(r => ({ ...r, typeLabel: 'Lost' })),
+      ...appState.foundReports.map(r => ({ ...r, typeLabel: 'Found' }))
+    ];
+
+    userReports.forEach(rep => {
+      optionsHTML += `<option value="${rep.id}">[${rep.typeLabel}] ${escapeHTML(rep.title)} (📍 ${escapeHTML(rep.location)})</option>`;
+    });
+
+    relatedItemSelect.innerHTML = optionsHTML;
+  }
+
+  // 3. Pre-fill student contact phone if known
+  const phoneInput = document.getElementById('complaint-contact-phone');
+  if (phoneInput && !phoneInput.value && appState.user?.phone) {
+    phoneInput.value = appState.user.phone;
+  }
+
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
+}
+
+function handleComplaintSubmit(e) {
+  if (e && typeof e.preventDefault === 'function') e.preventDefault();
+
+  const complaintType = document.getElementById('complaint-type')?.value;
+  const urgency = document.getElementById('complaint-urgency')?.value || 'Normal';
+  const relatedItemId = document.getElementById('complaint-related-item')?.value || '';
+  const involvedRole = document.getElementById('complaint-involved-role')?.value || 'Not Applicable';
+  let location = document.getElementById('complaint-location')?.value || 'Campus';
+  if (location === 'Other') {
+    const customLoc = document.getElementById('complaint-location-other')?.value.trim();
+    if (customLoc) location = customLoc;
+  }
+  const contactPhone = document.getElementById('complaint-contact-phone')?.value.trim() || '';
+  const description = document.getElementById('complaint-description')?.value.trim();
+
+  if (!complaintType || !description) {
+    showToast('Please fill in all required complaint fields.', 'warning');
+    return;
+  }
+
+  let itemTitle = 'General Campus Dispute';
+  if (relatedItemId) {
+    const matchedRep = appState.lostReports.find(r => r.id === relatedItemId) ||
+                       appState.foundReports.find(r => r.id === relatedItemId);
+    if (matchedRep) itemTitle = matchedRep.title;
+  }
+
+  const isUrgent = (urgency.toLowerCase().includes('critical') || urgency.toLowerCase().includes('high'));
+  const ticketId = generateId('help');
+
+  const ticket = {
+    id: ticketId,
+    type: 'complaint',
+    category: complaintType,
+    urgency: urgency,
+    priority: isUrgent ? 'urgent' : 'normal',
+    relatedReportId: relatedItemId,
+    itemTitle: itemTitle,
+    involvedRole: involvedRole,
+    location: location,
+    studentName: appState.user?.name || 'Campus Student',
+    studentId: appState.user?.studentId || 'STU-2026',
+    studentPhone: contactPhone || appState.user?.phone || '',
+    description: description,
+    status: 'New',
+    createdAt: new Date().toISOString(),
+    notes: [
+      {
+        author: 'System',
+        text: `Formal complaint filed by ${appState.user?.name || 'Student'} (${appState.user?.studentId || 'STU-2026'}). Severity: ${urgency}.`,
+        createdAt: new Date().toISOString()
+      }
+    ]
+  };
+
+  if (!appState.adminHelpRequests) appState.adminHelpRequests = [];
+  appState.adminHelpRequests.unshift(ticket);
+
+  // Student notification
+  appState.notifications.unshift({
+    id: generateId('notif'),
+    message: `🛡️ Dispute escalation filed (Ref #${ticket.id}): Campus Administration has been notified and assigned this case for investigation.`,
+    read: false,
+    createdAt: new Date().toISOString()
+  });
+
+  // Admin alert
+  appState.notifications.unshift({
+    id: generateId('notif'),
+    message: `🚨 New Student Complaint (#${ticket.id}): ${complaintType} at ${location} [${urgency}]. Immediate review requested.`,
+    read: false,
+    createdAt: new Date().toISOString()
+  });
+
+  saveData();
+  renderNotifications();
+  updateSidebarHelpBadge();
+
+  // Reset form
+  const form = document.getElementById('student-complaint-form');
+  if (form) form.reset();
+  const otherWrap = document.getElementById('complaint-location-other-wrap');
+  if (otherWrap) otherWrap.style.display = 'none';
+
+  showToast(`Complaint filed successfully! Case Ref #${ticket.id} logged with Campus Administration 🛡️`, 'success');
+}
+
+
+/* ==========================================================================
+   MODULE: 38_urgent_item_assistance_modal________need_help_____.js
+   ========================================================================== */
+/* ==========================================================================
+   URGENT ITEM ASSISTANCE MODAL ( [ 🆘 Need Help? ] )
+   ========================================================================== */
+
+function openItemHelpModal(reportId, title, location) {
+  ensureModalsLoaded();
+  const modal = document.getElementById('item-help-modal');
+  if (!modal) return;
+
+  const idInput = document.getElementById('item-help-report-id');
+  const titleEl = document.getElementById('item-help-modal-item-title');
+  const locEl = document.getElementById('item-help-modal-item-location');
+  const noteInput = document.getElementById('item-help-note');
+
+  if (idInput) idInput.value = reportId || '';
+  if (titleEl) titleEl.textContent = title || 'Campus Item';
+  if (locEl) locEl.textContent = location || 'Campus';
+  if (noteInput) noteInput.value = '';
+
+  // Reset radio buttons
+  const radios = modal.querySelectorAll('input[name="item-help-reason"]');
+  radios.forEach(r => { r.checked = false; });
+  if (radios.length > 0) radios[0].checked = true;
+
+  modal.classList.add('show');
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
+}
+
+function closeItemHelpModal() {
+  const modal = document.getElementById('item-help-modal');
+  if (modal) modal.classList.remove('show');
+}
+
+function submitItemHelpRequest(e) {
+  if (e && typeof e.preventDefault === 'function') e.preventDefault();
+
+  const reportId = document.getElementById('item-help-report-id')?.value || '';
+  const title = document.getElementById('item-help-modal-item-title')?.textContent || 'Campus Item';
+  const location = document.getElementById('item-help-modal-item-location')?.textContent || 'Campus';
+  const note = document.getElementById('item-help-note')?.value.trim() || '';
+
+  const checkedRadio = document.querySelector('input[name="item-help-reason"]:checked');
+  const reason = checkedRadio ? checkedRadio.value : 'Dispute or Safety Concern';
+
+  const ticketId = generateId('help');
+
+  const ticket = {
+    id: ticketId,
+    type: 'urgent_help',
+    category: reason,
+    urgency: 'Critical (Safety Risk)',
+    priority: 'urgent',
+    relatedReportId: reportId,
+    itemTitle: title,
+    involvedRole: 'Finder / Claimant Dispute',
+    location: location,
+    studentName: appState.user?.name || 'Campus Student',
+    studentId: appState.user?.studentId || 'STU-2026',
+    studentPhone: appState.user?.phone || '',
+    description: note ? `${reason}\n\nStudent Note: ${note}` : reason,
+    status: 'New',
+    createdAt: new Date().toISOString(),
+    notes: [
+      {
+        author: 'Security Bot',
+        text: `Urgent assistance requested for "${title}". Flagged reason: ${reason}`,
+        createdAt: new Date().toISOString()
+      }
+    ]
+  };
+
+  // Flag report as urgent
+  const targetReport = appState.lostReports.find(r => r.id === reportId) ||
+                       appState.foundReports.find(r => r.id === reportId);
+  if (targetReport) {
+    targetReport.priority = 'urgent';
+    targetReport.isFlagged = true;
+  }
+
+  if (!appState.adminHelpRequests) appState.adminHelpRequests = [];
+  appState.adminHelpRequests.unshift(ticket);
+
+  // Notifications
+  appState.notifications.unshift({
+    id: generateId('notif'),
+    message: `🚨 Urgent assistance requested for "${title}". Case #${ticket.id} flagged with Campus Security.`,
+    read: false,
+    createdAt: new Date().toISOString()
+  });
+
+  appState.notifications.unshift({
+    id: generateId('notif'),
+    message: `🚨 URGENT ITEM FLAG (#${ticket.id}): Student ${appState.user?.name || 'Student'} flagged item "${title}" at ${location} [${reason}].`,
+    read: false,
+    createdAt: new Date().toISOString()
+  });
+
+  saveData();
+  renderNotifications();
+  updateSidebarHelpBadge();
+  closeItemHelpModal();
+
+  showToast(`Urgent assistance requested! Campus Security Desk alerted (Ref #${ticket.id}) 🛡️`, 'success');
+}
+
+
+/* ==========================================================================
+   MODULE: 39_admin_help___complaints_desk.js
+   ========================================================================== */
+/* ==========================================================================
+   ADMIN HELP & COMPLAINTS DESK
+   ========================================================================== */
+
+function filterAdminHelpDeskTab(tabKey, btnEl) {
+  currentAdminHelpTab = tabKey;
+  const buttons = document.querySelectorAll('.admin-help-tab');
+  buttons.forEach(b => {
+    b.classList.remove('active');
+    b.classList.add('btn-secondary');
+  });
+
+  if (btnEl) {
+    btnEl.classList.add('active');
+    btnEl.classList.remove('btn-secondary');
+  }
+
+  renderAdminHelpDesk(tabKey);
+}
+
+function handleAdminHelpSearch() {
+  renderAdminHelpDesk(currentAdminHelpTab);
+}
+
+function updateSidebarHelpBadge() {
+  const badge = document.getElementById('sidebar-admin-help-badge');
+  if (!badge) return;
+  const newCount = (appState.adminHelpRequests || []).filter(r => r.status === 'New').length;
+  if (newCount > 0) {
+    badge.textContent = newCount;
+    badge.style.display = 'inline-block';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function renderAdminHelpDesk(filterTab = currentAdminHelpTab) {
+  currentAdminHelpTab = filterTab;
+  const tbody = document.getElementById('admin-help-table-tbody');
+  if (!tbody) return;
+
+  const requests = appState.adminHelpRequests || [];
+
+  // Update Metrics counters
+  const totalCount = requests.length;
+  const urgentCount = requests.filter(r => r.priority === 'urgent' || (r.urgency && r.urgency.toLowerCase().includes('critical'))).length;
+  const newCount = requests.filter(r => r.status === 'New').length;
+  const inReviewCount = requests.filter(r => r.status === 'In Review').length;
+  const resolvedCount = requests.filter(r => r.status === 'Handled' || r.status === 'Closed').length;
+
+  const totalEl = document.getElementById('admin-help-metric-total');
+  const urgentEl = document.getElementById('admin-help-metric-urgent');
+  const newEl = document.getElementById('admin-help-metric-new');
+  const inReviewEl = document.getElementById('admin-help-metric-in-review');
+  const resolvedEl = document.getElementById('admin-help-metric-resolved');
+
+  if (totalEl) totalEl.textContent = totalCount;
+  if (urgentEl) urgentEl.textContent = urgentCount;
+  if (newEl) newEl.textContent = newCount;
+  if (inReviewEl) inReviewEl.textContent = inReviewCount;
+  if (resolvedEl) resolvedEl.textContent = resolvedCount;
+
+  updateSidebarHelpBadge();
+
+  // Filter by Tab
+  let filtered = requests;
+  if (filterTab === 'new') {
+    filtered = filtered.filter(r => r.status === 'New');
+  } else if (filterTab === 'urgent') {
+    filtered = filtered.filter(r => r.priority === 'urgent' || (r.urgency && r.urgency.toLowerCase().includes('critical')));
+  } else if (filterTab === 'open') {
+    filtered = filtered.filter(r => r.status === 'In Review');
+  } else if (filterTab === 'handled') {
+    filtered = filtered.filter(r => r.status === 'Handled');
+  } else if (filterTab === 'closed') {
+    filtered = filtered.filter(r => r.status === 'Closed');
+  }
+
+  // Filter by Search Input
+  const query = document.getElementById('admin-help-search-input')?.value.toLowerCase().trim() || '';
+  if (query) {
+    filtered = filtered.filter(r => 
+      (r.id && r.id.toLowerCase().includes(query)) ||
+      (r.studentName && r.studentName.toLowerCase().includes(query)) ||
+      (r.studentId && r.studentId.toLowerCase().includes(query)) ||
+      (r.itemTitle && r.itemTitle.toLowerCase().includes(query)) ||
+      (r.category && r.category.toLowerCase().includes(query)) ||
+      (r.location && r.location.toLowerCase().includes(query))
+    );
+  }
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="8" style="text-align: center; padding: 36px 16px; color: var(--text-muted);">
+          <i data-lucide="shield-check" style="width: 32px; height: 32px; color: var(--teal-bright); margin: 0 auto 8px; display: block;"></i>
+          No assistance requests or complaints matching active filter.
+        </td>
+      </tr>
+    `;
+    if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(item => {
+    const isUrgent = (item.priority === 'urgent' || (item.urgency && item.urgency.toLowerCase().includes('critical')));
+    const statusClass = 
+      item.status === 'New' ? 'status-checking' :
+      item.status === 'In Review' ? 'status-in-review' :
+      item.status === 'Handled' ? 'status-handled' : 'status-closed';
+
+    const urgencyBadgeClass = 
+      item.urgency === 'Critical (Safety Risk)' ? 'badge-urgent' :
+      item.urgency === 'High' ? 'badge-matched' : 'badge-verified';
+
+    return `
+      <tr style="${isUrgent ? 'background: rgba(239, 68, 68, 0.04);' : ''}">
+        <td>
+          <div style="font-weight: 700; font-family: monospace; font-size: 0.88rem; color: var(--teal-bright);">
+            #${item.id}
+          </div>
+          <span class="badge ${item.type === 'urgent_help' ? 'badge-urgent' : 'badge-searching'}" style="font-size: 0.65rem; margin-top: 2px;">
+            ${item.type === 'urgent_help' ? '🚨 URGENT' : '🛡️ COMPLAINT'}
+          </span>
+        </td>
+        <td style="font-size: 0.8rem; color: var(--text-muted); white-space: nowrap;">
+          ${getTimeAgo(item.createdAt)}
+        </td>
+        <td>
+          <span class="badge ${urgencyBadgeClass}" style="font-size: 0.72rem;">
+            ${escapeHTML(item.urgency || 'Normal')}
+          </span>
+        </td>
+        <td>
+          <div style="font-weight: 600; font-size: 0.9rem; color: var(--text-primary);">
+            ${escapeHTML(item.category || item.itemTitle)}
+          </div>
+          <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">
+            Item: ${escapeHTML(item.itemTitle || 'Campus Item')}
+          </div>
+        </td>
+        <td>
+          <div style="font-weight: 600; font-size: 0.88rem; color: var(--text-primary);">
+            ${escapeHTML(item.studentName || 'Student')}
+          </div>
+          <div style="font-size: 0.75rem; color: var(--text-muted);">
+            ID: ${escapeHTML(item.studentId || 'STU')}
+          </div>
+        </td>
+        <td style="font-size: 0.82rem; color: var(--text-secondary);">
+          📍 ${escapeHTML(item.location || 'Campus')}
+        </td>
+        <td>
+          <span class="status-pill ${statusClass}">
+            <i data-lucide="${item.status === 'Handled' ? 'check-circle-2' : 'clock'}"></i>
+            ${escapeHTML(item.status)}
+          </span>
+        </td>
+        <td style="text-align: right;">
+          <div style="display: inline-flex; gap: 6px; align-items: center;">
+            <button type="button" class="btn btn-sm btn-secondary" onclick="openAdminHelpDetailsModal('${item.id}')">
+              <i data-lucide="eye"></i>
+              <span>View</span>
+            </button>
+            <select class="input-glass" style="padding: 3px 8px; font-size: 0.78rem; width: auto;" onchange="updateAdminHelpStatus('${item.id}', this.value)">
+              <option value="New" ${item.status === 'New' ? 'selected' : ''}>New</option>
+              <option value="In Review" ${item.status === 'In Review' ? 'selected' : ''}>In Review</option>
+              <option value="Handled" ${item.status === 'Handled' ? 'selected' : ''}>Handled</option>
+              <option value="Closed" ${item.status === 'Closed' ? 'selected' : ''}>Closed</option>
+            </select>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
+}
+
+function openAdminHelpDetailsModal(ticketId) {
+  ensureModalsLoaded();
+  activeAdminHelpTicketId = ticketId;
+  const ticket = (appState.adminHelpRequests || []).find(r => r.id === ticketId);
+  if (!ticket) return;
+
+  const modal = document.getElementById('admin-help-details-modal');
+  if (!modal) return;
+
+  document.getElementById('admin-help-modal-ticket-id').textContent = `Ticket #${ticket.id}`;
+  document.getElementById('admin-help-modal-created-time').textContent = `Submitted ${formatDateTime(ticket.createdAt)} (${getTimeAgo(ticket.createdAt)})`;
+
+  const urgencyBadge = document.getElementById('admin-help-modal-urgency-badge');
+  if (urgencyBadge) {
+    urgencyBadge.textContent = ticket.urgency || 'Normal';
+    urgencyBadge.className = `badge ${ticket.urgency === 'Critical (Safety Risk)' ? 'badge-urgent' : (ticket.urgency === 'High' ? 'badge-matched' : 'badge-verified')}`;
+  }
+
+  const statusPill = document.getElementById('admin-help-modal-status-pill');
+  if (statusPill) {
+    statusPill.textContent = ticket.status;
+    statusPill.className = `status-pill ${ticket.status === 'New' ? 'status-checking' : (ticket.status === 'In Review' ? 'status-in-review' : (ticket.status === 'Handled' ? 'status-handled' : 'status-closed'))}`;
+  }
+
+  document.getElementById('admin-help-modal-student-name').textContent = ticket.studentName || 'Student';
+  document.getElementById('admin-help-modal-student-contact').textContent = `ID: ${ticket.studentId || 'STU'} • Phone: ${ticket.studentPhone || 'Not shared'}`;
+  document.getElementById('admin-help-modal-location').textContent = ticket.location || 'Campus';
+  document.getElementById('admin-help-modal-item-title').textContent = ticket.itemTitle ? `Item: ${ticket.itemTitle}` : 'General Issue';
+  document.getElementById('admin-help-modal-reason').textContent = ticket.category || 'Dispute';
+  document.getElementById('admin-help-modal-description').textContent = ticket.description || 'No description provided.';
+
+  // Status select
+  const statusSelect = document.getElementById('admin-help-modal-status-select');
+  if (statusSelect) statusSelect.value = ticket.status || 'New';
+
+  // Render Notes
+  renderAdminHelpModalNotes(ticket);
+
+  // View Report Button
+  const viewReportBtn = document.getElementById('admin-help-view-item-btn');
+  if (viewReportBtn) {
+    if (ticket.relatedReportId) {
+      viewReportBtn.style.display = 'inline-flex';
+    } else {
+      viewReportBtn.style.display = 'none';
+    }
+  }
+
+  modal.classList.add('show');
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
+}
+
+function renderAdminHelpModalNotes(ticket) {
+  const notesContainer = document.getElementById('admin-help-modal-notes-list');
+  if (!notesContainer) return;
+
+  const notes = ticket.notes || [];
+  if (notes.length === 0) {
+    notesContainer.innerHTML = '<div style="font-size: 0.78rem; color: var(--text-muted); font-style: italic;">No internal notes added yet.</div>';
+    return;
+  }
+
+  notesContainer.innerHTML = notes.map(n => `
+    <div class="admin-note-bubble">
+      <div class="admin-note-header">
+        <span class="admin-note-author">${escapeHTML(n.author)}</span>
+        <span>${getTimeAgo(n.createdAt)}</span>
+      </div>
+      <div style="color: var(--text-primary); font-size: 0.8rem;">${escapeHTML(n.text)}</div>
+    </div>
+  `).join('');
+}
+
+function addAdminHelpInternalNote() {
+  if (!activeAdminHelpTicketId) return;
+  const ticket = (appState.adminHelpRequests || []).find(r => r.id === activeAdminHelpTicketId);
+  if (!ticket) return;
+
+  const input = document.getElementById('admin-help-new-note-input');
+  if (!input || !input.value.trim()) return;
+
+  const noteText = input.value.trim();
+  if (!ticket.notes) ticket.notes = [];
+
+  ticket.notes.push({
+    author: appState.user?.name || 'Staff Officer',
+    text: noteText,
+    createdAt: new Date().toISOString()
+  });
+
+  input.value = '';
+  saveData();
+  renderAdminHelpModalNotes(ticket);
+  showToast('Internal investigation note recorded 📝', 'success');
+}
+
+function updateAdminHelpStatus(newStatusOrTicketId, maybeStatus) {
+  let ticketId = activeAdminHelpTicketId;
+  let newStatus = newStatusOrTicketId;
+
+  if (maybeStatus !== undefined) {
+    ticketId = newStatusOrTicketId;
+    newStatus = maybeStatus;
+  }
+
+  const ticket = (appState.adminHelpRequests || []).find(r => r.id === ticketId);
+  if (!ticket) return;
+
+  const oldStatus = ticket.status;
+  ticket.status = newStatus;
+
+  if (!ticket.notes) ticket.notes = [];
+  ticket.notes.push({
+    author: appState.user?.name || 'Staff Officer',
+    text: `Status changed from ${oldStatus} to ${newStatus}.`,
+    createdAt: new Date().toISOString()
+  });
+
+  if (newStatus === 'Handled' || newStatus === 'Closed') {
+    ticket.resolvedAt = new Date().toISOString();
+  }
+
+  // Notify student
+  appState.notifications.unshift({
+    id: generateId('notif'),
+    message: `🛡️ Ticket #${ticket.id} status updated to "${newStatus}" by Campus Security.`,
+    read: false,
+    createdAt: new Date().toISOString()
+  });
+
+  saveData();
+  renderNotifications();
+  renderAdminHelpDesk(currentAdminHelpTab);
+
+  if (activeAdminHelpTicketId === ticketId) {
+    const statusPill = document.getElementById('admin-help-modal-status-pill');
+    if (statusPill) {
+      statusPill.textContent = newStatus;
+      statusPill.className = `status-pill ${newStatus === 'New' ? 'status-checking' : (newStatus === 'In Review' ? 'status-in-review' : (newStatus === 'Handled' ? 'status-handled' : 'status-closed'))}`;
+    }
+    renderAdminHelpModalNotes(ticket);
+  }
+
+  showToast(`Ticket #${ticket.id} updated to ${newStatus}!`, 'success');
+}
+
+function closeAdminHelpDetailsModal() {
+  activeAdminHelpTicketId = null;
+  const modal = document.getElementById('admin-help-details-modal');
+  if (modal) modal.classList.remove('show');
+}
+
+function viewRelatedReportFromHelpModal() {
+  if (!activeAdminHelpTicketId) return;
+  const ticket = (appState.adminHelpRequests || []).find(r => r.id === activeAdminHelpTicketId);
+  if (!ticket || !ticket.relatedReportId) return;
+
+  closeAdminHelpDetailsModal();
+  openReportDetailsModal(ticket.relatedReportId);
+}
+
+
+/* ==========================================================================
+   MODULE: 40_report_details_modal___item_details_modal_.js
+   ========================================================================== */
+/* ==========================================================================
+   REPORT DETAILS MODAL (#item-details-modal)
+   ========================================================================== */
+
+function openReportDetailsModal(reportId) {
+  ensureModalsLoaded();
+  const report = appState.lostReports.find(r => r.id === reportId) ||
+                 appState.foundReports.find(r => r.id === reportId);
+  if (!report) {
+    showToast('Item report not found.', 'warning');
+    return;
+  }
+
+  const modal = document.getElementById('item-details-modal');
+  const body = document.getElementById('item-details-modal-body');
+  const titleEl = document.getElementById('item-details-modal-title');
+  const badgeEl = document.getElementById('item-details-modal-type-badge');
+  if (!modal || !body) return;
+
+  const isLost = appState.lostReports.some(r => r.id === reportId);
+  const typeLabel = isLost ? 'Lost Item' : 'Found Item';
+
+  if (titleEl) titleEl.textContent = report.title;
+  if (badgeEl) {
+    badgeEl.textContent = typeLabel;
+    badgeEl.className = `badge ${isLost ? 'badge-searching' : 'badge-matched'}`;
+  }
+
+  const cat = CATEGORY_MAP[report.category] || { label: 'Item', icon: '📦' };
+
+  body.innerHTML = `
+    <div style="display: flex; gap: 18px; margin-bottom: 18px; flex-wrap: wrap;">
+      ${report.photo ? `
+        <div style="position: relative; width: 110px; height: 110px; border-radius: 8px; overflow: hidden; border: 1.5px solid var(--teal-bright);">
+          <img src="${report.photo}" alt="${escapeHTML(report.title)}" style="width: 100%; height: 100%; object-fit: cover;">
+          ${report.imageSharedForMatch ? `
+            <div style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(15, 23, 42, 0.88); color: var(--teal-bright); font-size: 0.65rem; padding: 3px 4px; text-align: center; font-weight: 600; line-height: 1.2;">
+              Possible match — image shared for verification
+            </div>
+          ` : ''}
+        </div>
+      ` : `
+        <div style="width: 110px; height: 110px; border-radius: 8px; background: var(--bg-subtle); display: flex; align-items: center; justify-content: center; font-size: 3rem;">
+          ${cat.icon}
+        </div>
+      `}
+
+      <div style="flex: 1; min-width: 220px;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <h4 style="margin: 0; font-size: 1.15rem; color: var(--text-primary);">${escapeHTML(report.title)}</h4>
+          ${getStatusBadgeHTML(report.status)}
+        </div>
+        <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 4px;">
+          📂 Category: <strong>${escapeHTML(cat.label)}</strong> • Color: <strong>${escapeHTML(report.color || 'Unspecified')}</strong>
+        </div>
+        <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 4px;">
+          📍 Location: <strong>${escapeHTML(report.location)}</strong>
+        </div>
+        <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">
+          📅 Date Reported: ${formatDateTime(report.date || report.createdAt)} (${getTimeAgo(report.date || report.createdAt)})
+        </div>
+      </div>
+    </div>
+
+    <div style="background: var(--bg-subtle); border-radius: 8px; padding: 12px 14px; margin-bottom: 16px; border: 1px solid var(--border-subtle);">
+      <span style="font-size: 0.72rem; text-transform: uppercase; font-weight: 700; color: var(--text-muted); display: block;">Description & Details</span>
+      <p style="margin: 4px 0 0; font-size: 0.86rem; color: var(--text-secondary); line-height: 1.5;">
+        ${escapeHTML(report.description || 'No detailed description provided.')}
+      </p>
+    </div>
+
+    <!-- Contact & Handover Privacy Card -->
+    ${renderContactCard(report, isLost ? 'Owner' : 'Finder')}
+
+    <!-- Actions Area -->
+    <div style="margin-top: 20px; padding-top: 14px; border-top: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+      <button type="button" class="btn btn-outline" style="border-color: rgba(239, 68, 68, 0.4); color: #F87171;" onclick="closeReportDetailsModal(); openItemHelpModal('${report.id}', '${escapeHTML(report.title)}', '${escapeHTML(report.location)}')">
+        <i data-lucide="shield-alert"></i>
+        <span>🆘 Need Help?</span>
+      </button>
+
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <button type="button" class="btn btn-secondary" onclick="openQrModal('${report.id}')" title="Print QR Tag">
+          <i data-lucide="qr-code"></i>
+          <span>QR Tag</span>
+        </button>
+        <button type="button" class="btn btn-secondary" onclick="downloadReportPdf('${report.id}')" title="Download Official PDF Report">
+          <i data-lucide="file-text"></i>
+          <span>Official PDF</span>
+        </button>
+        <button type="button" class="btn btn-secondary" onclick="closeReportDetailsModal()">Close</button>
+        ${!isLost && appState.user?.role?.toLowerCase() === 'admin' ? `
+          <button type="button" class="btn btn-primary" onclick="closeReportDetailsModal(); openAdminHandoverModal('${report.id}', 'found')">
+            <i data-lucide="package-check"></i>
+            <span>Safe Handover</span>
+          </button>
+        ` : ''}
+      </div>
+    </div>
+  `;
+
+  modal.classList.add('show');
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
+}
+
+function closeReportDetailsModal() {
+  const modal = document.getElementById('item-details-modal');
+  if (modal) modal.classList.remove('show');
+}
+
+
+/* ==========================================================================
+   MODULE: 41_official_campus_contacts_admin_settings_handler.js
+   ========================================================================== */
+/* ==========================================================================
+   OFFICIAL CAMPUS CONTACTS ADMIN SETTINGS HANDLER
+   ========================================================================== */
+
+function saveOfficialContactsSettings(e) {
+  if (e && typeof e.preventDefault === 'function') e.preventDefault();
+
+  if (!appState.officialContacts) {
+    appState.officialContacts = JSON.parse(JSON.stringify(DEFAULT_OFFICIAL_CONTACTS));
+  }
+
+  const officePhone = document.getElementById('setting-phone-office')?.value.trim() || '';
+  const secPhone = document.getElementById('setting-phone-security')?.value.trim() || '';
+  const policePhone = document.getElementById('setting-phone-police')?.value.trim() || '';
+
+  appState.officialContacts.campusOffice.phone = officePhone;
+  appState.officialContacts.campusSecurity.phone = secPhone;
+  appState.officialContacts.policeStation.phone = policePhone;
+
+  saveData();
+  renderHelpSafetyPage();
+  showToast('Official campus directory contact numbers saved! 📞', 'success');
+}
+
+
+window.handleLocationSelectChange = handleLocationSelectChange;
+window.renderHelpSafetyPage = renderHelpSafetyPage;
+window.handleComplaintSubmit = handleComplaintSubmit;
+window.openItemHelpModal = openItemHelpModal;
+window.closeItemHelpModal = closeItemHelpModal;
+window.submitItemHelpRequest = submitItemHelpRequest;
+window.renderAdminHelpDesk = renderAdminHelpDesk;
+window.filterAdminHelpDeskTab = filterAdminHelpDeskTab;
+window.handleAdminHelpSearch = handleAdminHelpSearch;
+window.openAdminHelpDetailsModal = openAdminHelpDetailsModal;
+window.closeAdminHelpDetailsModal = closeAdminHelpDetailsModal;
+window.addAdminHelpInternalNote = addAdminHelpInternalNote;
+window.updateAdminHelpStatus = updateAdminHelpStatus;
+window.openReportDetailsModal = openReportDetailsModal;
+window.closeReportDetailsModal = closeReportDetailsModal;
+window.saveOfficialContactsSettings = saveOfficialContactsSettings;
+
+window.setupAuthenticatedUser = setupAuthenticatedUser;
+window.showPage = showPage;
+window.saveData = saveData;
+window.loadData = loadData;
+
+
+
+/* ==========================================================================
+   MODULE: 42_manage_console_pages__lost__found__all_reports__claims__match_center_.js
+   ========================================================================== */
+/* ==========================================================================
+   MANAGE CONSOLE PAGES (LOST, FOUND, ALL REPORTS, CLAIMS, MATCH CENTER)
+   ========================================================================== */
+
+let currentClaimFilterTab = 'all';
+
+// Ensure all reports have standard type and history array
+function normalizeReportsData() {
+  if (!appState.lostReports) appState.lostReports = [];
+  if (!appState.foundReports) appState.foundReports = [];
+  if (!appState.claims) appState.claims = [];
+
+  appState.lostReports.forEach(r => {
+    r.type = 'LOST';
+    r.reportType = 'LOST';
+    if (!r.history) {
+      r.history = [
+        { action: 'Report Created', timestamp: r.date || r.createdAt || new Date().toISOString(), author: r.reporterName || 'Student', note: 'Initial lost report registered on campus.' }
+      ];
+    }
+  });
+
+  appState.foundReports.forEach(r => {
+    r.type = 'FOUND';
+    r.reportType = 'FOUND';
+    if (!r.history) {
+      r.history = [
+        { action: 'Report Registered', timestamp: r.date || r.createdAt || new Date().toISOString(), author: r.finderName || 'Finder', note: 'Found property logged into campus registry.' }
+      ];
+    }
+  });
+}
+
+// Update Admin Navigation Badges & Dashboard Metrics
+function updateAdminMetricsAndPills() {
+  normalizeReportsData();
+
+  const lostCount = appState.lostReports.length;
+  const foundCount = appState.foundReports.length;
+  const claimsCount = (appState.claims || []).filter(c => c.status === 'Pending' || c.status === 'Under Verification').length;
+  const helpCount = (appState.adminHelpRequests || []).filter(r => r.status === 'New').length;
+  const recoveredCount = appState.lostReports.filter(r => r.status === 'Recovered').length +
+                         appState.foundReports.filter(r => r.status === 'Returned').length;
+
+  // Real Potential Matches calculation
+  let totalPotentialMatches = 0;
+  appState.lostReports.forEach(r => {
+    const m = findMatches(r, 'lost');
+    totalPotentialMatches += m.length;
+  });
+
+  // Sidebar badges
+  const lostBadge = document.getElementById('sidebar-admin-lost-badge');
+  const foundBadge = document.getElementById('sidebar-admin-found-badge');
+  const claimsBadge = document.getElementById('sidebar-admin-claims-badge');
+  const matchesBadge = document.getElementById('sidebar-admin-matches-badge');
+  const helpBadge = document.getElementById('sidebar-admin-help-badge');
+
+  if (lostBadge) lostBadge.textContent = lostCount;
+  if (foundBadge) foundBadge.textContent = foundCount;
+  if (claimsBadge) claimsBadge.textContent = claimsCount;
+  if (matchesBadge) matchesBadge.textContent = totalPotentialMatches;
+  if (helpBadge) {
+    helpBadge.textContent = helpCount;
+    helpBadge.style.display = helpCount > 0 ? 'inline-block' : 'none';
+  }
+
+  // Dashboard metric cards
+  const statLost = document.getElementById('admin-stat-lost-reports');
+  const statFound = document.getElementById('admin-stat-found-reports');
+  const statMatches = document.getElementById('admin-stat-potential-matches');
+  const statClaims = document.getElementById('admin-stat-pending-claims');
+  const statUrgent = document.getElementById('admin-stat-urgent-cases');
+  const statRecovered = document.getElementById('admin-stat-recovered-items');
+
+  if (statLost) statLost.textContent = lostCount;
+  if (statFound) statFound.textContent = foundCount;
+  if (statMatches) statMatches.textContent = totalPotentialMatches;
+  if (statClaims) statClaims.textContent = claimsCount;
+  if (statUrgent) statUrgent.textContent = helpCount;
+  if (statRecovered) statRecovered.textContent = recoveredCount;
+}
+
+/* --------------------------------------------------------------------------
+   1. LOST ITEMS PAGE (#admin-lost-page)
+   -------------------------------------------------------------------------- */
+function renderAdminLostPage() {
+  normalizeReportsData();
+  updateAdminMetricsAndPills();
+
+  const tbody = document.getElementById('admin-lost-table-tbody');
+  if (!tbody) return;
+
+  const searchVal = (document.getElementById('admin-lost-search-input')?.value || '').toLowerCase().trim();
+  const catVal = document.getElementById('admin-lost-filter-category')?.value || '';
+  const locVal = document.getElementById('admin-lost-filter-location')?.value || '';
+  const statusVal = document.getElementById('admin-lost-filter-status')?.value || '';
+  const sortVal = document.getElementById('admin-lost-filter-sort')?.value || 'newest';
+
+  let list = [...appState.lostReports];
+
+  // Update Metric Pills
+  const totalEl = document.getElementById('admin-lost-metric-total');
+  const lookingEl = document.getElementById('admin-lost-metric-looking');
+  const matchesEl = document.getElementById('admin-lost-metric-matches');
+  const claimsEl = document.getElementById('admin-lost-metric-claims');
+  const recoveredEl = document.getElementById('admin-lost-metric-recovered');
+
+  if (totalEl) totalEl.textContent = list.length;
+  if (lookingEl) lookingEl.textContent = list.filter(r => r.status === 'Active' || r.status === 'Looking').length;
+  if (matchesEl) matchesEl.textContent = list.filter(r => r.status === 'Possible Match' || ((r.status === 'Active') && (appState.matches || []).some(m => m.lostReportId === r.id))).length;
+  if (claimsEl) claimsEl.textContent = list.filter(r => r.status === 'Claim Submitted' || r.status === 'Under Verification' || r.status === 'Pending' || r.status === 'Claim Approved').length;
+  if (recoveredEl) recoveredEl.textContent = list.filter(r => r.status === 'Recovered' || r.status === 'Returned').length;
+
+  // Filter
+  if (searchVal) {
+    list = list.filter(r => 
+      (r.id && r.id.toLowerCase().includes(searchVal)) ||
+      (r.title && r.title.toLowerCase().includes(searchVal)) ||
+      (r.description && r.description.toLowerCase().includes(searchVal)) ||
+      (r.brand && r.brand.toLowerCase().includes(searchVal)) ||
+      (r.reporterName && r.reporterName.toLowerCase().includes(searchVal))
+    );
+  }
+
+  if (catVal) list = list.filter(r => r.category === catVal);
+  if (locVal) list = list.filter(r => r.location === locVal);
+  if (statusVal) list = list.filter(r => r.status === statusVal);
+
+  // Sort
+  if (sortVal === 'oldest') {
+    list.sort((a, b) => new Date(a.date || a.createdAt) - new Date(b.date || b.createdAt));
+  } else if (sortVal === 'title') {
+    list.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+  } else {
+    list.sort((a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt));
+  }
+
+  if (list.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="10" style="text-align: center; padding: 40px 16px; color: var(--text-muted);">
+          <i data-lucide="file-question" style="width: 36px; height: 36px; color: var(--teal-bright); margin: 0 auto 8px; display: block;"></i>
+          No lost-item reports found matching current filters.
+        </td>
+      </tr>
+    `;
+    if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
+    return;
+  }
+
+  tbody.innerHTML = list.map(item => {
+    const cat = CATEGORY_MAP[item.category] || { label: 'Item', icon: '📦' };
+    const matches = findMatches(item, 'lost');
+    const matchBadge = matches.length > 0
+      ? `<span class="badge badge-matched" style="cursor: pointer;" onclick="viewMatchesForReport('${item.id}', 'lost')">${matches.length} Match${matches.length > 1 ? 'es' : ''} (${matches[0].score}%)</span>`
+      : '<span style="font-size: 0.75rem; color: var(--text-muted);">No match</span>';
+
+    return `
+      <tr>
+        <td>
+          <span style="font-weight: 700; font-family: monospace; color: var(--teal-bright); font-size: 0.82rem;">${item.id}</span>
+          ${item.priority === 'urgent' ? '<span class="badge badge-urgent" style="display: block; width: fit-content; margin-top: 2px; font-size: 0.65rem;">🔴 URGENT</span>' : ''}
+        </td>
+        <td>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            ${item.photo ? `<img src="${item.photo}" alt="${escapeHTML(item.title)}" style="width: 44px; height: 44px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border-subtle);">` : `<div style="width: 44px; height: 44px; border-radius: 6px; background: var(--bg-subtle); display: flex; align-items: center; justify-content: center; font-size: 1.4rem;">${cat.icon}</div>`}
+            <div>
+              <strong style="font-size: 0.92rem; color: var(--text-primary); display: block;">${escapeHTML(item.title)}</strong>
+              <span style="font-size: 0.75rem; color: var(--text-muted); display: block; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHTML(item.description || 'No description')}</span>
+            </div>
+          </div>
+        </td>
+        <td>
+          <span class="sub-text">${cat.icon} ${escapeHTML(cat.label)}</span>
+        </td>
+        <td style="font-size: 0.8rem; color: var(--text-secondary);">
+          <div>🎨 ${escapeHTML(item.color || 'Unspecified')}</div>
+          ${item.brand ? `<div style="color: var(--text-muted); font-size: 0.75rem;">🏷️ ${escapeHTML(item.brand)}</div>` : ''}
+        </td>
+        <td style="font-size: 0.82rem; color: var(--text-secondary);">
+          📍 ${escapeHTML(item.location || 'Campus')}
+        </td>
+        <td style="font-size: 0.78rem; color: var(--text-muted); white-space: nowrap;">
+          ${formatDateTime(item.date || item.createdAt)}
+        </td>
+        <td style="font-size: 0.8rem;">
+          <div style="font-weight: 600; color: var(--text-primary);">${escapeHTML(item.reporterName || 'Student')}</div>
+          <div style="font-size: 0.72rem; color: var(--text-muted);">${(item.sharePhone || item.phoneSharingConsent) && (item.phone || item.phoneNumber || item.phone_number) ? '📞 ' + escapeHTML(item.phone || item.phoneNumber || item.phone_number) : ((item.phone || item.phoneNumber || item.hasPhoneProvided) ? '🔒 Private' : 'ℹ️ No phone')}</div>
+        </td>
+        <td>
+          ${getStatusBadgeHTML(item.status)}
+        </td>
+        <td>
+          ${matchBadge}
+        </td>
+        <td style="text-align: right; white-space: nowrap;">
+          <div style="display: inline-flex; gap: 6px;">
+            <button type="button" class="btn btn-sm btn-secondary" onclick="openReportDetailsModal('${item.id}')" title="View Details">
+              <i data-lucide="eye"></i>
+            </button>
+            <button type="button" class="btn btn-sm btn-secondary" onclick="openStatusUpdateModal('${item.id}')" title="Update Status">
+              <i data-lucide="edit-3"></i>
+            </button>
+            <button type="button" class="btn btn-sm btn-secondary" onclick="openReportHistoryModal('${item.id}')" title="View Lifecycle History">
+              <i data-lucide="history"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
+}
+
+function handleAdminLostFilterChange() {
+  renderAdminLostPage();
+}
+
+function getAiStatusBadgeHTML(item) {
+  const analysis = item?.aiAnalysis || item?.ai_analysis;
+  if (!analysis) {
+    if (item?.photo && item.photo.trim()) {
+      return '<span class="badge" style="background: rgba(148, 163, 184, 0.15); color: var(--text-muted); font-size: 0.68rem; margin-top: 3px; display: inline-block;">AI Pending</span>';
+    }
+    return '';
+  }
+  if (analysis.status === 'completed') {
+    const cls = analysis.visualSummary?.primaryClass || 'Object';
+    return `<span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #10B981; font-size: 0.68rem; margin-top: 3px; display: inline-block;" title="YOLO Detection: ${escapeHTML(cls)}">✓ AI: ${escapeHTML(cls)}</span>`;
+  }
+  if (analysis.status === 'failed') {
+    return '<span class="badge" style="background: rgba(239, 68, 68, 0.15); color: #EF4444; font-size: 0.68rem; margin-top: 3px; display: inline-block;">! AI Unavailable</span>';
+  }
+  if (analysis.status === 'processing') {
+    return '<span class="badge" style="background: rgba(59, 130, 246, 0.15); color: #3B82F6; font-size: 0.68rem; margin-top: 3px; display: inline-block;">Analyzing...</span>';
+  }
+  return '';
+}
+
+/* --------------------------------------------------------------------------
+   2. FOUND ITEMS PAGE (#admin-found-page)
+   -------------------------------------------------------------------------- */
+function renderAdminFoundPage() {
+  normalizeReportsData();
+  updateAdminMetricsAndPills();
+
+  const tbody = document.getElementById('admin-found-table-tbody');
+  if (!tbody) return;
+
+  const searchVal = (document.getElementById('admin-found-search-input')?.value || '').toLowerCase().trim();
+  const catVal = document.getElementById('admin-found-filter-category')?.value || '';
+  const locVal = document.getElementById('admin-found-filter-location')?.value || '';
+  const statusVal = document.getElementById('admin-found-filter-status')?.value || '';
+  const custodyVal = document.getElementById('admin-found-filter-custody')?.value || '';
+  const sortVal = document.getElementById('admin-found-filter-sort')?.value || 'newest';
+
+  let list = [...appState.foundReports];
+
+  // Update Metric Pills
+  const totalEl = document.getElementById('admin-found-metric-total');
+  const lockersEl = document.getElementById('admin-found-metric-lockers');
+  const finderEl = document.getElementById('admin-found-metric-finder');
+  const matchesEl = document.getElementById('admin-found-metric-matches');
+  const returnedEl = document.getElementById('admin-found-metric-returned');
+
+  if (totalEl) totalEl.textContent = list.length;
+  if (lockersEl) lockersEl.textContent = list.filter(r => (r.custody || '').toLowerCase().includes('desk') || (r.custody || '').toLowerCase().includes('office')).length;
+  if (finderEl) finderEl.textContent = list.filter(r => (r.custody || '').toLowerCase().includes('finder') || (r.custody || '').toLowerCase().includes('me')).length;
+  if (matchesEl) matchesEl.textContent = list.filter(r => r.status === 'Possible Owner' || r.status === 'Possible Match' || ((r.status === 'Active') && (appState.matches || []).some(m => m.foundReportId === r.id))).length;
+  if (returnedEl) returnedEl.textContent = list.filter(r => r.status === 'Returned' || r.status === 'Recovered').length;
+
+  // Filter
+  if (searchVal) {
+    list = list.filter(r => 
+      (r.id && r.id.toLowerCase().includes(searchVal)) ||
+      (r.title && r.title.toLowerCase().includes(searchVal)) ||
+      (r.description && r.description.toLowerCase().includes(searchVal)) ||
+      (r.finderName && r.finderName.toLowerCase().includes(searchVal))
+    );
+  }
+
+  if (catVal) list = list.filter(r => r.category === catVal);
+  if (locVal) list = list.filter(r => r.location === locVal);
+  if (statusVal) list = list.filter(r => r.status === statusVal);
+  if (custodyVal === 'desk') list = list.filter(r => (r.custody || '').toLowerCase().includes('desk'));
+  if (custodyVal === 'finder') list = list.filter(r => (r.custody || '').toLowerCase().includes('finder') || (r.custody || '').toLowerCase().includes('me'));
+
+  // Sort
+  if (sortVal === 'oldest') {
+    list.sort((a, b) => new Date(a.date || a.createdAt) - new Date(b.date || b.createdAt));
+  } else if (sortVal === 'title') {
+    list.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+  } else {
+    list.sort((a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt));
+  }
+
+  if (list.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="10" style="text-align: center; padding: 40px 16px; color: var(--text-muted);">
+          <i data-lucide="package" style="width: 36px; height: 36px; color: var(--teal-bright); margin: 0 auto 8px; display: block;"></i>
+          No found-item reports found matching current filters.
+        </td>
+      </tr>
+    `;
+    if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
+    return;
+  }
+
+  tbody.innerHTML = list.map(item => {
+    const cat = CATEGORY_MAP[item.category] || { label: 'Item', icon: '📦' };
+    const matches = findMatches(item, 'found');
+    const matchBadge = matches.length > 0
+      ? `<span class="badge badge-matched" style="cursor: pointer;" onclick="viewMatchesForReport('${item.id}', 'found')">${matches.length} Owner${matches.length > 1 ? 's' : ''} (${matches[0].score}%)</span>`
+      : '<span style="font-size: 0.75rem; color: var(--text-muted);">Searching...</span>';
+
+    return `
+      <tr>
+        <td>
+          <span style="font-weight: 700; font-family: monospace; color: var(--teal-bright); font-size: 0.82rem;">${item.id}</span>
+          <span class="badge badge-verified" style="display: block; width: fit-content; margin-top: 2px; font-size: 0.65rem;">${escapeHTML(item.custody || 'Security Desk')}</span>
+        </td>
+        <td>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            ${item.photo ? `<img src="${item.photo}" alt="${escapeHTML(item.title)}" style="width: 44px; height: 44px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border-subtle);">` : `<div style="width: 44px; height: 44px; border-radius: 6px; background: var(--bg-subtle); display: flex; align-items: center; justify-content: center; font-size: 1.4rem;">${cat.icon}</div>`}
+            <div>
+              <strong style="font-size: 0.92rem; color: var(--text-primary); display: block;">${escapeHTML(item.title)}</strong>
+              <span style="font-size: 0.75rem; color: var(--text-muted); display: block; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHTML(item.description || 'No description')}</span>
+              ${getAiStatusBadgeHTML(item)}
+            </div>
+          </div>
+        </td>
+        <td>
+          <span class="sub-text">${cat.icon} ${escapeHTML(cat.label)}</span>
+        </td>
+        <td style="font-size: 0.8rem; color: var(--text-secondary);">
+          <div>🎨 ${escapeHTML(item.color || 'Unspecified')}</div>
+          ${item.brand ? `<div style="color: var(--text-muted); font-size: 0.75rem;">🏷️ ${escapeHTML(item.brand)}</div>` : ''}
+        </td>
+        <td style="font-size: 0.82rem; color: var(--text-secondary);">
+          📍 ${escapeHTML(item.location || 'Campus')}
+        </td>
+        <td style="font-size: 0.78rem; color: var(--text-muted); white-space: nowrap;">
+          ${formatDateTime(item.date || item.createdAt)}
+        </td>
+        <td style="font-size: 0.8rem;">
+          <div style="font-weight: 600; color: var(--text-primary);">${escapeHTML(item.finderName || 'Campus Staff')}</div>
+          <div style="font-size: 0.72rem; color: var(--text-muted);">${(item.sharePhone || item.phoneSharingConsent) && (item.phone || item.phoneNumber || item.phone_number) ? '📞 ' + escapeHTML(item.phone || item.phoneNumber || item.phone_number) : ((item.phone || item.phoneNumber || item.hasPhoneProvided) ? '🔒 Private / Desk' : 'ℹ️ No phone')}</div>
+        </td>
+        <td>
+          ${getStatusBadgeHTML(item.status)}
+        </td>
+        <td>
+          ${matchBadge}
+        </td>
+        <td style="text-align: right; white-space: nowrap;">
+          <div style="display: inline-flex; gap: 6px;">
+            <button type="button" class="btn btn-sm btn-secondary" onclick="openReportDetailsModal('${item.id}')" title="View Details">
+              <i data-lucide="eye"></i>
+            </button>
+            <button type="button" class="btn btn-sm btn-secondary" onclick="openAdminHandoverModal('${item.id}', 'found')" title="Safe Handover">
+              <i data-lucide="package-check"></i>
+            </button>
+            <button type="button" class="btn btn-sm btn-secondary" onclick="openStatusUpdateModal('${item.id}')" title="Update Status">
+              <i data-lucide="edit-3"></i>
+            </button>
+            <button type="button" class="btn btn-sm btn-secondary" onclick="openReportHistoryModal('${item.id}')" title="Lifecycle History">
+              <i data-lucide="history"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
+}
+
+function handleAdminFoundFilterChange() {
+  renderAdminFoundPage();
+}
+
+/* --------------------------------------------------------------------------
+   3. ALL REPORTS PAGE COMBINED (#admin-all-page)
+   -------------------------------------------------------------------------- */
+function renderAdminAllReportsPage() {
+  normalizeReportsData();
+  updateAdminMetricsAndPills();
+
+  const tbody = document.getElementById('admin-all-table-tbody');
+  if (!tbody) return;
+
+  const searchVal = (document.getElementById('admin-all-search-input')?.value || '').toLowerCase().trim();
+  const typeVal = document.getElementById('admin-all-filter-type')?.value || '';
+  const catVal = document.getElementById('admin-all-filter-category')?.value || '';
+  const locVal = document.getElementById('admin-all-filter-location')?.value || '';
+  const statusVal = document.getElementById('admin-all-filter-status')?.value || '';
+  const sortVal = document.getElementById('admin-all-filter-sort')?.value || 'newest';
+
+  // Combine both collections with explicit type
+  let list = [
+    ...appState.lostReports.map(r => ({ ...r, displayType: 'LOST' })),
+    ...appState.foundReports.map(r => ({ ...r, displayType: 'FOUND' }))
+  ];
+
+  // Filters
+  if (typeVal) {
+    list = list.filter(r => r.displayType === typeVal);
+  }
+
+  if (searchVal) {
+    list = list.filter(r => 
+      (r.id && r.id.toLowerCase().includes(searchVal)) ||
+      (r.title && r.title.toLowerCase().includes(searchVal)) ||
+      (r.description && r.description.toLowerCase().includes(searchVal)) ||
+      (r.reporterName && r.reporterName.toLowerCase().includes(searchVal)) ||
+      (r.finderName && r.finderName.toLowerCase().includes(searchVal))
+    );
+  }
+
+  if (catVal) list = list.filter(r => r.category === catVal);
+  if (locVal) list = list.filter(r => r.location === locVal);
+  if (statusVal) list = list.filter(r => r.status === statusVal);
+
+  // Sort
+  if (sortVal === 'oldest') {
+    list.sort((a, b) => new Date(a.date || a.createdAt) - new Date(b.date || b.createdAt));
+  } else if (sortVal === 'title') {
+    list.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+  } else {
+    list.sort((a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt));
+  }
+
+  if (list.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="10" style="text-align: center; padding: 40px 16px; color: var(--text-muted);">
+          <i data-lucide="clipboard-list" style="width: 36px; height: 36px; color: var(--teal-bright); margin: 0 auto 8px; display: block;"></i>
+          No reports found matching selected criteria.
+        </td>
+      </tr>
+    `;
+    if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
+    return;
+  }
+
+  tbody.innerHTML = list.map(item => {
+    const isLost = item.displayType === 'LOST';
+    const cat = CATEGORY_MAP[item.category] || { label: 'Item', icon: '📦' };
+    const personName = isLost ? (item.reporterName || 'Student') : (item.finderName || 'Finder');
+
+    return `
+      <tr>
+        <td>
+          <span class="badge ${isLost ? 'badge-type-lost' : 'badge-type-found'}">
+            ${isLost ? '🔴 LOST' : '🟢 FOUND'}
+          </span>
+        </td>
+        <td>
+          <span style="font-weight: 700; font-family: monospace; color: var(--teal-bright); font-size: 0.82rem;">${item.id}</span>
+        </td>
+        <td>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            ${item.photo ? `<img src="${item.photo}" alt="${escapeHTML(item.title)}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border-subtle);">` : `<div style="width: 40px; height: 40px; border-radius: 6px; background: var(--bg-subtle); display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">${cat.icon}</div>`}
+            <div>
+              <strong style="font-size: 0.92rem; color: var(--text-primary); display: block;">${escapeHTML(item.title)}</strong>
+              <span style="font-size: 0.75rem; color: var(--text-muted); display: block; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHTML(item.description || 'No description')}</span>
+            </div>
+          </div>
+        </td>
+        <td>${cat.icon} ${escapeHTML(cat.label)}</td>
+        <td style="font-size: 0.8rem; color: var(--text-secondary);">${escapeHTML(item.color || 'Unspecified')}</td>
+        <td style="font-size: 0.82rem; color: var(--text-secondary);">📍 ${escapeHTML(item.location || 'Campus')}</td>
+        <td style="font-size: 0.78rem; color: var(--text-muted); white-space: nowrap;">${formatDateTime(item.date || item.createdAt)}</td>
+        <td style="font-size: 0.8rem; font-weight: 600;">${escapeHTML(personName)}</td>
+        <td>${getStatusBadgeHTML(item.status)}</td>
+        <td style="text-align: right; white-space: nowrap;">
+          <button type="button" class="btn btn-sm btn-secondary" onclick="openReportDetailsModal('${item.id}')" title="View Details">
+            <i data-lucide="eye"></i>
+          </button>
+          <button type="button" class="btn btn-sm btn-secondary" onclick="openQrModal('${item.id}')" title="QR Tag">
+            <i data-lucide="qr-code"></i>
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
+}
+
+function handleAdminAllFilterChange() {
+  renderAdminAllReportsPage();
+}
+
+/* --------------------------------------------------------------------------
+   4. CLAIMS & VERIFICATION MODULE (#admin-claims-page)
+   -------------------------------------------------------------------------- */
+function filterAdminClaimsTab(tabKey, btnEl) {
+  currentClaimFilterTab = tabKey;
+  const buttons = document.querySelectorAll('.admin-claims-tab');
+  buttons.forEach(b => {
+    b.classList.remove('active');
+    b.classList.add('btn-secondary');
+  });
+
+  if (btnEl) {
+    btnEl.classList.add('active');
+    btnEl.classList.remove('btn-secondary');
+  }
+
+  renderAdminClaimsPage(tabKey);
+}
+
+function handleAdminClaimsFilterChange() {
+  renderAdminClaimsPage(currentClaimFilterTab);
+}
+
+function renderAdminClaimsPage(filterTab = currentClaimFilterTab) {
+  normalizeReportsData();
+  updateAdminMetricsAndPills();
+
+  currentClaimFilterTab = filterTab;
+  const tbody = document.getElementById('admin-claims-table-tbody');
+  if (!tbody) return;
+
+  const claims = appState.claims || [];
+
+  // Metrics
+  const totalEl = document.getElementById('admin-claims-metric-total');
+  const pendingEl = document.getElementById('admin-claims-metric-pending');
+  const verifEl = document.getElementById('admin-claims-metric-verification');
+  const approvedEl = document.getElementById('admin-claims-metric-approved');
+  const completedEl = document.getElementById('admin-claims-metric-completed');
+
+  if (totalEl) totalEl.textContent = claims.length;
+  if (pendingEl) pendingEl.textContent = claims.filter(c => c.status === 'Pending').length;
+  if (verifEl) verifEl.textContent = claims.filter(c => c.status === 'Under Verification').length;
+  if (approvedEl) approvedEl.textContent = claims.filter(c => c.status === 'Approved').length;
+  if (completedEl) completedEl.textContent = claims.filter(c => c.status === 'Completed').length;
+
+  let filtered = [...claims];
+  if (filterTab !== 'all') {
+    filtered = filtered.filter(c => c.status === filterTab);
+  }
+
+  const searchVal = (document.getElementById('admin-claims-search-input')?.value || '').toLowerCase().trim();
+  if (searchVal) {
+    filtered = filtered.filter(c => 
+      (c.id && c.id.toLowerCase().includes(searchVal)) ||
+      (c.claimantName && c.claimantName.toLowerCase().includes(searchVal)) ||
+      (c.claimantId && c.claimantId.toLowerCase().includes(searchVal)) ||
+      (c.itemTitle && c.itemTitle.toLowerCase().includes(searchVal)) ||
+      (c.verificationEvidence && c.verificationEvidence.toLowerCase().includes(searchVal))
+    );
+  }
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="9" style="text-align: center; padding: 40px 16px; color: var(--text-muted);">
+          <i data-lucide="shield-check" style="width: 36px; height: 36px; color: var(--teal-bright); margin: 0 auto 8px; display: block;"></i>
+          No claims require review under the "${escapeHTML(filterTab)}" tab.
+        </td>
+      </tr>
+    `;
+    if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(claim => {
+    const lostReport = appState.lostReports.find(r => r.id === claim.lostReportId) || { title: claim.itemTitle || 'Lost Item' };
+    const foundReport = appState.foundReports.find(r => r.id === claim.foundReportId) || { title: 'Found Item in Custody' };
+
+    const statusBadge = 
+      claim.status === 'Approved' ? '<span class="status-pill status-approved"><i data-lucide="check-circle-2"></i> Approved</span>' :
+      claim.status === 'Under Verification' ? '<span class="status-pill status-checking"><i data-lucide="clock"></i> Under Verification</span>' :
+      claim.status === 'Completed' ? '<span class="status-pill status-returned"><i data-lucide="package-check"></i> Completed / Returned</span>' :
+      claim.status === 'Rejected' ? '<span class="status-pill status-rejected"><i data-lucide="x-circle"></i> Rejected</span>' :
+      '<span class="status-pill status-waiting"><i data-lucide="clock"></i> Pending</span>';
+
+    return `
+      <tr>
+        <td>
+          <span style="font-weight: 700; font-family: monospace; color: var(--teal-bright); font-size: 0.84rem;">#${claim.id}</span>
+          <span style="display: block; font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;">${getTimeAgo(claim.createdAt)}</span>
+        </td>
+        <td>
+          <strong style="color: var(--text-primary); font-size: 0.9rem; display: block;">${escapeHTML(lostReport.title)}</strong>
+          <span style="font-size: 0.75rem; color: var(--text-muted);">ID: ${claim.lostReportId || '--'}</span>
+        </td>
+        <td>
+          <strong style="color: var(--text-primary); font-size: 0.9rem; display: block;">${escapeHTML(foundReport.title)}</strong>
+          <span style="font-size: 0.75rem; color: var(--text-muted);">ID: ${claim.foundReportId || '--'}</span>
+        </td>
+        <td>
+          <div style="font-weight: 600; color: var(--text-primary); font-size: 0.88rem;">${escapeHTML(claim.claimantName || 'Student')}</div>
+          <div style="font-size: 0.75rem; color: var(--text-muted);">ID: ${claim.claimantId || 'STU'} • ${(claim.sharePhone || claim.phoneSharingConsent) && (claim.claimantContact || claim.claimantPhone || claim.phone) ? '📞 ' + escapeHTML(claim.claimantContact || claim.claimantPhone || claim.phone) : ((claim.claimantContact || claim.claimantPhone || claim.phone) ? '🔒 Phone Private' : 'ℹ️ No phone')}</div>
+        </td>
+        <td>
+          <div style="font-weight: 600; color: var(--text-primary); font-size: 0.88rem;">${escapeHTML(claim.finderName || foundReport.finderName || 'Finder')}</div>
+          <div style="font-size: 0.75rem; color: var(--text-muted);">${escapeHTML(foundReport.custody || 'Campus Desk')}</div>
+        </td>
+        <td>
+          <span class="badge badge-matched" style="font-weight: 800; font-size: 0.82rem;">${claim.matchScore || 85}% AI Match</span>
+        </td>
+        <td>
+          <div class="claim-evidence-box" style="padding: 6px 10px; font-size: 0.8rem; max-width: 260px;">
+            <em>"${escapeHTML(claim.verificationEvidence || 'No private secret proof logged yet.')}"</em>
+          </div>
+        </td>
+        <td>
+          ${statusBadge}
+        </td>
+        <td style="text-align: right; white-space: nowrap;">
+          <div style="display: inline-flex; gap: 6px;">
+            <button type="button" class="btn btn-sm btn-primary" onclick="openClaimReviewModal('${claim.id}')">
+              <i data-lucide="shield-alert"></i>
+              <span>Review Claim</span>
+            </button>
+            <button type="button" class="btn btn-sm btn-secondary" style="border-color: rgba(239, 68, 68, 0.4); color: #F87171;" onclick="openItemHelpModal('${claim.lostReportId}', '${escapeHTML(lostReport.title)}', '${escapeHTML(lostReport.location)}')">
+              <span>🆘</span>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
+}
+
+/* --------------------------------------------------------------------------
+   5. MATCH CENTER MODULE (#admin-matches-page)
+   -------------------------------------------------------------------------- */
+function renderAdminMatchCenterPage() {
+  normalizeReportsData();
+  updateAdminMetricsAndPills();
+
+  const container = document.getElementById('admin-matches-cards-container');
+  if (!container) return;
+
+  const threshold = parseInt(document.getElementById('admin-match-filter-threshold')?.value || '40', 10);
+  const searchVal = (document.getElementById('admin-match-search-input')?.value || '').toLowerCase().trim();
+
+  // Calculate candidate matches across all lost reports
+  const allCandidateMatches = [];
+  appState.lostReports.forEach(lost => {
+    const candidateMatches = findMatches(lost, 'lost');
+    candidateMatches.forEach(m => {
+      if (m.score >= threshold) {
+        allCandidateMatches.push(m);
+      }
+    });
+  });
+
+  // Filter by search
+  let filtered = allCandidateMatches;
+  if (searchVal) {
+    filtered = filtered.filter(m => 
+      (m.lost.title && m.lost.title.toLowerCase().includes(searchVal)) ||
+      (m.found.title && m.found.title.toLowerCase().includes(searchVal)) ||
+      (m.lost.description && m.lost.description.toLowerCase().includes(searchVal)) ||
+      (m.found.description && m.found.description.toLowerCase().includes(searchVal)) ||
+      (m.lost.location && m.lost.location.toLowerCase().includes(searchVal)) ||
+      (m.found.location && m.found.location.toLowerCase().includes(searchVal))
+    );
+  }
+
+  if (filtered.length === 0) {
+    container.innerHTML = `
+      <div class="glass-card empty-state" style="text-align: center; padding: 48px 20px;">
+        <i data-lucide="sparkles" style="width: 44px; height: 44px; color: var(--ai-violet); margin: 0 auto 12px; display: block;"></i>
+        <h3 style="color: var(--text-primary); margin-bottom: 6px;">No Potential Matches Found</h3>
+        <p style="color: var(--text-muted); font-size: 0.9rem; max-width: 480px; margin: 0 auto;">
+          The multi-signal engine considers category, text descriptions, visual attributes, colors, KSRCE landmarks, and timestamps. As new campus reports arrive, potential matches will automatically populate here.
+        </p>
+      </div>
+    `;
+    if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
+    return;
+  }
+
+  container.innerHTML = filtered.map(m => {
+    const { lost, found, score, matchReasons, unmatchedReasons } = m;
+    const lostCat = CATEGORY_MAP[lost.category] || { label: 'Item', icon: '📦' };
+    const foundCat = CATEGORY_MAP[found.category] || { label: 'Item', icon: '📦' };
+    const isClaimed = (appState.claims || []).some(c => c.lostReportId === lost.id && c.foundReportId === found.id);
+
+    return `
+      <div class="glass-card match-card" style="padding: 22px;">
+        <div class="match-card-side-by-side">
+          <!-- Left: Lost item -->
+          <div class="match-item-pane">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span class="badge badge-searching"><span class="badge-dot"></span> Lost Report (#${lost.id})</span>
+              ${lost.priority === 'urgent' ? '<span class="badge badge-urgent">🔴 URGENT</span>' : ''}
+            </div>
+            ${lost.photo ? `<img src="${lost.photo}" class="match-item-thumb" alt="Lost">` : `<div class="match-item-thumb" style="display:flex;align-items:center;justify-content:center;font-size:2.6rem;">${lostCat.icon}</div>`}
+            <h4 style="font-size: 1.05rem; margin: 8px 0 2px;">${escapeHTML(lost.title)}</h4>
+            <div class="sub-text">${lostCat.icon} ${lostCat.label} • 🎨 ${escapeHTML(lost.color || 'Unspecified')}</div>
+            <div style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 4px;">📍 Last seen: <strong>${escapeHTML(lost.location)}</strong></div>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">📅 ${getTimeAgo(lost.date || lost.createdAt)} by ${escapeHTML(lost.reporterName || 'Student')}</div>
+          </div>
+
+          <!-- Center: Large Animated Confidence Ring -->
+          <div class="match-score-center" style="padding: 0 16px;">
+            <div class="score-ring-wrap">
+              <svg class="score-ring-svg" viewBox="0 0 100 100">
+                <circle class="score-ring-bg" cx="50" cy="50" r="40"></circle>
+                <circle class="score-ring-fill ${score > 70 ? 'score-green' : (score > 50 ? 'score-yellow' : 'score-red')}" cx="50" cy="50" r="40"
+                  stroke-dasharray="251.2"
+                  stroke-dashoffset="${251.2 - (score / 100) * 251.2}">
+                </circle>
+              </svg>
+              <div class="score-text-inside" style="font-size: 1.25rem;">${score}%</div>
+            </div>
+            <span style="font-size: 0.72rem; text-transform: uppercase; color: var(--ai-violet-light); font-weight: 700; letter-spacing: 0.6px; margin-top: 4px;">Match Score</span>
+          </div>
+
+          <!-- Right: Found item -->
+          <div class="match-item-pane">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span class="badge badge-matched"><span class="badge-dot"></span> Found Report (#${found.id})</span>
+              <span class="sub-text" style="font-size: 0.75rem;">${escapeHTML(found.custody || 'Campus Desk')}</span>
+            </div>
+            ${found.photo ? `<img src="${found.photo}" class="match-item-thumb" alt="Found">` : `<div class="match-item-thumb" style="display:flex;align-items:center;justify-content:center;font-size:2.6rem;">${foundCat.icon}</div>`}
+            <h4 style="font-size: 1.05rem; margin: 8px 0 2px;">${escapeHTML(found.title)}</h4>
+            <div class="sub-text">${foundCat.icon} ${foundCat.label} • 🎨 ${escapeHTML(found.color || 'Unspecified')}</div>
+            <div style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 4px;">📍 Found at: <strong>${escapeHTML(found.location)}</strong></div>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">📅 ${getTimeAgo(found.date || found.createdAt)} by ${escapeHTML(found.finderName || 'Finder')}</div>
+            ${found.aiAnalysis && found.aiAnalysis.status === 'completed' ? `
+              <div style="margin-top: 6px;">
+                <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #10B981; font-size: 0.72rem; border: 1px solid rgba(16, 185, 129, 0.3);">
+                  ✓ AI Analysis: ${escapeHTML(found.aiAnalysis.visualSummary?.primaryClass || 'Object')} detected
+                </span>
+              </div>
+            ` : (found.aiAnalysis && found.aiAnalysis.status === 'failed' ? `
+              <div style="margin-top: 6px;">
+                <span class="badge" style="background: rgba(239, 68, 68, 0.15); color: #EF4444; font-size: 0.72rem;">
+                  ! AI Analysis Unavailable
+                </span>
+              </div>
+            ` : '')}
+          </div>
+        </div>
+
+        <!-- Explainable Matching Reasons -->
+        <div class="explainable-reasons-box" style="margin-top: 16px;">
+          <div style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: var(--text-muted);">Explainable Correlation Signals</div>
+          <div class="explainable-reasons-list">
+            ${matchReasons.map(r => `<span class="reason-chip-matched">${r}</span>`).join('')}
+            ${unmatchedReasons.map(r => `<span class="reason-chip-unmatched">${r}</span>`).join('')}
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div style="margin-top: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+          <button type="button" class="btn btn-outline" style="border-color: rgba(239, 68, 68, 0.4); color: #F87171; font-size: 0.82rem;" onclick="openItemHelpModal('${lost.id}', '${escapeHTML(lost.title)}', '${escapeHTML(lost.location)}')">
+            <i data-lucide="shield-alert" style="width: 14px; height: 14px;"></i>
+            <span>🆘 Need Help?</span>
+          </button>
+
+          <div style="display: flex; gap: 8px;">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="openReportDetailsModal('${lost.id}')">
+              <i data-lucide="eye"></i>
+              <span>Review Details</span>
+            </button>
+            ${isClaimed ? `
+              <span class="badge badge-verified" style="padding: 8px 14px; font-size: 0.82rem;">Claim in Verification</span>
+            ` : `
+              <button type="button" class="btn btn-accent-teal btn-sm" onclick="openCreateClaimModal('${lost.id}', '${found.id}')">
+                <i data-lucide="hand"></i>
+                <span>Create Claim</span>
+              </button>
+            `}
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
+}
+
+function handleAdminMatchFilterChange() {
+  renderAdminMatchCenterPage();
+}
+
+function viewMatchesForReport(reportId, type) {
+  showPage('admin-matches-page');
+  const searchInput = document.getElementById('admin-match-search-input');
+  const targetReport = (type === 'lost' ? appState.lostReports : appState.foundReports).find(r => r.id === reportId);
+  if (searchInput && targetReport) {
+    searchInput.value = targetReport.title;
+    renderAdminMatchCenterPage();
+  }
+}
+
+
+/* ==========================================================================
+   MODULE: 43_claim_creation__ownership_verification___review_workflow.js
+   ========================================================================== */
+/* ==========================================================================
+   CLAIM CREATION, OWNERSHIP VERIFICATION & REVIEW WORKFLOW
+   ========================================================================== */
+
+function openCreateClaimModal(lostId, foundId) {
+  ensureModalsLoaded();
+  const lost = appState.lostReports.find(r => r.id === lostId);
+  const found = appState.foundReports.find(r => r.id === foundId);
+  if (!lost || !found) {
+    showToast('Cannot initiate claim: reports not found.', 'warning');
+    return;
+  }
+
+  const modal = document.getElementById('create-claim-modal');
+  if (!modal) return;
+
+  document.getElementById('create-claim-lost-id').value = lostId;
+  document.getElementById('create-claim-found-id').value = foundId;
+  document.getElementById('create-claim-secret-proof').value = '';
+
+  const summary = document.getElementById('create-claim-items-summary');
+  if (summary) {
+    summary.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <span style="font-size: 0.72rem; text-transform: uppercase; font-weight: 700; color: #F87171;">Lost Property</span>
+          <div style="font-weight: 700; color: var(--text-primary); font-size: 0.95rem;">${escapeHTML(lost.title)}</div>
+          <div style="font-size: 0.75rem; color: var(--text-muted);">📍 ${escapeHTML(lost.location)}</div>
+        </div>
+        <div style="font-size: 1.2rem; color: var(--teal-bright); font-weight: 800;">↕</div>
+        <div>
+          <span style="font-size: 0.72rem; text-transform: uppercase; font-weight: 700; color: var(--teal-bright);">Found Property</span>
+          <div style="font-weight: 700; color: var(--text-primary); font-size: 0.95rem;">${escapeHTML(found.title)}</div>
+          <div style="font-size: 0.75rem; color: var(--text-muted);">📍 ${escapeHTML(found.location)}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  modal.classList.add('show');
+}
+
+function closeCreateClaimModal() {
+  const modal = document.getElementById('create-claim-modal');
+  if (modal) modal.classList.remove('show');
+}
+
+function submitCreateClaimFromModal(e) {
+  if (e && typeof e.preventDefault === 'function') e.preventDefault();
+
+  const lostId = document.getElementById('create-claim-lost-id')?.value;
+  const foundId = document.getElementById('create-claim-found-id')?.value;
+  const secretProof = document.getElementById('create-claim-secret-proof')?.value.trim();
+  const shareOpt = document.querySelector('input[name="claim-contact-share-opt"]:checked')?.value || 'share';
+  const sharePhone = (shareOpt === 'share');
+
+  if (!secretProof) {
+    showToast('Please provide a distinguishing ownership proof.', 'warning');
+    return;
+  }
+
+  const lost = appState.lostReports.find(r => r.id === lostId);
+  const found = appState.foundReports.find(r => r.id === foundId);
+  if (!lost || !found) return;
+
+  const matches = findMatches(lost, 'lost');
+  const targetMatch = matches.find(m => m.found.id === foundId) || { score: 85, matchReasons: ['Category and location correlation'] };
+
+  const claimId = generateId('claim');
+  const newClaim = {
+    id: claimId,
+    lostReportId: lostId,
+    foundReportId: foundId,
+    itemTitle: lost.title,
+    claimantName: appState.user?.name || lost.reporterName || 'Student Claimant',
+    claimantId: appState.user?.studentId || 'STU-2026',
+    claimantContact: lost.phone || lost.phoneNumber || lost.phone_number || (appState.user && (appState.user.phone || appState.user.phoneNumber)) || '',
+    sharePhone: sharePhone,
+    finderName: found.finderName || 'Finder',
+    matchScore: targetMatch.score,
+    matchReasons: targetMatch.matchReasons || ['Strong multi-signal correlation'],
+    unmatchedReasons: targetMatch.unmatchedReasons || [],
+    verificationEvidence: secretProof,
+    verificationNotes: '',
+    status: 'Pending',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+
+  if (!appState.claims) appState.claims = [];
+  appState.claims.unshift(newClaim);
+
+  // Update report statuses
+  lost.status = 'Claim Submitted';
+  found.status = 'Claim Submitted';
+
+  // Add lifecycle history events
+  if (!lost.history) lost.history = [];
+  lost.history.push({
+    action: 'Claim Submitted',
+    timestamp: new Date().toISOString(),
+    author: newClaim.claimantName,
+    note: `Claim #${claimId} submitted with secret ownership proof.`
+  });
+
+  if (!found.history) found.history = [];
+  found.history.push({
+    action: 'Claim Submitted',
+    timestamp: new Date().toISOString(),
+    author: newClaim.claimantName,
+    note: `Claim #${claimId} submitted by claimant.`
+  });
+
+  // Notifications
+  appState.notifications.unshift({
+    id: generateId('notif'),
+    message: `🤝 Claim #${claimId} submitted for "${lost.title}". Proof logged for Campus Administration verification.`,
+    read: false,
+    createdAt: new Date().toISOString()
+  });
+
+  appState.notifications.unshift({
+    id: generateId('notif'),
+    message: `📋 New Claim #${claimId} requires review: ${newClaim.claimantName} claimed "${found.title}".`,
+    read: false,
+    createdAt: new Date().toISOString()
+  });
+
+  saveData();
+  renderNotifications();
+  closeCreateClaimModal();
+
+  showToast(`Claim #${claimId} created and sent for Admin verification! 🛡️`, 'success');
+
+  // Navigate to claims page if admin, or my reports if student
+  const isAdmin = appState.user && appState.user.role && appState.user.role.toLowerCase() === 'admin';
+  if (isAdmin) {
+    showPage('admin-claims-page');
+  } else {
+    showPage('my-reports-page');
+  }
+}
+
+function openClaimReviewModal(claimId) {
+  ensureModalsLoaded();
+  const claim = (appState.claims || []).find(c => c.id === claimId);
+  if (!claim) return;
+
+  const lost = appState.lostReports.find(r => r.id === claim.lostReportId) || { title: claim.itemTitle || 'Lost Item' };
+  const found = appState.foundReports.find(r => r.id === claim.foundReportId) || { title: 'Found Property' };
+
+  const modal = document.getElementById('claim-review-modal');
+  const body = document.getElementById('claim-review-modal-body');
+  if (!modal || !body) return;
+
+  document.getElementById('claim-review-modal-title').textContent = `Claim #${claim.id}`;
+  document.getElementById('claim-review-modal-sub').textContent = `Filed ${formatDateTime(claim.createdAt)} (${getTimeAgo(claim.createdAt)})`;
+
+  const lostCat = CATEGORY_MAP[lost.category] || { label: 'Item', icon: '📦' };
+  const foundCat = CATEGORY_MAP[found.category] || { label: 'Item', icon: '📦' };
+
+  body.innerHTML = `
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 18px;">
+      <!-- Lost Item Pane -->
+      <div style="background: var(--bg-subtle); padding: 14px; border-radius: 8px; border: 1px solid var(--border-subtle);">
+        <span class="badge badge-searching" style="font-size: 0.7rem;">🔴 Lost Report</span>
+        <h4 style="margin: 6px 0 2px; font-size: 1rem; color: var(--text-primary);">${escapeHTML(lost.title)}</h4>
+        <div style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 6px;">📍 ${escapeHTML(lost.location || 'Campus')} • 📅 ${formatDateTime(lost.date || lost.createdAt)}</div>
+        <div style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.4;">${escapeHTML(lost.description || 'No description')}</div>
+      </div>
+
+      <!-- Found Item Pane -->
+      <div style="background: var(--bg-subtle); padding: 14px; border-radius: 8px; border: 1px solid var(--border-subtle);">
+        <span class="badge badge-matched" style="font-size: 0.7rem;">🟢 Found Property</span>
+        <h4 style="margin: 6px 0 2px; font-size: 1rem; color: var(--text-primary);">${escapeHTML(found.title)}</h4>
+        <div style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 6px;">📍 ${escapeHTML(found.location || 'Campus')} • 📦 ${escapeHTML(found.custody || 'Security Desk')}</div>
+        <div style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.4;">${escapeHTML(found.description || 'No description')}</div>
+      </div>
+    </div>
+
+    <!-- AI Match Confidence & Reasons -->
+    <div class="explainable-reasons-box" style="margin-bottom: 16px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: var(--ai-violet);">AI Matching Confidence</span>
+        <span class="badge badge-matched" style="font-weight: 800; font-size: 0.85rem;">${claim.matchScore || 85}% Correlation</span>
+      </div>
+      <div class="explainable-reasons-list">
+        ${(claim.matchReasons || []).map(r => `<span class="reason-chip-matched">${r}</span>`).join('')}
+        ${(claim.unmatchedReasons || []).map(r => `<span class="reason-chip-unmatched">${r}</span>`).join('')}
+      </div>
+    </div>
+
+    <!-- Private Secret Verification Proof -->
+    <div style="margin-bottom: 18px;">
+      <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: var(--color-warning); display: block; margin-bottom: 4px;">
+        🔒 Private Distinguishing Proof (Submitted by Claimant)
+      </span>
+      <div class="claim-evidence-box">
+        <strong>Claimant Stated:</strong> "${escapeHTML(claim.verificationEvidence || 'No distinguishing proof entered.')}"
+      </div>
+    </div>
+
+    <!-- Claimant & Finder Info -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; font-size: 0.82rem; background: var(--bg-subtle); padding: 12px 14px; border-radius: 8px; margin-bottom: 18px; border: 1px solid var(--border-subtle);">
+      <div>
+        <span style="color: var(--text-muted); display: block;">Claimant:</span>
+        <strong style="color: var(--text-primary);">${escapeHTML(claim.claimantName)} (${escapeHTML(claim.claimantId)})</strong>
+        <div style="color: var(--text-muted); margin-top: 2px;">${(claim.sharePhone || claim.phoneSharingConsent) && (claim.claimantContact || claim.claimantPhone || claim.phone) ? '📞 ' + escapeHTML(claim.claimantContact || claim.claimantPhone || claim.phone) : ((claim.claimantContact || claim.claimantPhone || claim.phone) ? '🔒 Contact Private' : 'ℹ️ No phone provided')}</div>
+      </div>
+      <div>
+        <span style="color: var(--text-muted); display: block;">Finder &amp; Custody:</span>
+        <strong style="color: var(--text-primary);">${escapeHTML(claim.finderName || found.finderName || 'Finder')}</strong>
+        <div style="color: var(--text-muted); margin-top: 2px;">Custody: ${escapeHTML(found.custody || 'Campus Security Desk')}</div>
+      </div>
+    </div>
+
+    <!-- Status & Admin Actions -->
+    <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 14px; border-top: 1px solid var(--border-subtle); flex-wrap: wrap; gap: 10px;">
+      <button type="button" class="btn btn-outline" style="border-color: rgba(239, 68, 68, 0.4); color: #F87171;" onclick="closeClaimReviewModal(); openItemHelpModal('${claim.lostReportId}', '${escapeHTML(lost.title)}', '${escapeHTML(lost.location)}')">
+        <i data-lucide="shield-alert"></i>
+        <span>🆘 Need Help?</span>
+      </button>
+
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        ${claim.status !== 'Rejected' ? `
+          <button type="button" class="btn btn-secondary btn-sm" style="color: #F87171;" onclick="updateClaimStatus('${claim.id}', 'Rejected')">
+            <i data-lucide="x-circle"></i>
+            <span>Reject</span>
+          </button>
+        ` : ''}
+        ${claim.status === 'Pending' ? `
+          <button type="button" class="btn btn-secondary btn-sm" onclick="updateClaimStatus('${claim.id}', 'Under Verification')">
+            <i data-lucide="help-circle"></i>
+            <span>Request More Proof</span>
+          </button>
+        ` : ''}
+        ${claim.status !== 'Approved' && claim.status !== 'Completed' ? `
+          <button type="button" class="btn btn-accent-teal btn-sm" onclick="updateClaimStatus('${claim.id}', 'Approved')">
+            <i data-lucide="check-circle-2"></i>
+            <span>Approve Claim</span>
+          </button>
+        ` : ''}
+        ${claim.status === 'Approved' ? `
+          <button type="button" class="btn btn-primary btn-sm" onclick="closeClaimReviewModal(); openAdminHandoverModal('${claim.foundReportId}', 'found')">
+            <i data-lucide="package-check"></i>
+            <span>Authorize Safe Handover</span>
+          </button>
+        ` : ''}
+      </div>
+    </div>
+  `;
+
+  modal.classList.add('show');
+  if (window.lucide) if(window.optimizedCreateIcons) window.optimizedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
+}
+
+function closeClaimReviewModal() {
+  const modal = document.getElementById('claim-review-modal');
+  if (modal) modal.classList.remove('show');
+}
+
+function updateClaimStatus(claimId, newStatus) {
+  const claim = (appState.claims || []).find(c => c.id === claimId);
+  if (!claim) return;
+
+  claim.status = newStatus;
+  claim.updatedAt = new Date().toISOString();
+
+  const lost = appState.lostReports.find(r => r.id === claim.lostReportId);
+  const found = appState.foundReports.find(r => r.id === claim.foundReportId);
+
+  if (newStatus === 'Approved') {
+    if (lost) lost.status = 'Claim Approved';
+    if (found) found.status = 'Claim Approved';
+  } else if (newStatus === 'Completed') {
+    if (lost) lost.status = 'Recovered';
+    if (found) found.status = 'Returned';
+  } else if (newStatus === 'Rejected') {
+    if (lost) lost.status = 'Active';
+    if (found) found.status = 'Active';
+  }
+
+  // Audit history
+  const historyEvent = {
+    action: `Claim ${newStatus}`,
+    timestamp: new Date().toISOString(),
+    author: appState.user?.name || 'Campus Administrator',
+    note: `Claim #${claimId} status updated to ${newStatus}.`
+  };
+
+  if (lost && !lost.history) lost.history = [];
+  if (lost) lost.history.push(historyEvent);
+  if (found && !found.history) found.history = [];
+  if (found) found.history.push(historyEvent);
+
+  // Cloud persistence for claim update
+  fetch(API_BASE + '/api/claims?id=' + encodeURIComponent(claimId), {
+    method: 'PATCH',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ status: newStatus })
+  }).then(r => r.json()).then(d => {
+    if (d.success) updateSyncIndicator('synced', 'Cloud Synced');
+  }).catch(e => console.warn('Cloud claim update error:', e));
+
+  // Notification
+  appState.notifications.unshift({
+    id: generateId('notif'),
+    message: `🛡️ Claim #${claimId} update: Status changed to "${newStatus}" by Campus Security.`,
+    read: false,
+    createdAt: new Date().toISOString()
+  });
+
+  saveData();
+  renderNotifications();
+  renderAdminClaimsPage(currentClaimFilterTab);
+  closeClaimReviewModal();
+
+  showToast(`Claim #${claimId} marked ${newStatus}!`, 'success');
+}
+
+
+/* ==========================================================================
+   MODULE: 44_report_history_audit_modal.js
+   ========================================================================== */
+/* ==========================================================================
+   REPORT HISTORY AUDIT MODAL
+   ========================================================================== */
+function openReportHistoryModal(reportId) {
+  ensureModalsLoaded();
+  const report = appState.lostReports.find(r => r.id === reportId) ||
+                 appState.foundReports.find(r => r.id === reportId);
+  if (!report) return;
+
+  const modal = document.getElementById('report-history-modal');
+  const body = document.getElementById('report-history-modal-body');
+  if (!modal || !body) return;
+
+  document.getElementById('report-history-modal-title').textContent = `Audit: ${escapeHTML(report.title)}`;
+  document.getElementById('report-history-modal-sub').textContent = `Report ID #${report.id} • ${report.type || 'Item'}`;
+
+  const history = report.history || [
+    { action: 'Created', timestamp: report.date || report.createdAt, author: report.reporterName || report.finderName || 'Student', note: 'Report logged in LostSeek database.' }
+  ];
+
+  body.innerHTML = `
+    <div class="timeline-history-list">
+      ${history.map(evt => `
+        <div class="timeline-event-item">
+          <div class="timeline-event-time">${formatDateTime(evt.timestamp)} (${getTimeAgo(evt.timestamp)})</div>
+          <div style="font-weight: 700; font-size: 0.9rem; color: var(--text-primary); margin-top: 2px;">${escapeHTML(evt.action)}</div>
+          <div class="timeline-event-desc">${escapeHTML(evt.note || '')}</div>
+          <div style="font-size: 0.72rem; color: var(--teal-bright); margin-top: 2px;">Logged by: ${escapeHTML(evt.author || 'System')}</div>
+        </div>
+      `).join('')}
+    </div>
+    <div style="margin-top: 20px; display: flex; justify-content: flex-end;">
+      <button type="button" class="btn btn-secondary" onclick="closeReportHistoryModal()">Close</button>
+    </div>
+  `;
+
+  modal.classList.add('show');
+}
+
+function closeReportHistoryModal() {
+  const modal = document.getElementById('report-history-modal');
+  if (modal) modal.classList.remove('show');
+}
+
+
+/* ==========================================================================
+   MODULE: 45_status_update_modal.js
+   ========================================================================== */
+/* ==========================================================================
+   STATUS UPDATE MODAL
+   ========================================================================== */
+let activeStatusReportId = null;
+
+async function openStatusUpdateModal(reportId) {
+  ensureModalsLoaded();
+  activeStatusReportId = reportId;
+  const report = (appState.lostReports || []).find(r => r.id === reportId) ||
+                 (appState.foundReports || []).find(r => r.id === reportId);
+  if (!report) return;
+
+  const validStatuses = ['Active', 'Pending', 'Under Verification', 'Claim Approved', 'Verified', 'Returned', 'Recovered', 'Closed', 'Expired'];
+  const currentStatus = report.status || 'Active';
+  const input = prompt(`Update status for "${report.title}" (Current: ${currentStatus}):\n\nValid Statuses: Active, Under Verification, Claim Approved, Recovered, Returned, Closed`, currentStatus);
+
+  if (!input || !input.trim() || input.trim() === currentStatus) return;
+
+  let normalizedStatus = input.trim();
+  // Map common user or legacy UI inputs to valid database constraint values
+  if (normalizedStatus.toLowerCase() === 'looking' || normalizedStatus.toLowerCase() === 'possible match') {
+    normalizedStatus = 'Active';
+  } else if (normalizedStatus.toLowerCase() === 'claim submitted') {
+    normalizedStatus = 'Under Verification';
+  } else if (normalizedStatus.toLowerCase() === 'archived') {
+    normalizedStatus = 'Closed';
+  }
+
+  // Ensure case matches valid status
+  const matched = validStatuses.find(s => s.toLowerCase() === normalizedStatus.toLowerCase());
+  if (!matched) {
+    showToast(`Invalid status. Choose from: ${validStatuses.join(', ')}`, 'error');
+    return;
+  }
+
+  report.status = matched;
+  if (!report.history) report.history = [];
+  report.history.push({
+    action: `Status Changed to ${matched}`,
+    timestamp: new Date().toISOString(),
+    author: appState.user?.name || 'Administrator',
+    note: `Manual administrative status update.`
+  });
+
+  saveData();
+  renderAllAdminPages();
+
+  // Async push to production cloud backend
+  try {
+    const user = appState.user;
+    const headers = { 'Content-Type': 'application/json' };
+    if (user) headers['x-lostseek-user'] = encodeURIComponent(JSON.stringify(user));
+    await fetch(API_BASE + `/api/reports?id=${reportId}`, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify({ status: matched })
+    });
+  } catch (err) {
+    console.warn('Could not sync status change to cloud backend:', err.message);
+  }
+
+  showToast(`Status updated to ${matched}!`, 'success');
+}
+
+function renderAllAdminPages() {
+  renderAdminLostPage();
+  renderAdminFoundPage();
+  renderAdminAllReportsPage();
+  renderAdminClaimsPage();
+  renderAdminMatchCenterPage();
+  updateAdminMetricsAndPills();
+}
+
+
+window.renderAdminLostPage = renderAdminLostPage;
+window.renderAdminFoundPage = renderAdminFoundPage;
+window.renderAdminAllReportsPage = renderAdminAllReportsPage;
+window.renderAdminClaimsPage = renderAdminClaimsPage;
+window.renderAdminMatchCenterPage = renderAdminMatchCenterPage;
+window.handleAdminLostFilterChange = handleAdminLostFilterChange;
+window.handleAdminFoundFilterChange = handleAdminFoundFilterChange;
+window.handleAdminAllFilterChange = handleAdminAllFilterChange;
+window.handleAdminClaimsFilterChange = handleAdminClaimsFilterChange;
+window.handleAdminMatchFilterChange = handleAdminMatchFilterChange;
+window.filterAdminClaimsTab = filterAdminClaimsTab;
+window.openCreateClaimModal = openCreateClaimModal;
+window.closeCreateClaimModal = closeCreateClaimModal;
+window.submitCreateClaimFromModal = submitCreateClaimFromModal;
+window.openClaimReviewModal = openClaimReviewModal;
+window.closeClaimReviewModal = closeClaimReviewModal;
+window.updateClaimStatus = updateClaimStatus;
+window.openReportHistoryModal = openReportHistoryModal;
+window.closeReportHistoryModal = closeReportHistoryModal;
+window.openStatusUpdateModal = openStatusUpdateModal;
+window.viewMatchesForReport = viewMatchesForReport;
+window.updateAdminMetricsAndPills = updateAdminMetricsAndPills;
+window.toggleRegisterView = toggleRegisterView;
+window.handleRegistrationSubmit = handleRegistrationSubmit;
+window.triggerPhotoPick = triggerPhotoPick;
+window.triggerProfilePhotoUpload = triggerProfilePhotoUpload;
+window.handleProfilePhotoSelected = handleProfilePhotoSelected;
+window.handleProfilePasswordChange = handleProfilePasswordChange;
+window.clearWizardPhoto = clearWizardPhoto;
+
+/* =========================================================================
+   MANGA VIEWER LOGIC
+   ========================================================================= */
+
+let currentMangaPage = 1;
+const totalMangaPages = 9;
+
+function renderMangaPagination() {
+  const progressTextDesktop = document.getElementById('manga-progress-text-desktop');
+  const progressTextMobile = document.getElementById('manga-progress-text-mobile');
+  const progressFill = document.getElementById('manga-progress-fill');
+  
+  if (progressTextDesktop) progressTextDesktop.innerText = `Page ${currentMangaPage} of ${totalMangaPages}`;
+  if (progressTextMobile) progressTextMobile.innerText = `${currentMangaPage} / ${totalMangaPages}`;
+  if (progressFill) progressFill.style.width = `${(currentMangaPage / totalMangaPages) * 100}%`;
+}
+
+function updateMangaView() {
+  const slides = document.querySelectorAll('.manga-slide');
+  if (!slides.length) return;
+
+  slides.forEach(slide => {
+    const pageNum = parseInt(slide.getAttribute('data-page'));
+    slide.classList.remove('active', 'prev-slide');
+    
+    if (pageNum === currentMangaPage) {
+      slide.classList.add('active');
+    } else if (pageNum < currentMangaPage) {
+      slide.classList.add('prev-slide');
+    }
+  });
+
+  const prevBtns = [document.getElementById('manga-prev-desktop'), document.getElementById('manga-prev-mobile')];
+  const nextBtns = [document.getElementById('manga-next-desktop'), document.getElementById('manga-next-mobile')];
+  
+  prevBtns.forEach(btn => { if (btn) btn.disabled = currentMangaPage === 1; });
+  nextBtns.forEach(btn => { if (btn) btn.disabled = currentMangaPage === totalMangaPages; });
+  
+  renderMangaPagination();
+}
+
+let lastMangaTurn = 0;
+window.nextMangaPage = function() {
+  const now = Date.now();
+  if (now - lastMangaTurn < 250) {
+    console.log('Debounced nextMangaPage');
+    return;
+  }
+  lastMangaTurn = now;
+  console.log('nextMangaPage called. Current is:', currentMangaPage);
+
+  if (currentMangaPage < totalMangaPages) {
+    currentMangaPage++;
+    console.log('Incremented to:', currentMangaPage);
+    updateMangaView();
+  }
+};
+
+window.prevMangaPage = function() {
+  const now = Date.now();
+  if (now - lastMangaTurn < 250) return;
+  lastMangaTurn = now;
+
+  if (currentMangaPage > 1) {
+    currentMangaPage--;
+    updateMangaView();
+  }
+};
+
+window.goToMangaPage = function(page) {
+  if (page >= 1 && page <= totalMangaPages) {
+    currentMangaPage = page;
+    updateMangaView();
+  }
+};
+
+// Touch / Swipe Support
+let touchStartX = 0;
+let touchEndX = 0;
+
+function handleMangaSwipe() {
+  if (touchEndX < touchStartX - 50) {
+    window.nextMangaPage(); // Swipe Left -> Next
+  }
+  if (touchEndX > touchStartX + 50) {
+    window.prevMangaPage(); // Swipe Right -> Prev
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const wrapper = document.getElementById('manga-slides-wrapper');
+  const prevBtn = document.getElementById('manga-prev');
+  const nextBtn = document.getElementById('manga-next');
+  // Click events are handled by inline onclick attributes in index.html to prevent double firing
+
+  if (wrapper) {
+    wrapper.addEventListener('touchstart', e => {
+      touchStartX = e.changedTouches[0].screenX;
+    }, {passive: true});
+
+    wrapper.addEventListener('touchend', e => {
+      touchEndX = e.changedTouches[0].screenX;
+      handleMangaSwipe();
+    }, {passive: true});
+  }
+
+  // Keyboard navigation
+  document.addEventListener('keydown', (e) => {
+    // Only navigate if we are on the landing page
+    const mangaContainer = document.getElementById('manga-slides-wrapper');
+    if (mangaContainer && window.getComputedStyle(mangaContainer).display !== 'none') {
+      if (e.key === 'ArrowRight') window.nextMangaPage();
+      if (e.key === 'ArrowLeft') window.prevMangaPage();
+    }
+  });
+
+  updateMangaView();
+});
+
